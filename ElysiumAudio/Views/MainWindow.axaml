@@ -1,0 +1,369 @@
+<Window
+    x:Class="ElysiumAudio.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Avalonia.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:netDataGrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+    xmlns:vm="using:ElysiumAudio.ViewModels"
+    Title="Elysium Audio"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    x:DataType="vm:MainWindowViewModel"
+    Background="#121212"
+    Foreground="#E4E4E7"
+    Icon="/Assets/avalonia-logo.ico"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid Margin="16" RowDefinitions="Auto, *, Auto, Auto">
+
+        <!--  Panel Superior: Controles y Título  -->
+        <Grid
+            Grid.Row="0"
+            Margin="0,0,0,12"
+            ColumnDefinitions="*, Auto">
+            <StackPanel Grid.Column="0">
+                <TextBlock
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Foreground="White"
+                    LetterSpacing="2"
+                    Text="ELYSIUM AUDIO" />
+                <TextBlock
+                    Margin="0,2,0,12"
+                    FontSize="12"
+                    Foreground="#A1A1AA"
+                    Text="Pure linear normalizer designed for high dynamic range music &amp; ballads." />
+            </StackPanel>
+
+            <!--  Botones de Acción Rápida  -->
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button
+                    Padding="14,8"
+                    Background="#2563EB"
+                    Command="{Binding AddFileCommand}"
+                    FontWeight="SemiBold"
+                    Foreground="White">
+                    📁 Add Files
+                </Button>
+                <Button
+                    Padding="14,8"
+                    Background="#27272A"
+                    Command="{Binding ClearListCommand}"
+                    Foreground="#E4E4E7">
+                    Clear List
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!--  Zona Central: Cola de Archivos (DataGrid)  -->
+        <Border
+            Name="DropZoneBorder"
+            Grid.Row="1"
+            Margin="0,8,0,0"
+            Padding="4"
+            Background="#18181B"
+            BorderBrush="#27272A"
+            BorderThickness="1"
+            CornerRadius="8"
+            DragDrop.AllowDrop="True">
+
+            <DataGrid
+                AutoGenerateColumns="False"
+                Background="Transparent"
+                BorderThickness="0"
+                GridLinesVisibility="Horizontal"
+                IsReadOnly="True"
+                ItemsSource="{Binding AudioFiles}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn
+                        Width="110"
+                        Binding="{Binding Status}"
+                        Header="Status" />
+                    <DataGridTextColumn
+                        Width="280"
+                        Binding="{Binding FileName}"
+                        Header="File Name" />
+                    <DataGridTextColumn
+                        Width="80"
+                        Binding="{Binding Codec}"
+                        Header="Codec" />
+                    <DataGridTextColumn
+                        Width="90"
+                        Binding="{Binding Duration}"
+                        Header="Duration" />
+                    <DataGridTextColumn
+                        Width="100"
+                        Binding="{Binding Loudness}"
+                        Header="Current LUFS" />
+                    <DataGridTextColumn
+                        Width="*"
+                        Binding="{Binding Peak}"
+                        Header="Peak Level" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!--  Panel Inferior: Ajustes Técnicos de Audio  -->
+        <Grid
+            Grid.Row="2"
+            Margin="0,16,0,0"
+            ColumnDefinitions="*, *"
+            ColumnSpacing="16">
+
+            <!--  Panel Izquierdo: Configuración de Volumen y Techos  -->
+            <Border
+                Grid.Column="0"
+                Padding="20"
+                Background="#18181B"
+                BorderBrush="#27272A"
+                BorderThickness="1"
+                CornerRadius="10">
+
+                <StackPanel Spacing="20">
+                    <!--  Encabezado  -->
+                    <TextBlock
+                        Margin="0,0,0,8"
+                        FontSize="16"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="⚙️ DSP - Loudness Calibration" />
+
+                    <!--  Sección Target Loudness  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontSize="13"
+                            Foreground="#A1A1AA"
+                            Text="🎚 Target Loudness (Integrated)" />
+
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,Auto">
+                            <!--  Slider  -->
+                            <Slider
+                                Grid.Column="0"
+                                Foreground="#2563EB"
+                                IsSnapToTickEnabled="True"
+                                Maximum="-6"
+                                Minimum="-24"
+                                TickFrequency="0.5"
+                                Value="{Binding TargetLufs}" />
+
+                            <!--  Caja de valor  -->
+                            <StackPanel
+                                Grid.Column="1"
+                                Margin="12,0,0,0"
+                                Orientation="Horizontal">
+                                <TextBox
+                                    Width="60"
+                                    Height="26"
+                                    Padding="4,2"
+                                    Background="#27272A"
+                                    BorderBrush="#3F3F46"
+                                    BorderThickness="1"
+                                    CornerRadius="4" VerticalContentAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="White"
+                                    Text="{Binding TargetLufs, Mode=TwoWay}"
+                                    TextAlignment="Center" />
+                                <TextBlock
+                                    Margin="6,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#E4E4E7"
+                                    Text="LUFS" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!--  Sección True Peak Ceiling  -->
+                    <StackPanel Spacing="8">
+                        <TextBlock
+                            FontSize="13"
+                            Foreground="#A1A1AA"
+                            Text="📏 True Peak Ceiling Threshold" />
+
+                        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                            <TextBox
+                                Width="60"
+                                Height="26"
+                                Padding="4,2"
+                                Background="#27272A"
+                                BorderBrush="#3F3F46"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                FontSize="12" VerticalContentAlignment="Center"
+                                Foreground="White"
+                                Text="{Binding TruePeakCeilingString, Mode=TwoWay}"
+                                TextAlignment="Center" />
+                            <TextBlock
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="#E4E4E7"
+                                Text="dBTP" />
+                        </StackPanel>
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+
+
+            <!--<Border
+                Grid.Column="0"
+                Padding="16"
+                Background="#18181B"
+                BorderBrush="#27272A"
+                BorderThickness="1"
+                CornerRadius="8">
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        FontWeight="Bold"
+                        Foreground="White"
+                        Text="⚙️ DSP &amp; Loudness Calibration" />
+
+            -->
+            <!--  Slider Objetivo LUFS  -->
+            <!--
+                    <StackPanel Spacing="4">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock
+                                Grid.Column="0"
+                                FontSize="12"
+                                Foreground="#A1A1AA"
+                                Text="Target Loudness (Integrated)" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" >
+            -->
+            <!--  Quitamos el formato complejo, ahora es una lectura directa  -->
+            <!--
+                                <TextBox
+                                    Width="50"
+                                    Height="24"
+                                    Padding="4,2"
+                                    Background="#27272A"
+                                    BorderThickness="0"
+                                    FontSize="11"
+                                    Text="{Binding TargetLufs, Mode=TwoWay}"
+                                    TextAlignment="Center" />
+                                <TextBlock
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="White"
+                                    Text="LUFS" />
+                            </StackPanel>
+                        </Grid>
+                        <Slider
+                            Foreground="#2563EB"
+                            TickFrequency="0.5"
+                            Maximum="-6"
+                            Minimum="-24"
+							IsSnapToTickEnabled="True"
+                            Value="{Binding TargetLufs}" />
+                    </StackPanel>
+
+            -->
+            <!--  Caja de Entrada True Peak Ceiling  -->
+            <!--
+                    <StackPanel Margin="0,8,0,0" Spacing="4">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock
+                                Grid.Column="0"
+                                FontSize="12"
+                                Foreground="#A1A1AA"
+                                Text="True Peak Ceiling Threshold" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+            -->
+            <!--  Caja de texto limpia para que solo acepte el número flotante  -->
+            <!--
+                                <TextBox
+                                    Width="50"
+                                    Height="24"
+                                    Padding="4,2"
+                                    Background="#27272A"
+                                    BorderThickness="0"
+                                    FontSize="11"
+                                    Text="{Binding TruePeakCeilingString, Mode=TwoWay}"
+                                    TextAlignment="Center" />
+                                <TextBlock
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="White"
+                                    Text="dBTP" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>-->
+
+            <!--  Panel Derecho: Ajustes del Limitador Soft-Limiter y Ejecución  -->
+            <Border
+                Grid.Column="1"
+                Padding="16"
+                Background="#18181B"
+                BorderBrush="#27272A"
+                BorderThickness="1"
+                CornerRadius="8">
+                <Grid RowDefinitions="*, Auto">
+                    <StackPanel Grid.Row="0" Spacing="12">
+                        <TextBlock
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="🚀 Mastering Execution &amp; Safety" />
+
+                        <CheckBox
+                            Content="Strict Linear Mode (Protects Ballad Micro-dynamics)"
+                            Foreground="#E4E4E7"
+                            IsChecked="{Binding IsStrictLinearMode}" />
+
+                        <!--  Casilla para forzar ID3v2.3 en WAV y mantener carátulas  -->
+                        <CheckBox
+                            Content="Preserve Metadata &amp; Injected Cover Art (ID3v2.3)"
+                            Foreground="#E4E4E7"
+                            IsChecked="True" />
+                    </StackPanel>
+
+                    <!--  Botón de Ejecución Principal  -->
+                    <Button
+                        Grid.Row="1"
+                        Padding="12"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Background="#059669"
+                        Command="{Binding StartNormalizationCommand}"
+                        FontWeight="Bold"
+                        Foreground="White">
+                        ▶ Run Batch Normalization
+                    </Button>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!--  Barra de Estado Global  -->
+        <Border
+            Grid.Row="3"
+            Margin="0,14,0,0"
+            Padding="8,4"
+            Background="#18181B"
+            CornerRadius="4">
+            <TextBlock
+                VerticalAlignment="Center"
+                FontFamily="Consolas,Monospace"
+                FontSize="11"
+                Foreground="#34D399"
+                Text="{Binding SystemStatus}" />
+        </Border>
+    </Grid>
+</Window>
