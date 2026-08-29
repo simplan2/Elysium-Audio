@@ -15,7 +15,7 @@ namespace ElysiumAudio.Models
         private string _filePath = string.Empty;
 
         [ObservableProperty]
-        private string _codec = "WAV";
+        private string _codec = "-";
 
         [ObservableProperty]
         private string _duration = "00:00";
@@ -28,5 +28,11 @@ namespace ElysiumAudio.Models
 
         [ObservableProperty]
         private string _loudness = "-0.0 LUFS";
+
+        [ObservableProperty]
+        private string _normalizedLoudness = "-0.0 LUFS";
+
+        [ObservableProperty]
+        private string _normalizedPeak = "0.0 dBFS";
     }
 }

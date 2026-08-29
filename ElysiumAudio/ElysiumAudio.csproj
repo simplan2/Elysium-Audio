@@ -24,8 +24,11 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="NAudio" Version="3.0.1" />
+    <PackageReference Include="NAudio.SoundFile" Version="3.0.1" />
+    <PackageReference Include="org.sndfile.runtime.win-x64" Version="1.2.2" />
     <PackageReference Include="Projektanker.Icons.Avalonia" Version="9.6.2" />
     <PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
+    <PackageReference Include="z440.atl.core" Version="7.16.0" />
   </ItemGroup>
 </Project>

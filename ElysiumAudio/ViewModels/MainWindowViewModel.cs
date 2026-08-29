@@ -8,6 +8,7 @@ using ElysiumAudio.Models;
 using ElysiumAudio.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,15 +18,38 @@ namespace ElysiumAudio.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
+
+        #region Fields
+        private const double DEFAULT_TARGET_LUFS = -14.0;
+        private const double DEFAULT_TRUE_PEAK_CEILING = -1.0;
+
+        private const double RELEASE_TIME_MS = 50; // Tiempo de liberación del limitador en milisegundos (entre 20 y 100 ms es típico)
+        private const double LOOK_AHEAD_TIME_MS = 5; // Tiempo de anticipación del limitador en milisegundos (entre 1 y 10 ms es típico)
+        #endregion
+
+        #region Properties
         private readonly AudioEngineService _audioEngine = new();
 
+        [ObservableProperty]
+        private string? _targetLufsText = DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
+
+        [ObservableProperty]
+        private string? _truePeakCeilingString = DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
+
+        [ObservableProperty]
+        private double _lookAheadMsText = LOOK_AHEAD_TIME_MS;
+
+        [ObservableProperty]
+        private double _releaseMsText = RELEASE_TIME_MS;
+
         // 1. Enlazado al Slider y TextBox numérico de la interfaz
-        [ObservableProperty]     
-        private double _targetLufs = -14.0;
+        [ObservableProperty]
+        public double _targetLufs = DEFAULT_TARGET_LUFS;
 
         // 2. Enlazado al TextBox del techo de pico real
         [ObservableProperty]
-        private string _truePeakCeilingString = "-1.0";
+        public double _truePeakCeiling = DEFAULT_TRUE_PEAK_CEILING;
+     
 
         [ObservableProperty]
         private bool _isStrictLinearMode = true;
@@ -38,11 +62,110 @@ namespace ElysiumAudio.ViewModels
 
         public ObservableCollection<AudioFileModel> AudioFiles { get; } = new();
 
+
+        #endregion
+
+        #region constructors
+
+        public MainWindowViewModel()
+        {
+            TruePeakCeilingString = TruePeakCeiling.ToString("F1", CultureInfo.InvariantCulture);
+        }
+        #endregion
+
+        #region Commands
+        // Comando para añadir archivos a la cola de procesamiento
         [RelayCommand]
         private async Task AddFile()
         {
             await OnAddFile();
-        } 
+        }
+
+        // Comando para iniciar la normalización por lotes
+        [RelayCommand]
+        private async Task OnStartNormalizationAsync()
+        {
+            if (AudioFiles.Count == 0)
+            {
+                SystemStatus = "Advertencia: La cola de archivos está vacía.";
+                return;
+            }
+
+            IsProcessing = true;
+            SystemStatus = "Iniciando procesamiento lineal por lotes con clonación de metadatos...";
+
+            foreach (var file in AudioFiles)
+            {
+                file.Status = "Analyzing...";
+
+                try
+                {
+                    // PASADA 1: Análisis en segundo plano
+                    var analysis = await Task.Run(() => _audioEngine.AnalyzeAudioFile(file.FilePath));
+
+                    file.Peak = analysis.PeakDbFormatted;
+                    file.Loudness = analysis.LoudnessFormatted;
+                    file.Status = "Processing...";
+
+                    // Parseo directo y ultra seguro de la propiedad validada
+                    float maxPeakLimitDb = (float)TruePeakCeiling; // Respaldo por defecto
+                    if (float.TryParse(TruePeakCeilingString, System.Globalization.CultureInfo.InvariantCulture, out float parsedPeak))
+                    {
+                        maxPeakLimitDb = parsedPeak;
+                    }
+
+                    // Continuar con el cálculo de ganancia...
+                    float requiredGainDb = _audioEngine.CalculateTargetGain(analysis.IntegratedLoudness, (float)TargetLufs);
+
+                    string directory = Path.GetDirectoryName(file.FilePath) ?? "";
+                    string filenameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
+                    string ext = Path.GetExtension(file.FilePath);
+                    string outputPath = Path.Combine(directory, $"{filenameWithoutExt}_normalized{ext}");
+
+                    // PASADA 2: Renderizado físico del audio flotante
+                    await Task.Run(() =>
+                    {
+                        _audioEngine.ApplyNormalizationWithLimiter(
+                            file.FilePath,
+                            outputPath,
+                            requiredGainDb,
+                            maxPeakLimitDb,
+                            releaseMs: 25f
+                        );
+                    });
+
+                    // PASO 3 AUTOMATIZADO: Inyección digital de tags e imágenes ID3v2.3 / FLAC
+                    file.Status = "Tagging...";
+                    await Task.Run(() => _audioEngine.CloneMetadataAndCover(file.FilePath, outputPath));
+
+                    var reanalyze = await Task.Run(() => _audioEngine.AnalyzeAudioFile(outputPath));
+                    file.NormalizedLoudness = reanalyze.LoudnessFormatted;
+                    file.NormalizedPeak = reanalyze.PeakDbFormatted;
+
+                    file.Status = "Done 🟢";
+                    SystemStatus = $"Completado con metadatos: {file.FileName}";
+                }
+                catch (Exception ex)
+                {
+                    file.Status = "Error ❌";
+                    SystemStatus = $"Error crítico en {file.FileName}: {ex.Message}";
+                }
+            }
+
+            IsProcessing = false;
+            SystemStatus = "¡Normalización por lote completada! Archivos listos con portadas y tags intactos.";
+        }
+
+        [RelayCommand]
+        private void OnClearList()
+        {
+            AudioFiles.Clear();
+            SystemStatus = "Cola de archivos limpiada.";
+        }
+
+        #endregion
+
+        #region Methods
 
         private async Task OnAddFile()
         {
@@ -94,195 +217,85 @@ namespace ElysiumAudio.ViewModels
             }
         }
 
-        [RelayCommand]
-        private async Task OnStartNormalizationAsync()
-        {
-            if (AudioFiles.Count == 0)
-            {
-                SystemStatus = "Advertencia: La cola de archivos está vacía.";
-                return;
-            }
 
-            IsProcessing = true;
-            SystemStatus = "Iniciando procesamiento lineal por lotes con clonación de metadatos...";
+        // =========================================================================
+        // SINK 1: EVENTOS CUANDO EL USUARIO MUEVE LOS CONTROLES NUMÉRICOS (SLIDERS)
+        // =========================================================================
 
-            foreach (var file in AudioFiles)
-            {
-                file.Status = "Analyzing...";
-
-                try
-                {
-                    // PASADA 1: Análisis en segundo plano
-                    var analysis = await Task.Run(() => _audioEngine.AnalyzeAudioFile(file.FilePath));
-
-                    file.Peak = analysis.PeakDbFormatted;
-                    file.Loudness = analysis.LoudnessFormatted;
-                    file.Status = "Processing...";
-
-                    // Parseo directo y ultra seguro de la propiedad validada
-                    float maxPeakLimitDb = -1.0f; // Respaldo por defecto
-                    if (float.TryParse(TruePeakCeilingString, System.Globalization.CultureInfo.InvariantCulture, out float parsedPeak))
-                    {
-                        maxPeakLimitDb = parsedPeak;
-                    }
-
-                    // Continuar con el cálculo de ganancia...
-                    float requiredGainDb = _audioEngine.CalculateTargetGain(analysis.IntegratedLoudness, (float)TargetLufs);
-
-                    string directory = Path.GetDirectoryName(file.FilePath) ?? "";
-                    string filenameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
-                    string ext = Path.GetExtension(file.FilePath);
-                    string outputPath = Path.Combine(directory, $"{filenameWithoutExt}_normalized{ext}");
-
-                    // PASADA 2: Renderizado físico del audio flotante
-                    await Task.Run(() =>
-                    {
-                        _audioEngine.ApplyNormalizationWithLimiter(
-                            file.FilePath,
-                            outputPath,
-                            requiredGainDb,
-                            maxPeakLimitDb,
-                            releaseMs: 25f
-                        );
-                    });
-
-                    // PASO 3 AUTOMATIZADO: Inyección digital de tags e imágenes ID3v2.3 / FLAC
-                    file.Status = "Tagging...";
-                    await Task.Run(() => _audioEngine.CloneMetadataAndCover(file.FilePath, outputPath));
-
-                    file.Status = "Done 🟢";
-                    SystemStatus = $"Completado con metadatos: {file.FileName}";
-                }
-                catch (Exception ex)
-                {
-                    file.Status = "Error ❌";
-                    SystemStatus = $"Error crítico en {file.FileName}: {ex.Message}";
-                }
-            }
-
-            IsProcessing = false;
-            SystemStatus = "¡Normalización por lote completada! Archivos listos con portadas y tags intactos.";
-        }
-
-        [RelayCommand]
-        private void OnClearList()
-        {
-            AudioFiles.Clear();
-            SystemStatus = "Cola de archivos limpiada.";
-        }
-
-        #region Methods
-
-        // VALIDACIÓN 1: Aseguramos que el valor de TargetLufs no exceda -6.0 LUFS
         partial void OnTargetLufsChanged(double value)
         {
-            // Si intentan escribir o mover el slider más allá de -6.0 LUFS, se congela en -6.0
-            if (value > -6.0)
+            // Aplicamos tus límites físicos (Clamping)
+            double clamped = Math.Clamp(value, -24.0, -6.0);
+            clamped = Math.Round(clamped, 1);
+
+            if (Math.Abs(_targetLufs - clamped) > 0.01)
             {
-                TargetLufs = -6.0;
+                _targetLufs = clamped;
             }
-            // Opcional: Límite inferior de seguridad si es necesario
-            else if (value < -24.0)
+
+            // Sincronizamos la caja de texto de forma reactiva
+            string nuevoTexto = _targetLufs.ToString("F1", CultureInfo.InvariantCulture);
+            if (TargetLufsText != nuevoTexto)
             {
-                TargetLufs = -24.0;
+                TargetLufsText = nuevoTexto;
             }
         }
 
-        // VALIDACIÓN 2: Acotar el Techo de Pico Real (dBTP)
-        partial void OnTruePeakCeilingStringChanged(string value)
+        partial void OnTruePeakCeilingChanged(double value)
         {
-            // Evitamos bucles infinitos si la caja se queda vacía momentáneamente mientras el usuario borra
-            if (string.IsNullOrWhiteSpace(value) || value == "-" || value == "-0") return;
+            // Aplicamos tus límites físicos personalizados (-3.0 a -0.1)
+            double clamped = Math.Clamp(value, -3.0, -0.1);
+            clamped = Math.Round(clamped, 1);
 
-            if (float.TryParse(value, System.Globalization.CultureInfo.InvariantCulture, out float parsedPeak))
+            if (Math.Abs(_truePeakCeiling - clamped) > 0.01)
             {
-                // Regla: Si ponen 0 o valores positivos, se restablece al límite seguro comercial de -0.1
-                if (parsedPeak >= 0f)
+                _truePeakCeiling = clamped;
+            }
+
+            // Sincronizamos la caja de texto de forma reactiva
+            string nuevoTexto = _truePeakCeiling.ToString("F1", CultureInfo.InvariantCulture);
+            if (TruePeakCeilingString != nuevoTexto)
+            {
+                TruePeakCeilingString = nuevoTexto;
+            }
+        }
+
+        // =========================================================================
+        // SINK 2: EVENTOS CUANDO EL USUARIO ESCRIBE MANUALMENTE EN LOS TEXTBOX
+        // =========================================================================
+
+        partial void OnTargetLufsTextChanged(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
+
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            {
+                // Si el usuario escribe algo fuera de rango, tu lógica lo contiene
+                double clamped = Math.Clamp(parsed, -24.0, -6.0);
+
+                if (Math.Abs(TargetLufs - clamped) > 0.01)
                 {
-                    TruePeakCeilingString = "-0.1";
-                    SystemStatus = "Ajuste de seguridad: El techo True Peak no puede ser mayor o igual a 0 dBTP.";
-                }
-                // Regla: Si ponen menos de -12.0 dB, lo acotamos a -12.0 para evitar que la pista quede inaudible
-                else if (parsedPeak < -12.0f)
-                {
-                    TruePeakCeilingString = "-12.0";
-                    SystemStatus = "Ajuste de seguridad: El techo mínimo recomendado es -12.0 dBTP.";
+                    TargetLufs = clamped; // Esto disparará a su vez OnTargetLufsChanged para formatear el texto
                 }
             }
         }
 
+        partial void OnTruePeakCeilingStringChanged(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
 
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            {
+                double clamped = Math.Clamp(parsed, -3.0, -0.1);
+
+                if (Math.Abs(TruePeakCeiling - clamped) > 0.01)
+                {
+                    TruePeakCeiling = clamped; // Esto disparará OnTruePeakCeilingChanged para formatear el texto
+                }
+            }
+        }
         #endregion
 
 
-
-        //private async Task OnStartNormalizationAsync()
-        //{
-        //    if (AudioFiles.Count == 0)
-        //    {
-        //        SystemStatus = "Advertencia: La cola de archivos está vacía.";
-        //        return;
-        //    }
-
-        //    IsProcessing = true;
-        //    SystemStatus = "Iniciando procesamiento lineal por lotes...";
-
-        //    foreach (var file in AudioFiles)
-        //    {
-        //        file.Status = "Analyzing...";
-
-        //        try
-        //        {
-        //            // PASADA 1: Análisis en segundo plano (Usa Spans nativos)
-        //            var analysis = await Task.Run(() => _audioEngine.AnalyzeAudioFile(file.FilePath));
-
-        //            // Refrescamos la UI con las mediciones reales del archivo maestro
-        //            file.Peak = analysis.PeakDbFormatted;
-        //            file.Loudness = analysis.LoudnessFormatted;
-
-        //            file.Status = "Processing...";
-
-        //            // PARSEO BIDIRECCIONAL: Limpiamos la cadena de texto del control True Peak
-        //            float maxPeakLimitDb = -1.0f; // Valor de respaldo seguro
-        //            string cleanPeak = TruePeakCeiling.Replace(" dBTP", "").Replace("dBTP", "").Trim();
-        //            if (float.TryParse(cleanPeak, System.Globalization.CultureInfo.InvariantCulture, out float parsedPeak))
-        //            {
-        //                maxPeakLimitDb = parsedPeak;
-        //            }
-
-        //            // Cálculo de ganancia estática pura (Resta matemática directa sin parches adivinados)
-        //            float requiredGainDb = _audioEngine.CalculateTargetGain(analysis.IntegratedLoudness, (float)TargetLufs);
-
-        //            // Aislamos el archivo en la subcarpeta final para tu biblioteca personal
-        //            string directory = Path.GetDirectoryName(file.FilePath) ?? "";
-        //            string filenameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
-        //            string ext = Path.GetExtension(file.FilePath);
-        //            string outputPath = Path.Combine(directory, $"{filenameWithoutExt}_normalized{ext}");
-
-        //            // PASADA 2: Renderizado físico del archivo aplicando el Soft-Limiter transparente
-        //            await Task.Run(() =>
-        //            {
-        //                _audioEngine.ApplyNormalizationWithLimiter(
-        //                    file.FilePath,
-        //                    outputPath,
-        //                    requiredGainDb,
-        //                    maxPeakLimitDb,
-        //                    releaseMs: 25f // Constante de liberación ultra veloz para salvaguardar las baladas
-        //                );
-        //            });
-
-        //            file.Status = "Done 🟢";
-        //            SystemStatus = $"Procesado con éxito: {file.FileName}";
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            file.Status = "Error ❌";
-        //            SystemStatus = $"Error crítico en {file.FileName}: {ex.Message}";
-        //        }
-        //    }
-
-        //    IsProcessing = false;
-        //    SystemStatus = "¡Normalización por lote completada! Dinámica y microdinámica protegidas.";
-        //}
     }
 }

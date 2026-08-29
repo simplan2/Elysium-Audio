@@ -1,9 +1,14 @@
-﻿using NAudio.Wave;
+﻿using ATL;
+using NAudio.SoundFile;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
+
 
 namespace ElysiumAudio.Services
 {
@@ -19,65 +24,301 @@ namespace ElysiumAudio.Services
 
     public class AudioEngineService
     {
-        /// <summary>
-        /// Aplica una ganancia lineal estática a un archivo WAV basada en los decibelios de ajuste calculados.
-        /// Esto evita compresiones dinámicas y protege la microdinámica de las baladas.
-        /// </summary>
-        /// <param name="inputPath">Ruta del archivo original (copia)</param>
-        /// <param name="outputPath">Ruta de salida del archivo normalizado</param>
-        /// <param name="gainDb">Ganancia en decibelios a aplicar (ej. +3.5 o -2.1)</param>
+
+        // INTEROP NATIVO: Invoca la API de Windows que traduce rutas largas con tildes/eñes
+        // a rutas cortas en formato MS-DOS 8.3 (ej: "D:\Música\Canción.wav" -> "D:\MSICA~1\CANCN~1.WAV")
+        // Este formato ASCII puro es 100% digerible por los motores C++ de libsndfile y ATL
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern uint GetShortPathName(string lpszLongPath, StringBuilder lpszShortPath, uint cchBuffer);
+
+        private string GetSafePathForNativeLibraries(string longPath)
+        {
+            if (string.IsNullOrWhiteSpace(longPath)) return longPath;
+
+            // Si es una ruta de salida y el archivo aún no existe, creamos un cascarón vacío temporal
+            // para que la API de Windows pueda resolver el mapa de caracteres del disco duro
+            string directory = Path.GetDirectoryName(longPath) ?? "";
+            if (!File.Exists(longPath) && Directory.Exists(directory))
+            {
+                File.WriteAllBytes(longPath, Array.Empty<byte>());
+            }
+
+            StringBuilder shortPath = new StringBuilder(255);
+            uint result = GetShortPathName(longPath, shortPath, (uint)shortPath.Capacity);
+
+            return result > 0 ? shortPath.ToString() : longPath;
+        }
 
 
+        // Estructura para recalcular coeficientes dinámicos según el Sample Rate real del archivo
+        private class KWeightingFilter
+        {
+            private double b0_hp, b1_hp, b2_hp, a1_hp, a2_hp;
+            private double b0_sh, b1_sh, b2_sh, a1_sh, a2_sh;
+            private double[,] w_hp;
+            private double[,] w_sh;
+
+            public KWeightingFilter(int sampleRate, int channels)
+            {
+                w_hp = new double[channels, 2];
+                w_sh = new double[channels, 2];
+
+                double dbGain = 4.0;
+                double f0 = 1500.0;
+                double Q = 1.0 / Math.Sqrt(2.0);
+                double v0 = Math.Pow(10, dbGain / 20.0);
+                double k = Math.Tan(Math.PI * f0 / sampleRate);
+
+                double norm = 1.0 + (1.0 / Q) * k + k * k;
+                b0_sh = (v0 + (Math.Sqrt(v0) / Q) * k + k * k) / norm;
+                b1_sh = 2.0 * (k * k - v0) / norm;
+                b2_sh = (v0 - (Math.Sqrt(v0) / Q) * k + k * k) / norm;
+                a1_sh = 2.0 * (k * k - 1.0) / norm;
+                a2_sh = (1.0 - (1.0 / Q) * k + k * k) / norm;
+
+                double f0_hp = 38.0;
+                double Q_hp = 0.5;
+                double k_hp = Math.Tan(Math.PI * f0_hp / sampleRate);
+
+                double norm_hp = 1.0 + (1.0 / Q_hp) * k_hp + k_hp * k_hp;
+                b0_hp = 1.0 / norm_hp;
+                b1_hp = -2.0 / norm_hp;
+                b2_hp = 1.0 / norm_hp;
+                a1_hp = 2.0 * (k_hp * k_hp - 1.0) / norm_hp;
+                a2_hp = (1.0 - (1.0 / Q_hp) * k_hp + k_hp * k_hp) / norm_hp;
+            }
+
+            public float ProcessSample(float sample, int channel)
+            {
+                double x = sample;
+                double y_hp = b0_hp * x + b1_hp * w_hp[channel, 0] + b2_hp * w_hp[channel, 1] - a1_hp * w_hp[channel, 0] - a2_hp * w_hp[channel, 1];
+                w_hp[channel, 1] = w_hp[channel, 0]; w_hp[channel, 0] = x;
+
+                double y_sh = b0_sh * y_hp + b1_sh * w_sh[channel, 0] + b2_sh * w_sh[channel, 1] - a1_sh * w_sh[channel, 0] - a2_sh * w_sh[channel, 1];
+                w_sh[channel, 1] = w_sh[channel, 0]; w_sh[channel, 0] = y_hp;
+
+                return (float)y_sh;
+            }
+        }
 
 
-        // PASADA 1: Análisis lineal corregido utilizando la sintaxis moderna de Span<float>
+        // PASADA 1: Análisis lineal K-Weighting con cálculo de sonoridad integrada LUFS y pico máximo
         public AudioInfo AnalyzeAudioFile(string filePath)
         {
-            var info = new AudioInfo();
-            if (!File.Exists(filePath)) return info;
-
-            using (var reader = new AudioFileReader(filePath))
+            try
             {
-                TimeSpan duration = reader.TotalTime;
-                info.DurationFormatted = duration.ToString(duration.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
+                var info = new AudioInfo();
+                if (!System.IO.File.Exists(filePath)) return info;
 
-                float maxSample = 0f;
-                double sumSquares = 0.0;
-                long totalSamples = 0;
-
-                var sampleProvider = reader.ToSampleProvider();
-                float[] floatBuffer = new float[reader.WaveFormat.SampleRate * reader.WaveFormat.Channels];
-                int samplesRead;
-
-                // SOLUCIÓN: Usamos .AsSpan() para cumplir con la firma moderna de NAudio 3
-                while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
+                // Abrimos el archivo mediante un FileStream binario nativo de .NET (Blindado contra tildes/eñes)
+                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    for (int i = 0; i < samplesRead; i++)
+                    // Pasamos el Stream seguro al decodificador unificado de NAudio.SoundFile
+                    using (var reader = new SoundFileReader(fileStream))
                     {
-                        float sample = floatBuffer[i];
-                        float absValue = Math.Abs(sample);
-                        if (absValue > maxSample) maxSample = absValue;
+                        var waveFormat = reader.WaveFormat;
+                        info.DurationFormatted = reader.TotalTime.ToString(reader.TotalTime.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
 
-                        sumSquares += (sample * sample);
-                        totalSamples++;
+                        var sampleProvider = reader.ToSampleProvider();
+                        var filter = new KWeightingFilter(waveFormat.SampleRate, waveFormat.Channels);
+
+                        int blockSizeSamples = (int)(0.4 * waveFormat.SampleRate) * waveFormat.Channels;
+
+                        // CORRECCIÓN: Unificamos el nombre a floatBuffer para que compile correctamente
+                        float[] floatBuffer = new float[waveFormat.SampleRate * waveFormat.Channels];
+
+                        float maxSample = 0f;
+                        double totalGatedEnergy = 0.0;
+                        long totalGatedSamples = 0;
+
+                        double currentBlockEnergy = 0.0;
+                        int currentBlockSampleCount = 0;
+                        int samplesRead;
+
+                        // El bucle ahora lee correctamente usando la variable unificada
+                        while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
+                        {
+                            for (int i = 0; i < samplesRead; i++)
+                            {
+                                float rawSample = floatBuffer[i];
+                                float absSample = Math.Abs(rawSample);
+
+                                if (absSample > maxSample) maxSample = absSample;
+
+                                int channel = i % waveFormat.Channels;
+                                float filteredSample = filter.ProcessSample(rawSample, channel);
+
+                                currentBlockEnergy += (filteredSample * filteredSample);
+                                currentBlockSampleCount++;
+
+                                if (currentBlockSampleCount >= blockSizeSamples)
+                                {
+                                    double rms = Math.Sqrt(currentBlockEnergy / currentBlockSampleCount);
+                                    float blockLufs = rms > 0.0 ? (20f * (float)Math.Log10(rms) + 3.01f) : -70f;
+
+                                    if (blockLufs > -70f)
+                                    {
+                                        totalGatedEnergy += currentBlockEnergy;
+                                        totalGatedSamples += currentBlockSampleCount;
+                                    }
+
+                                    currentBlockEnergy = 0.0;
+                                    currentBlockSampleCount = 0;
+                                }
+                            }
+                        }
+
+                        if (currentBlockSampleCount > 0)
+                        {
+                            double rms = Math.Sqrt(currentBlockEnergy / currentBlockSampleCount);
+                            float blockLufs = rms > 0.0 ? (20f * (float)Math.Log10(rms) + 3.01f) : -70f;
+                            if (blockLufs > -70f)
+                            {
+                                totalGatedEnergy += currentBlockEnergy;
+                                totalGatedSamples += currentBlockSampleCount;
+                            }
+                        }
+
+                        info.MaxPeakLinear = maxSample;
+                        info.PeakDbFormatted = maxSample > 0f ? $"{(20f * Math.Log10(maxSample)):F2} dBFS" : "-oo dBFS";
+
+                        if (totalGatedSamples > 0 && totalGatedEnergy > 0)
+                        {
+                            double rmsIntegrated = Math.Sqrt(totalGatedEnergy / totalGatedSamples);
+                            float finalLufs = 20f * (float)Math.Log10(rmsIntegrated) + 3.01f;
+
+                            info.IntegratedLoudness = finalLufs;
+                            info.LoudnessFormatted = $"{finalLufs:F1} LUFS";
+                        }
+                        else
+                        {
+                            info.IntegratedLoudness = -70f;
+                            info.LoudnessFormatted = "-70.0 LUFS";
+                        }
                     }
                 }
+                return info;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error analítico del motor: {ex.Message}");
+                throw;
+            }
+        }
 
-                info.MaxPeakLinear = maxSample;
-                info.PeakDbFormatted = maxSample > 0f ? $"{(20f * Math.Log10(maxSample)):F2} dBFS" : "-oo dBFS";
+        // PASADA 2: Renderizado físico del limitador Soft-Limiter utilizando firmas válidas de 1 solo argumento string
+        public void ApplyNormalizationWithLimiter(string inputPath, string outputPath, float gainDb, float maxPeakLimitDb, float releaseMs = 40f, float lookAheadMs = 5f)
+        {
+            float linearGain = (float)Math.Pow(10, gainDb / 20.0);
+            float ceilingLinear = (float)Math.Pow(10, maxPeakLimitDb / 20.0);
 
-                if (totalSamples > 0 && sumSquares > 0)
+            string safeInputPath = GetSafePathForNativeLibraries(inputPath);
+            string safeOutputPath = GetSafePathForNativeLibraries(outputPath);
+
+            using (var reader = new SoundFileReader(safeInputPath))
+            {
+                var waveFormat = reader.WaveFormat;
+                var sampleProvider = reader.ToSampleProvider();
+
+                // 1. Estructura del Búfer Circular Fijo (Reemplaza la cola lenta)
+                int lookAheadSize = (int)((lookAheadMs / 1000.0) * waveFormat.SampleRate) * waveFormat.Channels;
+                if (lookAheadSize < 1) lookAheadSize = 1;
+
+                float[] delayBuffer = new float[lookAheadSize];
+                int writeIndex = 0;
+                int readIndex = 0;
+                int count = 0;
+
+                // Variables para rastrear el pico de forma instantánea sin bucles foreach
+                float currentMaxInQueue = 0f;
+
+                float releaseFactor = (float)Math.Exp(-1.0 / (waveFormat.SampleRate * (releaseMs / 1000.0)));
+                float currentGain = 1.0f;
+
+                using (var writer = new SoundFileWriter(safeOutputPath, waveFormat,
+                    Path.GetExtension(outputPath).ToLower() == ".flac" ? SoundFileMajorFormat.Flac : SoundFileMajorFormat.Wav))
                 {
-                    double rms = Math.Sqrt(sumSquares / totalSamples);
-                    if (rms > 0.0)
+                    float[] floatBuffer = new float[waveFormat.SampleRate * waveFormat.Channels];
+                    int samplesRead;
+
+                    while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
                     {
-                        float lufs = 20f * (float)Math.Log10(rms) + 3.01f;
-                        info.IntegratedLoudness = lufs;
-                        info.LoudnessFormatted = $"{lufs:F1} LUFS";
+                        for (int i = 0; i < samplesRead; i++)
+                        {
+                            float gainAppliedSample = floatBuffer[i] * linearGain;
+                            float absInput = Math.Abs(gainAppliedSample);
+
+                            float delayedSample = 0f;
+
+                            // 2. Gestión del Búfer Circular Indexado
+                            if (count >= lookAheadSize)
+                            {
+                                // Extraemos la muestra retrasada 5ms de forma instantánea
+                                delayedSample = delayBuffer[readIndex];
+                                float absLeaving = Math.Abs(delayedSample);
+
+                                readIndex = (readIndex + 1) % lookAheadSize;
+                                count--;
+
+                                // Si la muestra que sale era el pico máximo, recalculamos el nuevo pico una sola vez
+                                if (absLeaving >= currentMaxInQueue)
+                                {
+                                    currentMaxInQueue = 0f;
+                                    for (int j = 0; j < lookAheadSize; j++)
+                                    {
+                                        float absVal = Math.Abs(delayBuffer[j]);
+                                        if (absVal > currentMaxInQueue) currentMaxInQueue = absVal;
+                                    }
+                                }
+                            }
+
+                            // Insertar la muestra nueva en el búfer circular
+                            delayBuffer[writeIndex] = gainAppliedSample;
+                            writeIndex = (writeIndex + 1) % lookAheadSize;
+                            count++;
+
+                            // Evaluar de inmediato si la muestra entrante es el nuevo pico máximo del futuro
+                            if (absInput > currentMaxInQueue)
+                            {
+                                currentMaxInQueue = absInput;
+                            }
+
+                            // 3. Cálculo de la Atenuación Predictiva Instantánea
+                            float targetGain = 1.0f;
+                            if (currentMaxInQueue > ceilingLinear)
+                            {
+                                targetGain = ceilingLinear / currentMaxInQueue;
+                            }
+
+                            // Aplicar envolvente del limitador (Ataque predictivo / Liberación suave)
+                            if (targetGain < currentGain)
+                            {
+                                currentGain = targetGain;
+                            }
+                            else
+                            {
+                                currentGain = releaseFactor * currentGain + (1.0f - releaseFactor) * targetGain;
+                            }
+
+                            // Mapear la muestra procesada al búfer de salida
+                            floatBuffer[i] = delayedSample * currentGain;
+                        }
+
+                        writer.WriteSamples(floatBuffer.AsSpan(0, samplesRead));
+                    }
+
+                    // 4. Vaciado Rápido del Búfer Circular al terminar la canción
+                    while (count > 0)
+                    {
+                        float delayedSample = delayBuffer[readIndex];
+                        readIndex = (readIndex + 1) % lookAheadSize;
+                        count--;
+
+                        float[] flushBuffer = new float[] { delayedSample * currentGain };
+                        writer.WriteSamples(flushBuffer.AsSpan());
                     }
                 }
             }
-            return info;
         }
 
         public float CalculateTargetGain(float currentLoudness, float targetLufs)
@@ -87,306 +328,64 @@ namespace ElysiumAudio.Services
             return gainNeeded;
         }
 
-        // PASADA 2: Aplicación de ganancia y Soft-Limiter corregido con Span<float>
-        public void ApplyNormalizationWithLimiter(string inputPath, string outputPath, float gainDb, float maxPeakLimitDb, float releaseMs = 25f)
-        {
-            float linearGain = (float)Math.Pow(10, gainDb / 20.0);
-            float ceilingLinear = (float)Math.Pow(10, maxPeakLimitDb / 20.0);
-
-            using (var reader = new AudioFileReader(inputPath))
-            {
-                var waveFormat = reader.WaveFormat;
-                var sampleProvider = reader.ToSampleProvider();
-
-                float releaseFactor = (float)Math.Exp(-1.0 / (waveFormat.SampleRate * (releaseMs / 1000.0)));
-                float currentGain = 1.0f;
-
-                using (var writer = new WaveFileWriter(outputPath, waveFormat))
-                {
-                    float[] floatBuffer = new float[waveFormat.SampleRate * waveFormat.Channels];
-                    int samplesRead;
-
-                    // SOLUCIÓN: Migración a Span<float> nativo
-                    while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
-                    {
-                        for (int i = 0; i < samplesRead; i++)
-                        {
-                            // 1. Aplicamos la ganancia lineal estática
-                            float sample = floatBuffer[i] * linearGain;
-                            float absSample = Math.Abs(sample);
-
-                            // 2. Limitador Soft-Limiter dinámico transparente (Estilo Adobe Audition)
-                            float targetGain = 1.0f;
-                            if (absSample > ceilingLinear)
-                            {
-                                targetGain = ceilingLinear / absSample;
-                            }
-
-                            if (targetGain < currentGain) currentGain = targetGain;
-                            else currentGain = releaseFactor * currentGain + (1.0f - releaseFactor) * targetGain;
-
-                            floatBuffer[i] = sample * currentGain;
-                        }
-
-                        // Escribimos las muestras procesadas directamente al archivo final
-                        writer.WriteSamples(floatBuffer, 0, samplesRead);
-                    }
-                }
-            }
-        }
-
-
+        // PASO 3: Clonación profunda automatizada mediante rutas cortas seguras de ATL
         public void CloneMetadataAndCover(string inputPath, string outputPath)
         {
             if (!File.Exists(inputPath) || !File.Exists(outputPath)) return;
 
             try
             {
-                // 1. Leer tags del archivo maestro original
-                using var originalFile = TagLib.File.Create(inputPath);
+                // Traducimos las rutas largas a cadenas de formato corto seguro 8.3
+                string safeInputPath = GetSafePathForNativeLibraries(inputPath);
+                string safeOutputPath = GetSafePathForNativeLibraries(outputPath);
 
-                // Almacenar la carátula en un arreglo de bytes en memoria si existe
-                byte[] coverArtBytes = null!;
-                string mimeType = "image/jpeg";
-                if (originalFile.Tag.Pictures.Length > 0)
+                // Abrir archivo fuente de manera segura
+                Track source = new Track(safeInputPath);
+
+                // Abrir archivo destino de manera segura
+                Track target = new Track(safeOutputPath);
+
+                // Copiar campos estándar
+                target.Title = source.Title;
+                target.Artist = source.Artist;
+                target.Album = source.Album;
+                target.Year = source.Year;
+                target.Genre = source.Genre;
+                target.Comment = source.Comment;
+                target.TrackNumber = source.TrackNumber;
+                target.DiscNumber = source.DiscNumber;
+                target.Composer = source.Composer;
+                target.Conductor = source.Conductor;
+                target.OriginalArtist = source.OriginalArtist;
+                target.OriginalAlbum = source.OriginalAlbum;
+                target.Publisher = source.Publisher;
+                target.Copyright = source.Copyright;
+                target.Lyrics = source.Lyrics;
+
+                // Copiar carátulas forzando el tipo Front
+                target.EmbeddedPictures.Clear();
+                foreach (var pic in source.EmbeddedPictures)
                 {
-                    coverArtBytes = originalFile.Tag.Pictures[0].Data.Data;
-                    mimeType = originalFile.Tag.Pictures[0].MimeType;
+                    pic.PicType = PictureInfo.PIC_TYPE.Front; // Sincronización de tu enum correcto
+                    target.EmbeddedPictures.Add(pic);
                 }
 
-                // 2. Abrir el archivo recién normalizado para inyectar los datos
-                using var targetFile = TagLib.File.Create(outputPath);
-
-                // Copiar metadatos estándar de texto
-                targetFile.Tag.Title = originalFile.Tag.Title;
-                targetFile.Tag.Album = originalFile.Tag.Album;
-                targetFile.Tag.Performers = originalFile.Tag.Performers;
-                targetFile.Tag.Year = originalFile.Tag.Year;
-                targetFile.Tag.Track = originalFile.Tag.Track;
-                targetFile.Tag.Genres = originalFile.Tag.Genres;
-                targetFile.Tag.AlbumArtists = originalFile.Tag.AlbumArtists;
-                targetFile.Tag.Comment = originalFile.Tag.Comment;
-                targetFile.Tag.Composers = originalFile.Tag.Composers;
-                targetFile.Tag.Copyright = originalFile.Tag.Copyright;
-                targetFile.Tag.Lyrics = originalFile.Tag.Lyrics;
-                targetFile.Tag.DiscCount = originalFile.Tag.DiscCount;
-                targetFile.Tag.Disc = originalFile.Tag.Disc;
-
-                // 3. Si el archivo de salida es WAV, forzamos la estructura ID3v2.3
-                string extension = Path.GetExtension(outputPath).ToLower();
-
-                // 4. Re-inyectar la carátula de forma nativa sin corromper el audio
-                if (coverArtBytes != null)
+                // Copiar cualquier campo personalizado extendido (ISRC, etc.)
+                target.AdditionalFields.Clear();
+                foreach (var kv in source.AdditionalFields)
                 {
-                    var picture = new TagLib.Id3v2.AttachmentFrame
-                    {
-                        Type = TagLib.PictureType.FrontCover,
-                        Description = "Front Cover",
-                        MimeType = mimeType,
-                        Data = coverArtBytes
-                    };
-                    targetFile.Tag.Pictures = new TagLib.IPicture[] { picture };
+                    target.AdditionalFields[kv.Key] = kv.Value;
                 }
 
-                targetFile.Save();
+                // Guardar cambios recalculando cabeceras de forma nativa
+                target.Save();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Si un tag falla por estructura interna del archivo original, permitimos que continúe el flujo
+                System.Diagnostics.Debug.WriteLine($"Error crítico en el módulo de metadatos ATL: {ex.Message}");
                 throw;
             }
         }
-
-
-
-
-
-
-
-
-
-
-        // Método ampliado para leer metadatos, pico Y sonoridad integrada estimada
-        public AudioInfo AnalyzeWavFile(string filePath)
-        {
-            var info = new AudioInfo();
-
-            using (var reader = new WaveFileReader(filePath))
-            {
-                TimeSpan duration = reader.TotalTime;
-                info.DurationFormatted = duration.ToString(duration.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
-
-                float maxSample = 0f;
-                double sumSquares = 0.0;
-                long totalSamples = 0;
-
-                byte[] buffer = new byte[reader.WaveFormat.AverageBytesPerSecond];
-                int bytesRead;
-
-                while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-                {
-                    if (reader.WaveFormat.Encoding == WaveFormatEncoding.IeeeFloat && reader.WaveFormat.BitsPerSample == 32)
-                    {
-                        int samplesRead = bytesRead / 4;
-                        float[] floatBuffer = new float[samplesRead];
-                        Buffer.BlockCopy(buffer, 0, floatBuffer, 0, bytesRead);
-
-                        for (int i = 0; i < samplesRead; i++)
-                        {
-                            float sample = floatBuffer[i];
-                            float absValue = Math.Abs(sample);
-                            if (absValue > maxSample) maxSample = absValue;
-
-                            sumSquares += (sample * sample);
-                            totalSamples++;
-                        }
-                    }
-                    else if (reader.WaveFormat.Encoding == WaveFormatEncoding.Pcm && reader.WaveFormat.BitsPerSample == 16)
-                    {
-                        int samplesRead = bytesRead / 2;
-                        short[] shortBuffer = new short[samplesRead];
-                        Buffer.BlockCopy(buffer, 0, shortBuffer, 0, bytesRead);
-
-                        for (int i = 0; i < samplesRead; i++)
-                        {
-                            float sample = shortBuffer[i] / 32768f;
-                            float absValue = Math.Abs(sample);
-                            if (absValue > maxSample) maxSample = absValue;
-
-                            sumSquares += (sample * sample);
-                            totalSamples++;
-                        }
-                    }
-                }
-
-                info.MaxPeakLinear = maxSample;
-
-                // 1. Formatear Pico en dBFS
-                if (maxSample > 0f)
-                {
-                    float db = 20f * (float)Math.Log10(maxSample);
-                    info.PeakDbFormatted = $"{db:F2} dBFS";
-                }
-                else
-                {
-                    info.PeakDbFormatted = "-oo dBFS";
-                }
-
-                // 2. Cálculo aproximado de Sonoridad Integrada (RMS perceptual / LUFS base)             
-                if (totalSamples > 0 && sumSquares > 0)
-                {
-                    double rms = Math.Sqrt(sumSquares / totalSamples);
-
-                    if (rms > 0.0)
-                    {
-                        // Corrección de calibración perceptual estándar para aproximar LUFS reales sin K-weighting pesado
-                        // El offset estándar de la industria para señales de música masterizada suele calibrarse a -0.69 / -3.01 dB de headroom perceptual
-                        float lufs = 20f * (float)Math.Log10(rms) + 3.01f; // Ajustamos el factor base a escala de potencia completa
-
-                        // Si el valor calculado excede el pico físico o da valores atípicos, lo acotamos limpiamente
-                        info.IntegratedLoudness = lufs;
-                        info.LoudnessFormatted = $"{lufs:F1} LUFS";
-                    }
-                    else
-                    {
-                        info.LoudnessFormatted = "-70.0 LUFS";
-                    }
-                }
-            }
-
-            return info;
-        }
-
-        // Método inteligente de ganancia basado en el objetivo LUFS, protegiendo el Peak máximo
-        public float CalculateTargetGain(float currentLoudness, float currentPeakLinear, float targetLufs = -14.0f, float maxPeakLimitDb = -1.5f)
-        {
-            float gainNeeded = targetLufs - currentLoudness;
-
-            // Ajuste final definitivo para volúmenes exigentes (>= -12 LUFS)
-            if (targetLufs >= -12.0f)
-            {
-                // Ajustamos de -0.8f a -0.6f para recuperar exactamente 0.2 dB y clavar el -10.0 LUFS
-                gainNeeded -= 0.6f;
-            }
-
-            if (Math.Abs(gainNeeded) < 0.1f)
-            {
-                return 0f;
-            }
-
-            return gainNeeded;
-        }
-
-        public void ApplyNormalizationWithLimiter(string inputPath, string outputPath, float gainDb, float maxPeakLimitDb = -1.5f)
-        {
-            float linearGain = (float)Math.Pow(10, gainDb / 20.0);
-            float maxLinearLimit = (float)Math.Pow(10, maxPeakLimitDb / 20.0);
-
-            using (var reader = new AudioFileReader(inputPath))
-            {
-                var waveFormat = reader.WaveFormat;
-
-                using (var writer = new WaveFileWriter(outputPath, waveFormat))
-                {
-                    byte[] buffer = new byte[waveFormat.AverageBytesPerSecond];
-                    int bytesRead;
-
-                    while ((bytesRead = reader.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        int samplesRead = bytesRead / (waveFormat.BitsPerSample / 8);
-                        float[] floatBuffer = new float[samplesRead];
-
-                        for (int i = 0; i < samplesRead; i++)
-                        {
-                            float sample = 0f;
-                            if (waveFormat.BitsPerSample == 32)
-                            {
-                                sample = BitConverter.ToSingle(buffer, i * 4);
-                            }
-                            else if (waveFormat.BitsPerSample == 16)
-                            {
-                                short pcmSample = BitConverter.ToInt16(buffer, i * 2);
-                                sample = pcmSample / 32768f;
-                            }
-
-                            // 1. Aplicamos la ganancia de normalización global
-                            sample *= linearGain;
-
-                            // 2. LIMITADOR BRICKWALL REAL (Techo plano profesional)
-                            // Si la muestra excede el límite de pico máximo, la recortamos estrictamente al umbral
-                            // sin deformar la pendiente interna (evita el gráfico deforme).
-                            if (sample > maxLinearLimit)
-                            {
-                                sample = maxLinearLimit;
-                            }
-                            else if (sample < -maxLinearLimit)
-                            {
-                                sample = -maxLinearLimit;
-                            }
-
-                            floatBuffer[i] = sample;
-                        }
-
-                        // 3. Escritura de salida
-                        if (waveFormat.Encoding == WaveFormatEncoding.IeeeFloat)
-                        {
-                            writer.WriteSamples(floatBuffer, 0, samplesRead);
-                        }
-                        else
-                        {
-                            byte[] byteBuffer = new byte[samplesRead * 2];
-                            for (int i = 0; i < samplesRead; i++)
-                            {
-                                float s = Math.Clamp(floatBuffer[i], -1.0f, 1.0f);
-                                short pcmSample = (short)(s * 32767);
-                                byteBuffer[i * 2] = (byte)(pcmSample & 0xFF);
-                                byteBuffer[i * 2 + 1] = (byte)((pcmSample >> 8) & 0xFF);
-                            }
-                            writer.Write(byteBuffer, 0, byteBuffer.Length);
-                        }
-                    }
-                }
-            }
-        }
     }
+
 }

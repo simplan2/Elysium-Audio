@@ -3,6 +3,7 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Avalonia.Controls"
+    xmlns:conv="using:ElysiumAudio.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:netDataGrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
@@ -23,6 +24,9 @@
         -->
         <vm:MainWindowViewModel />
     </Design.DataContext>
+    <Window.Resources>
+        <conv:LufsRangeConverter x:Key="LufsRangeConverter" />
+    </Window.Resources>
 
     <Grid Margin="16" RowDefinitions="Auto, *, Auto, Auto">
 
@@ -85,6 +89,8 @@
                 AutoGenerateColumns="False"
                 Background="Transparent"
                 BorderThickness="0"
+                CanUserReorderColumns="True"
+                CanUserResizeColumns="True"
                 GridLinesVisibility="Horizontal"
                 IsReadOnly="True"
                 ItemsSource="{Binding AudioFiles}">
@@ -102,17 +108,29 @@
                         Binding="{Binding Codec}"
                         Header="Codec" />
                     <DataGridTextColumn
-                        Width="90"
+                        Width="98"
                         Binding="{Binding Duration}"
                         Header="Duration" />
+
+                    <!--  Valores del archivo original  -->
                     <DataGridTextColumn
-                        Width="100"
+                        Width="120"
                         Binding="{Binding Loudness}"
-                        Header="Current LUFS" />
+                        Header="Original LUFS" />
                     <DataGridTextColumn
-                        Width="*"
+                        Width="120"
                         Binding="{Binding Peak}"
-                        Header="Peak Level" />
+                        Header="Original Peak" />
+
+                    <!--  Valores del archivo normalizado  -->
+                    <DataGridTextColumn
+                        Width="120"
+                        Binding="{Binding NormalizedLoudness}"
+                        Header="Normalized LUFS" />
+                    <DataGridTextColumn
+                        Width="120"
+                        Binding="{Binding NormalizedPeak}"
+                        Header="Normalized Peak" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -131,7 +149,8 @@
                 Background="#18181B"
                 BorderBrush="#27272A"
                 BorderThickness="1"
-                CornerRadius="10">
+                CornerRadius="10"
+                Focusable="True">
 
                 <StackPanel Spacing="20">
                     <!--  Encabezado  -->
@@ -140,45 +159,65 @@
                         FontSize="16"
                         FontWeight="Bold"
                         Foreground="White"
-                        Text="⚙️ DSP - Loudness Calibration" />
+                        Text="⚙️ DSP y Loudness Calibration" />
 
                     <!--  Sección Target Loudness  -->
-                    <StackPanel Spacing="8">
+                    <StackPanel Margin="24,0,8,0" Spacing="1">
                         <TextBlock
                             FontSize="13"
+                            FontWeight="Medium"
                             Foreground="#A1A1AA"
-                            Text="🎚 Target Loudness (Integrated)" />
+                            Text="Target Loudness (LUFS)" />
 
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,Auto">
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
                             <!--  Slider  -->
-                            <Slider
-                                Grid.Column="0"
-                                Foreground="#2563EB"
-                                IsSnapToTickEnabled="True"
-                                Maximum="-6"
-                                Minimum="-24"
-                                TickFrequency="0.5"
-                                Value="{Binding TargetLufs}" />
+                            <Grid ColumnDefinitions="26,2, *,2 , 26">
+                                <TextBlock
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="-24" />
+                                <Slider
+                                    Grid.Column="2"
+                                    Foreground="#2563EB"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="-6"
+                                    Minimum="-24"
+                                    TickFrequency="0.1"
+                                    Value="{Binding TargetLufs}" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="-6" />
+                            </Grid>
+
 
                             <!--  Caja de valor  -->
-                            <StackPanel
-                                Grid.Column="1"
-                                Margin="12,0,0,0"
-                                Orientation="Horizontal">
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
                                 <TextBox
-                                    Width="60"
+                                    Width="42"
                                     Height="26"
-                                    Padding="4,2"
-                                    Background="#27272A"
-                                    BorderBrush="#3F3F46"
-                                    BorderThickness="1"
-                                    CornerRadius="4" VerticalContentAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="White"
-                                    Text="{Binding TargetLufs, Mode=TwoWay}"
+                                    MinWidth="42"
+                                    Padding="1,2"
+                                    VerticalContentAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    FontSize="13"
+                                    Foreground="#319CD7"
+                                    KeyDown="OnTextBoxKeyDown"
+                                    LostFocus="OnTextBoxLostFocus"
+                                    Text="{Binding TargetLufs, Mode=OneWay, StringFormat=F1}"
                                     TextAlignment="Center" />
+
                                 <TextBlock
-                                    Margin="6,0,0,0"
+                                    Margin="1,0,0,0"
                                     VerticalAlignment="Center"
                                     FontSize="12"
                                     Foreground="#E4E4E7"
@@ -188,125 +227,128 @@
                     </StackPanel>
 
                     <!--  Sección True Peak Ceiling  -->
-                    <StackPanel Spacing="8">
+                    <StackPanel Margin="24,0,8,0" Spacing="1">
                         <TextBlock
                             FontSize="13"
+                            FontWeight="Medium"
                             Foreground="#A1A1AA"
-                            Text="📏 True Peak Ceiling Threshold" />
+                            Text="True Peak Ceiling Threshold" />
 
-                        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                            <TextBox
-                                Width="60"
-                                Height="26"
-                                Padding="4,2"
-                                Background="#27272A"
-                                BorderBrush="#3F3F46"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                FontSize="12" VerticalContentAlignment="Center"
-                                Foreground="White"
-                                Text="{Binding TruePeakCeilingString, Mode=TwoWay}"
-                                TextAlignment="Center" />
-                            <TextBlock
-                                Margin="6,0,0,0"
-                                VerticalAlignment="Center"
-                                FontSize="12"
-                                Foreground="#E4E4E7"
-                                Text="dBTP" />
-                        </StackPanel>
-                    </StackPanel>
-
-                </StackPanel>
-            </Border>
-
-
-            <!--<Border
-                Grid.Column="0"
-                Padding="16"
-                Background="#18181B"
-                BorderBrush="#27272A"
-                BorderThickness="1"
-                CornerRadius="8">
-                <StackPanel Spacing="12">
-                    <TextBlock
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Text="⚙️ DSP &amp; Loudness Calibration" />
-
-            -->
-            <!--  Slider Objetivo LUFS  -->
-            <!--
-                    <StackPanel Spacing="4">
-                        <Grid ColumnDefinitions="*, Auto">
-                            <TextBlock
-                                Grid.Column="0"
-                                FontSize="12"
-                                Foreground="#A1A1AA"
-                                Text="Target Loudness (Integrated)" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal" >
-            -->
-            <!--  Quitamos el formato complejo, ahora es una lectura directa  -->
-            <!--
-                                <TextBox
-                                    Width="50"
-                                    Height="24"
-                                    Padding="4,2"
-                                    Background="#27272A"
-                                    BorderThickness="0"
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
+                            <!--  Slider para True Peak  -->
+                            <Grid ColumnDefinitions="26,2, *,2 , 26">
+                                <TextBlock
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
                                     FontSize="11"
-                                    Text="{Binding TargetLufs, Mode=TwoWay}"
+                                    Foreground="#A1A1AA"
+                                    Text="-3" />
+                                <Slider
+                                    Grid.Column="2"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="-0.1"
+                                    Minimum="-3.0"
+                                    TickFrequency="0.1"
+                                    Value="{Binding TruePeakCeiling}" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="-0.1" />
+                            </Grid>
+
+                            <StackPanel
+                                Grid.Column="2"
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal">
+                                <TextBox
+                                    Width="42"
+                                    Height="26"
+                                    MinWidth="42"
+                                    Padding="1,2"
+                                    VerticalContentAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    FontSize="13"
+                                    Foreground="#32ADD6"
+                                    KeyDown="OnTruePeakKeyDown"
+                                    LostFocus="OnTruePeakLostFocus"
+                                    Text="{Binding TruePeakCeilingString, Mode=OneWay, StringFormat=F1}"
                                     TextAlignment="Center" />
                                 <TextBlock
-                                    Margin="4,0,0,0"
+                                    Margin="1,0,0,0"
                                     VerticalAlignment="Center"
                                     FontSize="12"
-                                    Foreground="White"
-                                    Text="LUFS" />
-                            </StackPanel>
-                        </Grid>
-                        <Slider
-                            Foreground="#2563EB"
-                            TickFrequency="0.5"
-                            Maximum="-6"
-                            Minimum="-24"
-							IsSnapToTickEnabled="True"
-                            Value="{Binding TargetLufs}" />
-                    </StackPanel>
-
-            -->
-            <!--  Caja de Entrada True Peak Ceiling  -->
-            <!--
-                    <StackPanel Margin="0,8,0,0" Spacing="4">
-                        <Grid ColumnDefinitions="*, Auto">
-                            <TextBlock
-                                Grid.Column="0"
-                                FontSize="12"
-                                Foreground="#A1A1AA"
-                                Text="True Peak Ceiling Threshold" />
-                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-            -->
-            <!--  Caja de texto limpia para que solo acepte el número flotante  -->
-            <!--
-                                <TextBox
-                                    Width="50"
-                                    Height="24"
-                                    Padding="4,2"
-                                    Background="#27272A"
-                                    BorderThickness="0"
-                                    FontSize="11"
-                                    Text="{Binding TruePeakCeilingString, Mode=TwoWay}"
-                                    TextAlignment="Center" />
-                                <TextBlock
-                                    Margin="4,0,0,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="White"
+                                    Foreground="#E4E4E7"
                                     Text="dBTP" />
                             </StackPanel>
                         </Grid>
+
                     </StackPanel>
-                </StackPanel>
-            </Border>-->
+
+					<!--  Sección Release Time (Nuevo) -->
+					<StackPanel Margin="24,0,8,0" Spacing="1">
+						<TextBlock
+							FontSize="13"
+							FontWeight="Medium"
+							Foreground="#A1A1AA"
+							Text="Release Time (Tiempo de Liberación)" />
+
+						<Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
+							<Grid ColumnDefinitions="26,2, *,2 , 26">
+								<TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="5" />
+								<!--<Slider Grid.Column="2" Foreground="#D97706" IsSnapToTickEnabled="True" Maximum="500" Minimum="5" TickFrequency="1" Value="{Binding ReleaseMs}" />-->
+								<TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="500" />
+							</Grid>
+
+							<StackPanel Grid.Column="2" Orientation="Horizontal">
+								<TextBox
+									Name="ReleaseInput"
+									Width="42" Height="26" MinWidth="42" Padding="1,2" VerticalContentAlignment="Center"
+									Background="Transparent" BorderBrush="Transparent" BorderThickness="0" CornerRadius="4"
+									FontSize="13" Foreground="#F59E0B" KeyDown="OnReleaseKeyDown" LostFocus="OnReleaseLostFocus"
+									Text="{Binding ReleaseMsText, Mode=OneWay}" TextAlignment="Center" />
+								<TextBlock Margin="1,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#E4E4E7" Text="ms" />
+							</StackPanel>
+						</Grid>
+					</StackPanel>
+
+					<!--  Sección Look-ahead Time (Nuevo) -->
+					<StackPanel Margin="24,0,8,0" Spacing="1">
+						<TextBlock
+							FontSize="13"
+							FontWeight="Medium"
+							Foreground="#A1A1AA"
+							Text="Look-ahead Time (Tiempo de Avance)" />
+
+						<Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
+							<Grid ColumnDefinitions="26,2, *,2 , 26">
+								<TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="0" />
+								<!--<Slider Grid.Column="2" Foreground="#10B981" IsSnapToTickEnabled="True" Maximum="15" Minimum="0" TickFrequency="0.1" Value="{Binding LookAheadMs}" />-->
+								<TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="15" />
+							</Grid>
+
+							<StackPanel Grid.Column="2" Orientation="Horizontal">
+								<TextBox
+									Name="LookAheadInput"
+									Width="42" Height="26" MinWidth="42" Padding="1,2" VerticalContentAlignment="Center"
+									Background="Transparent" BorderBrush="Transparent" BorderThickness="0" CornerRadius="4"
+									FontSize="13" Foreground="#10B981" KeyDown="OnLookAheadKeyDown" LostFocus="OnLookAheadLostFocus"
+									Text="{Binding LookAheadMsText, Mode=OneWay, StringFormat=F1}" TextAlignment="Center" />
+								<TextBlock Margin="1,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#E4E4E7" Text="ms" />
+							</StackPanel>
+						</Grid>
+					</StackPanel>
+
+				</StackPanel>
+            </Border>
+
+
 
             <!--  Panel Derecho: Ajustes del Limitador Soft-Limiter y Ejecución  -->
             <Border
@@ -321,7 +363,7 @@
                         <TextBlock
                             FontWeight="Bold"
                             Foreground="White"
-                            Text="🚀 Mastering Execution &amp; Safety" />
+                            Text="Mastering Execution &amp; Safety" />
 
                         <CheckBox
                             Content="Strict Linear Mode (Protects Ballad Micro-dynamics)"
