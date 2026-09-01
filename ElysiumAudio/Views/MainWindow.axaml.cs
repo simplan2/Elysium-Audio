@@ -103,7 +103,7 @@ namespace ElysiumAudio.Views
                                     FileName = fileInfo.Name,
                                     Codec = fileInfo.Extension.ToUpper().Replace(".", ""),
                                     Duration = durationFormatted,
-                                    Status = "Pending",
+                                    StatusMessage = "Pending",
                                     Peak = "—",
                                     Loudness = "—",
                                     NormalizedPeak = "—",
@@ -130,29 +130,29 @@ namespace ElysiumAudio.Views
             }
         }
 
-        private void OnTextBoxKeyDown(object? sender, KeyEventArgs e)
+        private void OnTargetLufsKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && sender is TextBox tb)
             {
                 if (tb != null && !string.IsNullOrEmpty(tb.Text))
                 {
-                    ValidateAndSet(tb.Text, tb);
+                    ValidateTargetLufs(tb.Text, tb);
                 }
             }
         }
 
-        private void OnTextBoxLostFocus(object? sender, RoutedEventArgs e)
+        private void OnTargetLufsLostFocus(object? sender, RoutedEventArgs e)
         {
             if (sender is TextBox tb)
             {
                 if (tb != null && !string.IsNullOrEmpty(tb.Text))
                 {
-                    ValidateAndSet(tb.Text, tb);
+                    ValidateTargetLufs(tb.Text, tb);
                 }
             }
         }
 
-        private void ValidateAndSet(string input, TextBox tb)
+        private void ValidateTargetLufs(string input, TextBox tb)
         {
             if (ViewModel != null)
                 // Validar que el input sea un número válido y esté en el rango permitido
@@ -170,6 +170,7 @@ namespace ElysiumAudio.Views
                 }
         }
 
+        // Validación de TruePeakCeiling
         private void OnTruePeakKeyDown(object? sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && sender is TextBox tb)
@@ -204,25 +205,83 @@ namespace ElysiumAudio.Views
             }
         }
 
-
-        private void OnReleaseKeyDown(object? sender, KeyEventArgs e)
+        // Validación de ReleaseTimeMs
+        private void OnReleaseTimeMsKeyDown(object? sender, KeyEventArgs e)
         {
-            // throw new NotImplementedException();
+            if ((e.Key == Key.Enter && sender is TextBox tb))
+            {
+                if (!string.IsNullOrEmpty(tb.Text))
+                {
+                    ValidateReleaseTimeMs(tb.Text, tb);
+                }
+            }
+        }
+        
+        private void OnReleaseTimeMsLostFocus(object? sender, RoutedEventArgs e)
+        {
+            if(sender is TextBox tb)
+            {
+                if (!string.IsNullOrWhiteSpace(tb.Text))
+                {
+                    ValidateReleaseTimeMs(tb.Text, tb);
+                }
+            }
         }
 
-        private void OnReleaseLostFocus(object? sender, RoutedEventArgs e)
+        private void ValidateReleaseTimeMs(string input, TextBox tb)
         {
-            // throw new NotImplementedException();
+            if (ViewModel == null) return;
+            if (NumericRegex.IsMatch(input) &&
+                double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+            {
+                ViewModel.ReleaseTimeMsText = parsed.ToString("F1", CultureInfo.InvariantCulture); // clamp en el setter
+                tb.Text = ViewModel.ReleaseTimeMsText;
+            }
+            else
+            {
+                // Restaurar el valor en caso de entrada de caracteres inválidos
+                tb.Text = ViewModel.ReleaseTimeMsText;
+            }
         }
 
+
+        // Validación de LookAheadTimeMs
         private void OnLookAheadKeyDown(object? sender, KeyEventArgs e)
         {
-            // throw new NotImplementedException();
+            if(e.Key == Key.Enter && sender is TextBox tb)
+            {
+                if (!string.IsNullOrEmpty(tb.Text))
+                {
+                    ValidateLookAheadTimeMs(tb.Text, tb);
+                }
+            }
         }
 
         private void OnLookAheadLostFocus(object? sender, RoutedEventArgs e)
         {
-            // throw new NotImplementedException();
+            if (sender is TextBox tb)
+            {
+                if (!string.IsNullOrWhiteSpace(tb.Text))
+                {
+                    ValidateLookAheadTimeMs(tb.Text, tb);
+                }
+            }
         }
+        private void ValidateLookAheadTimeMs(string text, TextBox tb)
+        {
+            if(ViewModel == null) return;
+            if(NumericRegex.IsMatch(text) && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+            {
+                ViewModel.LookAheadTimeMsText = parsed.ToString("F1", CultureInfo.InvariantCulture); // clamp en el setter
+                tb.Text = ViewModel.LookAheadTimeMsText;
+            }
+            else
+            {
+                // Restaurar el valor en caso de entrada de caracteres inválidos
+                tb.Text = ViewModel.LookAheadTimeMsText;
+            }
+        }
+
+       
     }
 }

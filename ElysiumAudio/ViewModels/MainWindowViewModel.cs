@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ElysiumAudio.Helpers;
 using ElysiumAudio.Models;
 using ElysiumAudio.Services;
 using System;
@@ -12,6 +13,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
 using System.Windows.Input;
 
 namespace ElysiumAudio.ViewModels
@@ -20,36 +22,45 @@ namespace ElysiumAudio.ViewModels
     {
 
         #region Fields
-        private const double DEFAULT_TARGET_LUFS = -14.0;
-        private const double DEFAULT_TRUE_PEAK_CEILING = -1.0;
-
-        private const double RELEASE_TIME_MS = 50; // Tiempo de liberación del limitador en milisegundos (entre 20 y 100 ms es típico)
-        private const double LOOK_AHEAD_TIME_MS = 5; // Tiempo de anticipación del limitador en milisegundos (entre 1 y 10 ms es típico)
+        private readonly AudioEngineService _audioEngine = new();
+        private readonly ISettingsService _settingsService;
+        private readonly Models.UserSettings _settings;
         #endregion
 
         #region Properties
-        private readonly AudioEngineService _audioEngine = new();
+
+        // 1. Enlazado al Slider LUFS y TextBox numérico de la interfaz
+        [ObservableProperty]
+        private string? _targetLufsText = DefaultValues.DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
 
         [ObservableProperty]
-        private string? _targetLufsText = DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
-
-        [ObservableProperty]
-        private string? _truePeakCeilingString = DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
-
-        [ObservableProperty]
-        private double _lookAheadMsText = LOOK_AHEAD_TIME_MS;
-
-        [ObservableProperty]
-        private double _releaseMsText = RELEASE_TIME_MS;
-
-        // 1. Enlazado al Slider y TextBox numérico de la interfaz
-        [ObservableProperty]
-        public double _targetLufs = DEFAULT_TARGET_LUFS;
+        public double _targetLufs = DefaultValues.DEFAULT_TARGET_LUFS;
+        public double MinTargetLufs { get; set; } = DefaultValues.MIN_TARGET_LUFS;
+        public double MaxTargetLufs { get; set; } = DefaultValues.MAX_TARGET_LUFS;
 
         // 2. Enlazado al TextBox del techo de pico real
         [ObservableProperty]
-        public double _truePeakCeiling = DEFAULT_TRUE_PEAK_CEILING;
-     
+        private string? _truePeakCeilingString = DefaultValues.DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
+
+        [ObservableProperty]
+        public double _truePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING;
+        public double MinPeakCeiling { get; set; } = DefaultValues.MIN_TRUE_PEAK_CEILING;
+        public double MaxPeakCeiling { get; set; } = DefaultValues.MAX_TRUE_PEAK_CEILING;
+
+        // 3. Tiempo de liberacion del limitador en milisegundos
+        [ObservableProperty]
+        private string? _releaseTimeMsText = DefaultValues.DEFAULT_RELEASE_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
+
+        [ObservableProperty]
+        private double _releaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
+
+        // 4. Tiempo de anticipación del limitador en milisegundos
+        [ObservableProperty]
+        private string? _lookAheadTimeMsText = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
+
+        [ObservableProperty]
+        private double _lookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
+
 
         [ObservableProperty]
         private bool _isStrictLinearMode = true;
@@ -60,6 +71,11 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private bool _isProcessing;
 
+        // Directorio de salida donde se guardan los archivos normalizados
+        [ObservableProperty]
+        private string _outputDirectory = DefaultValues.GetDefaultOutputDirectory()
+            ?? Environment.CurrentDirectory;
+
         public ObservableCollection<AudioFileModel> AudioFiles { get; } = new();
 
 
@@ -67,9 +83,37 @@ namespace ElysiumAudio.ViewModels
 
         #region constructors
 
-        public MainWindowViewModel()
+        public MainWindowViewModel() : this(new Services.SettingsService())
         {
+        }
+
+        public MainWindowViewModel(ISettingsService settingsService)
+        {
+            _settingsService = settingsService;
+            _settings = _settingsService.Load();
+
+            // Cargar las preferencias guardadas del usuario
+            TargetLufs = _settings.TargetLufs;
+            TruePeakCeiling = _settings.TruePeakCeiling;
+            ReleaseTimeMs = _settings.ReleaseTimeMs;
+            LookAheadTimeMs = _settings.LookAheadTimeMs;
+
+            TargetLufsText = TargetLufs.ToString("F1", CultureInfo.InvariantCulture);
             TruePeakCeilingString = TruePeakCeiling.ToString("F1", CultureInfo.InvariantCulture);
+            ReleaseTimeMsText = _settings.ReleaseTimeMs.ToString("F1", CultureInfo.InvariantCulture);
+            LookAheadTimeMsText = _settings.LookAheadTimeMs.ToString("F1", CultureInfo.InvariantCulture);
+
+            if (!string.IsNullOrWhiteSpace(_settings.OutputDirectory) && Directory.Exists(_settings.OutputDirectory))
+            {
+                OutputDirectory = _settings.OutputDirectory;
+            }
+        }
+
+        // Guarda todas las preferencias del modelo en el servicio de persistencia.
+        // Se invoca al cerrar la aplicación para escribir los datos una sola vez.
+        public void SaveSettings()
+        {
+            _settingsService.Save(_settings);
         }
         #endregion
 
@@ -92,37 +136,76 @@ namespace ElysiumAudio.ViewModels
             }
 
             IsProcessing = true;
-            SystemStatus = "Iniciando procesamiento lineal por lotes con clonación de metadatos...";
 
-            foreach (var file in AudioFiles)
+            // Solo se procesan los archivos que aún no están completados
+            var filesToProcess = AudioFiles
+                .Where(f => f.Status != AudioFileStatus.Completed)
+                .ToList();
+
+            int totalFiles = filesToProcess.Count;
+            int processedCount = 0;
+            int errorCount = 0;
+
+            if (totalFiles == 0)
             {
-                file.Status = "Analyzing...";
+                IsProcessing = false;
+                SystemStatus = "Todos los archivos ya están completados. No hay nada que procesar.";
+                return;
+            }
+
+            SystemStatus = $"Iniciando normalización de {totalFiles} archivo(s)...";
+
+            foreach (var file in filesToProcess)
+            {
+                processedCount++;
+                SystemStatus = $"Procesando {processedCount}/{totalFiles}: {file.FileName}";
 
                 try
                 {
-                    // PASADA 1: Análisis en segundo plano
+                    // PASO 1: Análisis
+                    file.Status = AudioFileStatus.Analyzing;
+                    file.StatusMessage = $"Analizando... (0%)";
+
                     var analysis = await Task.Run(() => _audioEngine.AnalyzeAudioFile(file.FilePath));
 
                     file.Peak = analysis.PeakDbFormatted;
                     file.Loudness = analysis.LoudnessFormatted;
-                    file.Status = "Processing...";
+                    file.StatusMessage = $"Análisis completado (25%)";
 
-                    // Parseo directo y ultra seguro de la propiedad validada
-                    float maxPeakLimitDb = (float)TruePeakCeiling; // Respaldo por defecto
-                    if (float.TryParse(TruePeakCeilingString, System.Globalization.CultureInfo.InvariantCulture, out float parsedPeak))
-                    {
-                        maxPeakLimitDb = parsedPeak;
-                    }
+                    // PASO 2: Cálculo de ganancia
+                    file.Status = AudioFileStatus.Processing;
+                    file.StatusMessage = $"Calculando ganancia... (25%)";
 
-                    // Continuar con el cálculo de ganancia...
+                    float maxPeakLimitDb = (float)TruePeakCeiling;
+
                     float requiredGainDb = _audioEngine.CalculateTargetGain(analysis.IntegratedLoudness, (float)TargetLufs);
 
-                    string directory = Path.GetDirectoryName(file.FilePath) ?? "";
+                    string inputDirectory = Path.GetDirectoryName(file.FilePath) ?? "";
                     string filenameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
                     string ext = Path.GetExtension(file.FilePath);
-                    string outputPath = Path.Combine(directory, $"{filenameWithoutExt}_normalized{ext}");
 
-                    // PASADA 2: Renderizado físico del audio flotante
+                    // Si el directorio de salida coincide con el de entrada, agregamos "_normalized"
+                    // para no pisar el archivo original; si son distintos, conservamos el nombre.
+                    string outputDir = OutputDirectory ?? inputDirectory;
+                    bool sameDir = string.Equals(
+                        Path.GetFullPath(outputDir).TrimEnd(Path.DirectorySeparatorChar),
+                        Path.GetFullPath(inputDirectory).TrimEnd(Path.DirectorySeparatorChar),
+                        StringComparison.OrdinalIgnoreCase);
+
+                    string outputFileName = sameDir
+                        ? $"{filenameWithoutExt}_normalized{ext}"
+                        : $"{filenameWithoutExt}{ext}";
+
+                    string outputPath = OutputPathHelper.GetUniqueOutputPath(
+                        Path.Combine(outputDir, outputFileName));
+
+                    file.StatusMessage = $"Renderizando audio... (50%)";
+
+                    // Valores del limitador desde las preferencias del usuario
+                    float releaseMs = (float)ReleaseTimeMs;
+                    float lookAheadMs = (float)LookAheadTimeMs;
+
+                    // PASO 3: Renderizado
                     await Task.Run(() =>
                     {
                         _audioEngine.ApplyNormalizationWithLimiter(
@@ -130,30 +213,47 @@ namespace ElysiumAudio.ViewModels
                             outputPath,
                             requiredGainDb,
                             maxPeakLimitDb,
-                            releaseMs: 25f
+                            releaseMs: releaseMs,
+                            lookAheadMs: lookAheadMs
                         );
                     });
 
-                    // PASO 3 AUTOMATIZADO: Inyección digital de tags e imágenes ID3v2.3 / FLAC
-                    file.Status = "Tagging...";
+                    file.StatusMessage = $"Aplicando metadatos... (75%)";
+
+                    // PASO 4: Metadatos
+                    file.Status = AudioFileStatus.Tagging;
                     await Task.Run(() => _audioEngine.CloneMetadataAndCover(file.FilePath, outputPath));
+
+                    file.StatusMessage = $"Verificando resultado... (90%)";
 
                     var reanalyze = await Task.Run(() => _audioEngine.AnalyzeAudioFile(outputPath));
                     file.NormalizedLoudness = reanalyze.LoudnessFormatted;
                     file.NormalizedPeak = reanalyze.PeakDbFormatted;
 
-                    file.Status = "Done 🟢";
-                    SystemStatus = $"Completado con metadatos: {file.FileName}";
+                    // Completado
+                    file.Status = AudioFileStatus.Completed;
+                    file.StatusMessage = $"Completado (100%)";
+                    SystemStatus = $"[{processedCount}/{totalFiles}] Completado: {file.FileName}";
                 }
                 catch (Exception ex)
                 {
-                    file.Status = "Error ❌";
-                    SystemStatus = $"Error crítico en {file.FileName}: {ex.Message}";
+                    errorCount++;
+                    file.Status = AudioFileStatus.Error;
+                    file.StatusMessage = $"Error: {ex.Message}";
+                    SystemStatus = $"Error en {file.FileName}: {ex.Message}";
                 }
             }
 
             IsProcessing = false;
-            SystemStatus = "¡Normalización por lote completada! Archivos listos con portadas y tags intactos.";
+
+            if (errorCount == 0)
+            {
+                SystemStatus = $"Normalización completada: {totalFiles} archivo(s) procesado(s) exitosamente.";
+            }
+            else
+            {
+                SystemStatus = $"Proceso finalizado: {totalFiles - errorCount} éxitos, {errorCount} error(es).";
+            }
         }
 
         [RelayCommand]
@@ -161,6 +261,33 @@ namespace ElysiumAudio.ViewModels
         {
             AudioFiles.Clear();
             SystemStatus = "Cola de archivos limpiada.";
+        }
+
+        // Comando para elegir el directorio de salida de los archivos normalizados
+        [RelayCommand]
+        private async Task SelectOutputDirectory()
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                var topLevel = TopLevel.GetTopLevel(desktop.MainWindow);
+                if (topLevel == null) return;
+
+                var options = new FolderPickerOpenOptions
+                {
+                    Title = "Selecciona el directorio de salida",
+                    AllowMultiple = false
+                };
+
+                var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
+                var folder = folders.FirstOrDefault();
+
+                if (folder != null)
+                {
+                    OutputDirectory = folder.Path.LocalPath;
+                    _settings.OutputDirectory = OutputDirectory;
+                    SystemStatus = $"Directorio de salida: {OutputDirectory}";
+                }
+            }
         }
 
         #endregion
@@ -207,7 +334,7 @@ namespace ElysiumAudio.ViewModels
                             FileName = Path.GetFileName(localPath),
                             Codec = Path.GetExtension(localPath).ToUpper().Replace(".", ""),
                             Duration = "--:--",
-                            Status = "Pending",
+                            StatusMessage = "Pending",
                             Peak = "0.0 dBFS",
                             Loudness = "-0.0 LUFS"
                         });
@@ -225,7 +352,7 @@ namespace ElysiumAudio.ViewModels
         partial void OnTargetLufsChanged(double value)
         {
             // Aplicamos tus límites físicos (Clamping)
-            double clamped = Math.Clamp(value, -24.0, -6.0);
+            double clamped = Math.Clamp(value, DefaultValues.MIN_TARGET_LUFS, DefaultValues.MAX_TARGET_LUFS);
             clamped = Math.Round(clamped, 1);
 
             if (Math.Abs(_targetLufs - clamped) > 0.01)
@@ -239,12 +366,15 @@ namespace ElysiumAudio.ViewModels
             {
                 TargetLufsText = nuevoTexto;
             }
+
+            // Actualizar el modelo de preferencias del usuario
+            _settings.TargetLufs = _targetLufs;
         }
 
         partial void OnTruePeakCeilingChanged(double value)
         {
             // Aplicamos tus límites físicos personalizados (-3.0 a -0.1)
-            double clamped = Math.Clamp(value, -3.0, -0.1);
+            double clamped = Math.Clamp(value, DefaultValues.MIN_TRUE_PEAK_CEILING, DefaultValues.MAX_TRUE_PEAK_CEILING);
             clamped = Math.Round(clamped, 1);
 
             if (Math.Abs(_truePeakCeiling - clamped) > 0.01)
@@ -258,6 +388,9 @@ namespace ElysiumAudio.ViewModels
             {
                 TruePeakCeilingString = nuevoTexto;
             }
+
+            // Actualizar el modelo de preferencias del usuario
+            _settings.TruePeakCeiling = _truePeakCeiling;
         }
 
         // =========================================================================
@@ -271,7 +404,7 @@ namespace ElysiumAudio.ViewModels
             if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
             {
                 // Si el usuario escribe algo fuera de rango, tu lógica lo contiene
-                double clamped = Math.Clamp(parsed, -24.0, -6.0);
+                double clamped = Math.Clamp(parsed, DefaultValues.MIN_TARGET_LUFS, DefaultValues.MAX_TARGET_LUFS);
 
                 if (Math.Abs(TargetLufs - clamped) > 0.01)
                 {
@@ -286,12 +419,44 @@ namespace ElysiumAudio.ViewModels
 
             if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
             {
-                double clamped = Math.Clamp(parsed, -3.0, -0.1);
-
+                double clamped = Math.Clamp(parsed, DefaultValues.MIN_TRUE_PEAK_CEILING, DefaultValues.MAX_TRUE_PEAK_CEILING);
+                // Si el usuario escribe algo fuera de rango, tu lógica lo contiene
                 if (Math.Abs(TruePeakCeiling - clamped) > 0.01)
                 {
                     TruePeakCeiling = clamped; // Esto disparará OnTruePeakCeilingChanged para formatear el texto
                 }
+            }
+        }
+
+        partial void OnReleaseTimeMsTextChanged(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            {
+                double clamped = Math.Clamp(parsed, DefaultValues.MIN_RELEASE_TIME_MS, DefaultValues.MAX_RELEASE_TIME_MS);
+                if (Math.Abs(parsed - clamped) > 0.01)
+                {
+                    ReleaseTimeMsText = clamped.ToString();
+                   
+                }
+
+                _settings.ReleaseTimeMs = clamped;
+            }
+        }
+
+        partial void OnLookAheadTimeMsTextChanged(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            {
+                double clamped = Math.Clamp(parsed, DefaultValues.MIN_LOOK_AHEAD_TIME_MS, DefaultValues.MAX_LOOK_AHEAD_TIME_MS);
+                if (Math.Abs(parsed - clamped) > 0.01)
+                {
+                    LookAheadTimeMsText = clamped.ToString();
+                    
+                }
+
+                _settings.LookAheadTimeMs = clamped;
             }
         }
         #endregion

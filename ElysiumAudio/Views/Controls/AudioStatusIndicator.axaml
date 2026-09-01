@@ -1,0 +1,105 @@
+<UserControl
+    x:Class="ElysiumAudio.Views.Controls.AudioStatusIndicator"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Width="32"
+    Height="32"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid
+        Width="32"
+        Height="32"
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+
+        <!--
+            Círculo de fondo.
+            Siempre está presente y le da consistencia
+            visual al indicador.
+        -->
+        <Ellipse
+            Width="28"
+            Height="28"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Stroke="#303038"
+            StrokeThickness="2" />
+
+
+        <!--
+            SPINNER
+            Visible únicamente durante:
+            Analyzing / Processing / Tagging
+
+            Se usa un <Arc> (Avalonia.Controls.Shapes) que dibuja
+            exactamente un segmento de ~108° (30%) del círculo.
+            Al rotar el Grid contenedor (cuadrado y centrado), el arco
+            gira de forma perfectamente concéntrica con el círculo de fondo.
+        -->
+        <Grid
+            x:Name="SpinnerHost"
+            Width="32"
+            Height="32"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            RenderTransformOrigin="0.1,0.1">
+            <Grid.RenderTransform>
+                <RotateTransform Angle="0" />
+            </Grid.RenderTransform>
+
+            <Arc
+                Width="27.8"
+                Height="27.8" Margin="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                StartAngle="0"
+                Stroke="#B27CE8"
+                StrokeLineCap="Round"
+                StrokeThickness="3"
+                SweepAngle="82" />
+        </Grid>
+
+        <!--  CHECK  -->
+        <Path
+            x:Name="CheckIcon"
+            Width="16"
+            Height="16"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Data="M 3,8 L 7,12 L 14,4"
+            IsVisible="False"
+            Stroke="#62D68A"
+            StrokeJoin="Round"
+            StrokeLineCap="Round"
+            StrokeThickness="2" />
+
+
+        <!--  ERROR  -->
+        <Path
+            x:Name="ErrorIcon"
+            Width="16"
+            Height="16"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Data="M 4,4 L 12,12 M 12,4 L 4,12"
+            IsVisible="False"
+            Stroke="#F06464"
+            StrokeLineCap="Round"
+            StrokeThickness="2" />
+
+
+        <!--  PENDING  -->
+        <Ellipse
+            x:Name="PendingIcon"
+            Width="8"
+            Height="8"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Fill="#686872"
+            IsVisible="False" />
+
+    </Grid>
+</UserControl>

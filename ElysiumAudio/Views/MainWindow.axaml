@@ -4,12 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Avalonia.Controls"
     xmlns:conv="using:ElysiumAudio.Converters"
+    xmlns:customControls="using:ElysiumAudio.Views.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:ElysiumAudio.Models"
     xmlns:netDataGrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
     xmlns:vm="using:ElysiumAudio.ViewModels"
     Title="Elysium Audio"
-    d:DesignHeight="450"
+    Width="1080"
+    Height="700"
+    d:DesignHeight="540"
     d:DesignWidth="800"
     x:DataType="vm:MainWindowViewModel"
     Background="#121212"
@@ -25,7 +29,7 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
     <Window.Resources>
-        <conv:LufsRangeConverter x:Key="LufsRangeConverter" />
+        <conv:DynamicNumberFormatConverter x:Key="DynamicNumberFormatConverter" />
     </Window.Resources>
 
     <Grid Margin="16" RowDefinitions="Auto, *, Auto, Auto">
@@ -65,11 +69,19 @@
                 </Button>
                 <Button
                     Padding="14,8"
+                    Background="#334155"
+                    Command="{Binding SelectOutputDirectoryCommand}"
+                    Foreground="#E4E4E7">
+                    📂 Output Dir
+                </Button>
+                <Button
+                    Padding="14,8"
                     Background="#27272A"
                     Command="{Binding ClearListCommand}"
-                    Foreground="#E4E4E7">
-                    Clear List
+                    Foreground="#D5D5D9">
+                    🗑️ Clear List
                 </Button>
+
             </StackPanel>
         </Grid>
 
@@ -93,14 +105,29 @@
                 CanUserResizeColumns="True"
                 GridLinesVisibility="Horizontal"
                 IsReadOnly="True"
-                ItemsSource="{Binding AudioFiles}">
+                ItemsSource="{Binding AudioFiles}"
+                RowHeight="40">
+                <DataGrid.Styles>
+                    <Style Selector="TextBlock">
+                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                        <Setter Property="TextWrapping" Value="NoWrap" />
+                    </Style>
+                </DataGrid.Styles>
+
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="88" Header="Status">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="models:AudioFileModel">
+                                <customControls:AudioStatusIndicator
+                                    Width="32"
+                                    Height="32"
+                                    HorizontalAlignment="Center"
+                                    Status="{Binding Status}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn
-                        Width="110"
-                        Binding="{Binding Status}"
-                        Header="Status" />
-                    <DataGridTextColumn
-                        Width="280"
+                        Width="270"
                         Binding="{Binding FileName}"
                         Header="File Name" />
                     <DataGridTextColumn
@@ -152,40 +179,38 @@
                 CornerRadius="10"
                 Focusable="True">
 
-                <StackPanel Spacing="20">
+                <StackPanel Spacing="4">
                     <!--  Encabezado  -->
                     <TextBlock
-                        Margin="0,0,0,8"
+                        Margin="0,0,0,16"
                         FontSize="16"
                         FontWeight="Bold"
                         Foreground="White"
                         Text="⚙️ DSP y Loudness Calibration" />
 
-                    <!--  Sección Target Loudness  -->
-                    <StackPanel Margin="24,0,8,0" Spacing="1">
+                    <!--  1. Sección Target Loudness  -->
+                    <StackPanel Margin="24,0,10,0">
                         <TextBlock
                             FontSize="13"
                             FontWeight="Medium"
                             Foreground="#A1A1AA"
                             Text="Target Loudness (LUFS)" />
 
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
                             <!--  Slider  -->
-                            <Grid ColumnDefinitions="26,2, *,2 , 26">
+                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
                                 <TextBlock
                                     Grid.Column="0"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     FontSize="11"
                                     Foreground="#A1A1AA"
-                                    Text="-24" />
+                                    Text="{Binding MinTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
                                 <Slider
                                     Grid.Column="2"
                                     Foreground="#2563EB"
-                                    IsSnapToTickEnabled="True"
-                                    Maximum="-6"
-                                    Minimum="-24"
-                                    TickFrequency="0.1"
+                                    Maximum="-6.0"
+                                    Minimum="-24.0"
                                     Value="{Binding TargetLufs}" />
                                 <TextBlock
                                     Grid.Column="4"
@@ -193,9 +218,8 @@
                                     VerticalAlignment="Center"
                                     FontSize="11"
                                     Foreground="#A1A1AA"
-                                    Text="-6" />
+                                    Text="{Binding MaxTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
                             </Grid>
-
 
                             <!--  Caja de valor  -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -203,7 +227,7 @@
                                     Width="42"
                                     Height="26"
                                     MinWidth="42"
-                                    Padding="1,2"
+                                    Padding="1,0"
                                     VerticalContentAlignment="Center"
                                     Background="Transparent"
                                     BorderBrush="Transparent"
@@ -211,13 +235,13 @@
                                     CornerRadius="4"
                                     FontSize="13"
                                     Foreground="#319CD7"
-                                    KeyDown="OnTextBoxKeyDown"
-                                    LostFocus="OnTextBoxLostFocus"
-                                    Text="{Binding TargetLufs, Mode=OneWay, StringFormat=F1}"
+                                    KeyDown="OnTargetLufsKeyDown"
+                                    LostFocus="OnTargetLufsLostFocus"
+                                    Text="{Binding TargetLufs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
                                     TextAlignment="Center" />
 
                                 <TextBlock
-                                    Margin="1,0,0,0"
+                                    Margin="1,0"
                                     VerticalAlignment="Center"
                                     FontSize="12"
                                     Foreground="#E4E4E7"
@@ -226,30 +250,28 @@
                         </Grid>
                     </StackPanel>
 
-                    <!--  Sección True Peak Ceiling  -->
-                    <StackPanel Margin="24,0,8,0" Spacing="1">
+                    <!--  2. Sección True Peak Ceiling  -->
+                    <StackPanel Margin="24,0,10,0">
                         <TextBlock
                             FontSize="13"
                             FontWeight="Medium"
                             Foreground="#A1A1AA"
                             Text="True Peak Ceiling Threshold" />
 
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
                             <!--  Slider para True Peak  -->
-                            <Grid ColumnDefinitions="26,2, *,2 , 26">
+                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
                                 <TextBlock
                                     Grid.Column="0"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     FontSize="11"
                                     Foreground="#A1A1AA"
-                                    Text="-3" />
+                                    Text="{Binding MinPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
                                 <Slider
                                     Grid.Column="2"
-                                    IsSnapToTickEnabled="True"
                                     Maximum="-0.1"
                                     Minimum="-3.0"
-                                    TickFrequency="0.1"
                                     Value="{Binding TruePeakCeiling}" />
                                 <TextBlock
                                     Grid.Column="4"
@@ -257,7 +279,7 @@
                                     VerticalAlignment="Center"
                                     FontSize="11"
                                     Foreground="#A1A1AA"
-                                    Text="-0.1" />
+                                    Text="{Binding MaxPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
                             </Grid>
 
                             <StackPanel
@@ -268,7 +290,7 @@
                                     Width="42"
                                     Height="26"
                                     MinWidth="42"
-                                    Padding="1,2"
+                                    Padding="1,0"
                                     VerticalContentAlignment="Center"
                                     Background="Transparent"
                                     BorderBrush="Transparent"
@@ -278,10 +300,10 @@
                                     Foreground="#32ADD6"
                                     KeyDown="OnTruePeakKeyDown"
                                     LostFocus="OnTruePeakLostFocus"
-                                    Text="{Binding TruePeakCeilingString, Mode=OneWay, StringFormat=F1}"
+                                    Text="{Binding TruePeakCeilingString, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
                                     TextAlignment="Center" />
                                 <TextBlock
-                                    Margin="1,0,0,0"
+                                    Margin="1,0"
                                     VerticalAlignment="Center"
                                     FontSize="12"
                                     Foreground="#E4E4E7"
@@ -291,61 +313,129 @@
 
                     </StackPanel>
 
-					<!--  Sección Release Time (Nuevo) -->
-					<StackPanel Margin="24,0,8,0" Spacing="1">
-						<TextBlock
-							FontSize="13"
-							FontWeight="Medium"
-							Foreground="#A1A1AA"
-							Text="Release Time (Tiempo de Liberación)" />
+                    <!--  3 Sección Release Time (Nuevo)  -->
+                    <StackPanel Margin="24,0,10,0">
+                        <TextBlock
+                            FontSize="13"
+                            FontWeight="Medium"
+                            Foreground="#A1A1AA"
+                            Text="Release Time (Tiempo de Liberación)" />
 
-						<Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
-							<Grid ColumnDefinitions="26,2, *,2 , 26">
-								<TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="5" />
-								<!--<Slider Grid.Column="2" Foreground="#D97706" IsSnapToTickEnabled="True" Maximum="500" Minimum="5" TickFrequency="1" Value="{Binding ReleaseMs}" />-->
-								<TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="500" />
-							</Grid>
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
+                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
+                                <TextBlock
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="5" />
+                                <Slider
+                                    Grid.Column="2"
+                                    Foreground="#D97706"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="500"
+                                    Minimum="5"
+                                    TickFrequency="1" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="500" />
+                            </Grid>
 
-							<StackPanel Grid.Column="2" Orientation="Horizontal">
-								<TextBox
-									Name="ReleaseInput"
-									Width="42" Height="26" MinWidth="42" Padding="1,2" VerticalContentAlignment="Center"
-									Background="Transparent" BorderBrush="Transparent" BorderThickness="0" CornerRadius="4"
-									FontSize="13" Foreground="#F59E0B" KeyDown="OnReleaseKeyDown" LostFocus="OnReleaseLostFocus"
-									Text="{Binding ReleaseMsText, Mode=OneWay}" TextAlignment="Center" />
-								<TextBlock Margin="1,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#E4E4E7" Text="ms" />
-							</StackPanel>
-						</Grid>
-					</StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <TextBox
+                                    Name="ReleaseTimeMsInput"
+                                    Width="42"
+                                    Height="26"
+                                    MinWidth="42"
+                                    Padding="1,0"
+                                    VerticalContentAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    FontSize="13"
+                                    Foreground="#F59E0B"
+                                    KeyDown="OnReleaseTimeMsKeyDown"
+                                    LostFocus="OnReleaseTimeMsLostFocus"
+                                    Text="{Binding ReleaseTimeMsText, Mode=TwoWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                    TextAlignment="Center" />
+                                <TextBlock
+                                    Margin="1,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#E4E4E7"
+                                    Text="ms" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
 
-					<!--  Sección Look-ahead Time (Nuevo) -->
-					<StackPanel Margin="24,0,8,0" Spacing="1">
-						<TextBlock
-							FontSize="13"
-							FontWeight="Medium"
-							Foreground="#A1A1AA"
-							Text="Look-ahead Time (Tiempo de Avance)" />
+                    <!--  4. Sección Look-ahead Time (Nuevo)  -->
+                    <StackPanel Margin="24,0,10,0">
+                        <TextBlock
+                            FontSize="13"
+                            FontWeight="Medium"
+                            Foreground="#A1A1AA"
+                            Text="Look-ahead Time (Tiempo de Avance)" />
 
-						<Grid VerticalAlignment="Center" ColumnDefinitions="*,18,Auto">
-							<Grid ColumnDefinitions="26,2, *,2 , 26">
-								<TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="0" />
-								<!--<Slider Grid.Column="2" Foreground="#10B981" IsSnapToTickEnabled="True" Maximum="15" Minimum="0" TickFrequency="0.1" Value="{Binding LookAheadMs}" />-->
-								<TextBlock Grid.Column="4" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" Foreground="#A1A1AA" Text="15" />
-							</Grid>
+                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
+                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
+                                <TextBlock
+                                    Grid.Column="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="0" />
+                                <Slider
+                                    Grid.Column="2"
+                                    Foreground="#10B981"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="15"
+                                    Minimum="0"
+                                    TickFrequency="0.1" />
+                                <TextBlock
+                                    Grid.Column="4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="11"
+                                    Foreground="#A1A1AA"
+                                    Text="15" />
+                            </Grid>
 
-							<StackPanel Grid.Column="2" Orientation="Horizontal">
-								<TextBox
-									Name="LookAheadInput"
-									Width="42" Height="26" MinWidth="42" Padding="1,2" VerticalContentAlignment="Center"
-									Background="Transparent" BorderBrush="Transparent" BorderThickness="0" CornerRadius="4"
-									FontSize="13" Foreground="#10B981" KeyDown="OnLookAheadKeyDown" LostFocus="OnLookAheadLostFocus"
-									Text="{Binding LookAheadMsText, Mode=OneWay, StringFormat=F1}" TextAlignment="Center" />
-								<TextBlock Margin="1,0,0,0" VerticalAlignment="Center" FontSize="12" Foreground="#E4E4E7" Text="ms" />
-							</StackPanel>
-						</Grid>
-					</StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <TextBox
+                                    Name="LookAheadInput"
+                                    Width="42"
+                                    Height="26"
+                                    MinWidth="42"
+                                    Padding="1,0"
+                                    VerticalContentAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="4"
+                                    FontSize="13"
+                                    Foreground="#10B981"
+                                    KeyDown="OnLookAheadKeyDown"
+                                    LostFocus="OnLookAheadLostFocus"
+                                    Text="{Binding LookAheadTimeMsText, Mode=TwoWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                    TextAlignment="Center" />
+                                <TextBlock
+                                    Margin="1,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="12"
+                                    Foreground="#E4E4E7"
+                                    Text="ms" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
 
-				</StackPanel>
+                </StackPanel>
             </Border>
 
 
@@ -358,7 +448,7 @@
                 BorderBrush="#27272A"
                 BorderThickness="1"
                 CornerRadius="8">
-                <Grid RowDefinitions="*, Auto">
+                <Grid RowDefinitions="*, Auto, Auto">
                     <StackPanel Grid.Row="0" Spacing="12">
                         <TextBlock
                             FontWeight="Bold"
@@ -389,6 +479,13 @@
                         Foreground="White">
                         ▶ Run Batch Normalization
                     </Button>
+                    <TextBlock
+                        Grid.Row="2"
+                        Margin="0,6,0,0"
+                        HorizontalAlignment="Center"
+                        FontSize="10"
+                        Foreground="#A1A1AA"
+                        Text="{Binding OutputDirectory, StringFormat='Salida: {0}'}" />
                 </Grid>
             </Border>
         </Grid>
