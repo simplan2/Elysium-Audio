@@ -30,8 +30,8 @@ namespace ElysiumAudio.ViewModels
         #region Properties
 
         // 1. Enlazado al Slider LUFS y TextBox numérico de la interfaz
-        [ObservableProperty]
-        private string? _targetLufsText = DefaultValues.DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
+        //[ObservableProperty]
+        //private string? _targetLufsText = DefaultValues.DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
 
         [ObservableProperty]
         public double _targetLufs = DefaultValues.DEFAULT_TARGET_LUFS;
@@ -39,8 +39,8 @@ namespace ElysiumAudio.ViewModels
         public double MaxTargetLufs { get; set; } = DefaultValues.MAX_TARGET_LUFS;
 
         // 2. Enlazado al TextBox del techo de pico real
-        [ObservableProperty]
-        private string? _truePeakCeilingString = DefaultValues.DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
+        //[ObservableProperty]
+        //private string? _truePeakCeilingString = DefaultValues.DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
 
         [ObservableProperty]
         public double _truePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING;
@@ -48,18 +48,25 @@ namespace ElysiumAudio.ViewModels
         public double MaxPeakCeiling { get; set; } = DefaultValues.MAX_TRUE_PEAK_CEILING;
 
         // 3. Tiempo de liberacion del limitador en milisegundos
-        [ObservableProperty]
-        private string? _releaseTimeMsText = DefaultValues.DEFAULT_RELEASE_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
+        //[ObservableProperty]
+        //private string? _releaseTimeMsText = DefaultValues.DEFAULT_RELEASE_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
 
         [ObservableProperty]
         private double _releaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
+        public double MinReleaseTimeMs { get; set; } = DefaultValues.MIN_RELEASE_TIME_MS;
+        
+        public double MaxReleaseTimeMs { get; set; } = DefaultValues.MAX_RELEASE_TIME_MS;     
 
         // 4. Tiempo de anticipación del limitador en milisegundos
-        [ObservableProperty]
-        private string? _lookAheadTimeMsText = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
+        //[ObservableProperty]
+        //private string? _lookAheadTimeMsText = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
 
         [ObservableProperty]
         private double _lookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
+
+        public double MinLookAheadTimeMs { get; set; } = DefaultValues.MIN_LOOK_AHEAD_TIME_MS;
+        public double MaxLookAheadTimeMs { get; set; } = DefaultValues.MAX_LOOK_AHEAD_TIME_MS;
+
 
 
         [ObservableProperty]
@@ -76,9 +83,9 @@ namespace ElysiumAudio.ViewModels
         private string _outputDirectory = DefaultValues.GetDefaultOutputDirectory()
             ?? Environment.CurrentDirectory;
 
-        public ObservableCollection<AudioFileModel> AudioFiles { get; } = new();
-
-
+        public ObservableCollection<AudioFileModel> AudioFiles { get; set; } = new();
+       
+        public bool ShowDropMessage => AudioFiles.Count == 0;
         #endregion
 
         #region constructors
@@ -98,15 +105,17 @@ namespace ElysiumAudio.ViewModels
             ReleaseTimeMs = _settings.ReleaseTimeMs;
             LookAheadTimeMs = _settings.LookAheadTimeMs;
 
-            TargetLufsText = TargetLufs.ToString("F1", CultureInfo.InvariantCulture);
-            TruePeakCeilingString = TruePeakCeiling.ToString("F1", CultureInfo.InvariantCulture);
-            ReleaseTimeMsText = _settings.ReleaseTimeMs.ToString("F1", CultureInfo.InvariantCulture);
-            LookAheadTimeMsText = _settings.LookAheadTimeMs.ToString("F1", CultureInfo.InvariantCulture);
-
             if (!string.IsNullOrWhiteSpace(_settings.OutputDirectory) && Directory.Exists(_settings.OutputDirectory))
             {
                 OutputDirectory = _settings.OutputDirectory;
             }
+
+            AudioFiles.CollectionChanged += AudioFiles_CollectionChanged;
+        }
+
+        private void AudioFiles_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            base.OnPropertyChanged(nameof(ShowDropMessage));
         }
 
         // Guarda todas las preferencias del modelo en el servicio de persistencia.
@@ -290,6 +299,15 @@ namespace ElysiumAudio.ViewModels
             }
         }
 
+        [RelayCommand]
+        private void DefaultNormalizationValues()
+        {
+            TargetLufs = DefaultValues.DEFAULT_TARGET_LUFS;
+            TruePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING;
+            ReleaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
+            LookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
+        }
+
         #endregion
 
         #region Methods
@@ -360,13 +378,6 @@ namespace ElysiumAudio.ViewModels
                 _targetLufs = clamped;
             }
 
-            // Sincronizamos la caja de texto de forma reactiva
-            string nuevoTexto = _targetLufs.ToString("F1", CultureInfo.InvariantCulture);
-            if (TargetLufsText != nuevoTexto)
-            {
-                TargetLufsText = nuevoTexto;
-            }
-
             // Actualizar el modelo de preferencias del usuario
             _settings.TargetLufs = _targetLufs;
         }
@@ -382,83 +393,38 @@ namespace ElysiumAudio.ViewModels
                 _truePeakCeiling = clamped;
             }
 
-            // Sincronizamos la caja de texto de forma reactiva
-            string nuevoTexto = _truePeakCeiling.ToString("F1", CultureInfo.InvariantCulture);
-            if (TruePeakCeilingString != nuevoTexto)
-            {
-                TruePeakCeilingString = nuevoTexto;
-            }
-
             // Actualizar el modelo de preferencias del usuario
             _settings.TruePeakCeiling = _truePeakCeiling;
         }
 
-        // =========================================================================
-        // SINK 2: EVENTOS CUANDO EL USUARIO ESCRIBE MANUALMENTE EN LOS TEXTBOX
-        // =========================================================================
-
-        partial void OnTargetLufsTextChanged(string? value)
+        // Esta función se invoca cuando el usuario mueve el slider de ReleaseTimeMs, y actualiza tanto la propiedad como el texto asociado.
+        partial void OnLookAheadTimeMsChanged(double value)
         {
-            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
+            double clamped = Math.Clamp(value, DefaultValues.MIN_LOOK_AHEAD_TIME_MS, DefaultValues.MAX_LOOK_AHEAD_TIME_MS);
+            clamped = Math.Round(clamped, 1);
 
-            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            if (Math.Abs(_lookAheadTimeMs - clamped) > 0.01)
             {
-                // Si el usuario escribe algo fuera de rango, tu lógica lo contiene
-                double clamped = Math.Clamp(parsed, DefaultValues.MIN_TARGET_LUFS, DefaultValues.MAX_TARGET_LUFS);
-
-                if (Math.Abs(TargetLufs - clamped) > 0.01)
-                {
-                    TargetLufs = clamped; // Esto disparará a su vez OnTargetLufsChanged para formatear el texto
-                }
+                _lookAheadTimeMs = clamped;
             }
+
+            _settings.LookAheadTimeMs = _lookAheadTimeMs;
         }
 
-        partial void OnTruePeakCeilingStringChanged(string? value)
+        partial void OnReleaseTimeMsChanged(double value)
         {
-            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
+            double clamped = Math.Clamp(value, DefaultValues.MIN_RELEASE_TIME_MS, DefaultValues.MAX_RELEASE_TIME_MS);
+            clamped = Math.Round(clamped, 1);
 
-            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
+            if(Math.Abs(_releaseTimeMs - clamped) > 0.01)
             {
-                double clamped = Math.Clamp(parsed, DefaultValues.MIN_TRUE_PEAK_CEILING, DefaultValues.MAX_TRUE_PEAK_CEILING);
-                // Si el usuario escribe algo fuera de rango, tu lógica lo contiene
-                if (Math.Abs(TruePeakCeiling - clamped) > 0.01)
-                {
-                    TruePeakCeiling = clamped; // Esto disparará OnTruePeakCeilingChanged para formatear el texto
-                }
+                _releaseTimeMs = clamped;
             }
+
+            _settings.ReleaseTimeMs = _releaseTimeMs;
         }
 
-        partial void OnReleaseTimeMsTextChanged(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
-            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
-            {
-                double clamped = Math.Clamp(parsed, DefaultValues.MIN_RELEASE_TIME_MS, DefaultValues.MAX_RELEASE_TIME_MS);
-                if (Math.Abs(parsed - clamped) > 0.01)
-                {
-                    ReleaseTimeMsText = clamped.ToString();
-                   
-                }
-
-                _settings.ReleaseTimeMs = clamped;
-            }
-        }
-
-        partial void OnLookAheadTimeMsTextChanged(string? value)
-        {
-            if (string.IsNullOrWhiteSpace(value) || value == "-") return;
-            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed))
-            {
-                double clamped = Math.Clamp(parsed, DefaultValues.MIN_LOOK_AHEAD_TIME_MS, DefaultValues.MAX_LOOK_AHEAD_TIME_MS);
-                if (Math.Abs(parsed - clamped) > 0.01)
-                {
-                    LookAheadTimeMsText = clamped.ToString();
-                    
-                }
-
-                _settings.LookAheadTimeMs = clamped;
-            }
-        }
+      
         #endregion
 
 

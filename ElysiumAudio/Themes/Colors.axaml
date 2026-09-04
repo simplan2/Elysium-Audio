@@ -1,0 +1,82 @@
+<ResourceDictionary
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- =====================================================================
+         PALETA GLOBAL DE ELYSIUM AUDIO
+         Dark theme profesional con acentos azul / violeta / verde.
+         Todos los colores se definen una sola vez y se reutilizan vía
+         StaticResource en el resto de la aplicación.
+         ===================================================================== -->
+
+    <!-- Superficies -->
+    <Color x:Key="BgBase">#0B0E14</Color>
+    <Color x:Key="BgPanel">#131722</Color>
+    <Color x:Key="BgPanelAlt">#0F131C</Color>
+    <Color x:Key="BgInput">#0D1117</Color>
+    <Color x:Key="BgElevated">#1A1F2E</Color>
+
+    <!-- Bordes -->
+    <Color x:Key="BorderSubtle">#1E2433</Color>
+    <Color x:Key="BorderDefault">#2A3346</Color>
+    <Color x:Key="BorderStrong">#37415A</Color>
+
+    <!-- Texto -->
+    <Color x:Key="TextPrimary">#EDF0F7</Color>
+    <Color x:Key="TextSecondary">#98A2B8</Color>
+    <Color x:Key="TextMuted">#5C6A82</Color>
+    <Color x:Key="TextOnAccent">#FFFFFF</Color>
+
+    <!-- Acentos primarios -->
+    <Color x:Key="AccentPrimary">#4F7CFF</Color>
+    <Color x:Key="AccentPrimaryHover">#6B93FF</Color>
+    <Color x:Key="AccentPrimaryPress">#3B63D6</Color>
+    <Color x:Key="AccentPrimaryDim">#2E4370</Color>
+
+    <!-- Acentos secundarios -->
+    <Color x:Key="AccentViolet">#A78BFA</Color>
+    <Color x:Key="AccentTeal">#2DD4BF</Color>
+    <Color x:Key="AccentGreen">#34D399</Color>
+    <Color x:Key="AccentAmber">#F59E0B</Color>
+    <Color x:Key="AccentCyan">#38BDF8</Color>
+    <Color x:Key="AccentRed">#F06464</Color>
+
+    <!-- Estado -->
+    <Color x:Key="Success">#34D399</Color>
+    <Color x:Key="Warning">#FBBF24</Color>
+    <Color x:Key="Error">#F87171</Color>
+    <Color x:Key="Info">#38BDF8</Color>
+
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="BrushBgBase" Color="{StaticResource BgBase}" />
+    <SolidColorBrush x:Key="BrushBgPanel" Color="{StaticResource BgPanel}" />
+    <SolidColorBrush x:Key="BrushBgPanelAlt" Color="{StaticResource BgPanelAlt}" />
+    <SolidColorBrush x:Key="BrushBgInput" Color="{StaticResource BgInput}" />
+    <SolidColorBrush x:Key="BrushBgElevated" Color="{StaticResource BgElevated}" />
+
+    <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource BorderSubtle}" />
+    <SolidColorBrush x:Key="BrushBorderDefault" Color="{StaticResource BorderDefault}" />
+    <SolidColorBrush x:Key="BrushBorderStrong" Color="{StaticResource BorderStrong}" />
+
+    <SolidColorBrush x:Key="BrushTextPrimary" Color="{StaticResource TextPrimary}" />
+    <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource TextSecondary}" />
+    <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource TextMuted}" />
+    <SolidColorBrush x:Key="BrushTextOnAccent" Color="{StaticResource TextOnAccent}" />
+
+    <SolidColorBrush x:Key="BrushAccent" Color="{StaticResource AccentPrimary}" />
+    <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource AccentPrimaryHover}" />
+    <SolidColorBrush x:Key="BrushAccentPress" Color="{StaticResource AccentPrimaryPress}" />
+    <SolidColorBrush x:Key="BrushAccentDim" Color="{StaticResource AccentPrimaryDim}" />
+
+    <SolidColorBrush x:Key="BrushAccentViolet" Color="{StaticResource AccentViolet}" />
+    <SolidColorBrush x:Key="BrushAccentTeal" Color="{StaticResource AccentTeal}" />
+    <SolidColorBrush x:Key="BrushAccentGreen" Color="{StaticResource AccentGreen}" />
+    <SolidColorBrush x:Key="BrushAccentAmber" Color="{StaticResource AccentAmber}" />
+    <SolidColorBrush x:Key="BrushAccentCyan" Color="{StaticResource AccentCyan}" />
+
+    <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource Success}" />
+    <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource Warning}" />
+    <SolidColorBrush x:Key="BrushError" Color="{StaticResource Error}" />
+    <SolidColorBrush x:Key="BrushInfo" Color="{StaticResource Info}" />
+
+</ResourceDictionary>

@@ -1,0 +1,144 @@
+<Styles
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- =====================================================================
+         ESTILOS GLOBALES DE ELYSIUM AUDIO
+         Sobrescriben partes del tema Fluent con el look dark profesional.
+         ===================================================================== -->
+
+    <!-- ============================= BUTTON ============================= -->
+    <Style Selector="Button">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Padding" Value="16,9" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBorderDefault}" />
+    </Style>
+
+    <!-- Variantes de botones: primario, éxito, fantasma -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextOnAccent}" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentHover}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentHover}" />
+    </Style>
+    <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentPress}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentPress}" />
+    </Style>
+
+    <Style Selector="Button.success">
+        <Setter Property="Background" Value="#059669" />
+        <Setter Property="BorderBrush" Value="#059669" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Button.success:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#10B981" />
+        <Setter Property="BorderBrush" Value="#10B981" />
+    </Style>
+
+    <Style Selector="Button.ghost">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+    </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+
+    <!-- ============================= TEXTBOX ============================= -->
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{StaticResource BrushBgInput}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="CaretBrush" Value="{StaticResource BrushAccent}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+    </Style>
+    <!-- TextBox "invisible" dentro de los paneles de parámetros -->
+    <Style Selector="TextBox.param">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="1,0" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+
+    <!-- ============================= SLIDER ============================= -->
+    <!-- Color del tramo activo (parte rellenada hasta el thumb) -->
+    <Style Selector="Slider.active-accent /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+    </Style>
+    <Style Selector="Slider.active-amber /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{StaticResource BrushWarning}" />
+    </Style>
+    <Style Selector="Slider.active-teal /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{StaticResource BrushAccentTeal}" />
+    </Style>
+    <Style Selector="Slider.active-green /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
+    </Style>
+
+    <!-- ============================= CHECKBOX ============================= -->
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+    </Style>
+
+    <!-- ============================= DATAGRID ============================= -->
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RowBackground" Value="Transparent" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorderSubtle}" />
+        <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style Selector="DataGridCell">
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="DataGridRow:pointerover /template/ Border#BackgroundBorder">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+    </Style>
+
+</Styles>

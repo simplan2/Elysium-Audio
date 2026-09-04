@@ -11,498 +11,783 @@
     xmlns:netDataGrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
     xmlns:vm="using:ElysiumAudio.ViewModels"
     Title="Elysium Audio"
-    Width="1080"
-    Height="700"
-    d:DesignHeight="540"
-    d:DesignWidth="800"
+    Width="1200"
+    Height="760"
+    MinWidth="1024"
+    MinHeight="640"
+    d:DesignHeight="720"
+    d:DesignWidth="1180"
     x:DataType="vm:MainWindowViewModel"
-    Background="#121212"
-    Foreground="#E4E4E7"
+    Background="{StaticResource BrushBgBase}"
+    Foreground="{StaticResource BrushTextPrimary}"
     Icon="/Assets/avalonia-logo.ico"
     mc:Ignorable="d">
 
     <Design.DataContext>
-        <!--
-            This only sets the DataContext for the previewer in an IDE,
-            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
-        -->
         <vm:MainWindowViewModel />
     </Design.DataContext>
+
     <Window.Resources>
         <conv:DynamicNumberFormatConverter x:Key="DynamicNumberFormatConverter" />
     </Window.Resources>
 
-    <Grid Margin="16" RowDefinitions="Auto, *, Auto, Auto">
+    <Grid Margin="20" RowDefinitions="Auto, *, Auto">
 
-        <!--  Panel Superior: Controles y Título  -->
+        <!--
+            ==========================================================
+            HEADER
+            ==========================================================
+        -->
         <Grid
             Grid.Row="0"
-            Margin="0,0,0,12"
-            ColumnDefinitions="*, Auto">
-            <StackPanel Grid.Column="0">
-                <TextBlock
-                    FontSize="20"
-                    FontWeight="Bold"
-                    Foreground="White"
-                    LetterSpacing="2"
-                    Text="ELYSIUM AUDIO" />
-                <TextBlock
-                    Margin="0,2,0,12"
-                    FontSize="12"
-                    Foreground="#A1A1AA"
-                    Text="Pure linear normalizer designed for high dynamic range music &amp; ballads." />
-            </StackPanel>
+            Margin="0,0,0,16"
+            VerticalAlignment="Center"
+            ColumnDefinitions="Auto, *, Auto">
 
-            <!--  Botones de Acción Rápida  -->
+            <!--  Logo + Título  -->
+            <!--<StackPanel
+                Grid.Column="0"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="14">
+                <Border
+                    Width="42"
+                    Height="42"
+                    Background="{StaticResource BrushAccentDim}"
+                    CornerRadius="10">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="20"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource BrushAccent}"
+                        Text="E" />
+                </Border>
+                <StackPanel VerticalAlignment="Center" Spacing="1">
+                    <TextBlock
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource BrushTextPrimary}"
+                        LetterSpacing="1"
+                        Text="ELYSIUM AUDIO" />
+                    <TextBlock
+                        FontSize="11.5"
+                        Foreground="{StaticResource BrushTextMuted}"
+                        Text="Pure linear normalizer · Hi-Res Mastering Suite" />
+                </StackPanel>
+            </StackPanel>-->
+
+            <!--  Barra de la cola  -->
+            <Grid
+                Grid.Row="0"
+                Margin="0,0,0,0"
+                VerticalAlignment="Bottom"
+                ColumnDefinitions="*, Auto">
+
+                <StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="10">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource BrushTextPrimary}"
+                        Text="Queue" />
+                    <Border
+                        Padding="8,2"
+                        Background="{StaticResource BrushAccentDim}"
+                        CornerRadius="20">
+                        <TextBlock
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Foreground="{StaticResource BrushAccent}"
+                            Text="{Binding AudioFiles.Count, StringFormat={}{0} files}" />
+                    </Border>
+                </StackPanel>
+
+            </Grid>
+
+            <!--  Botones de Acción  -->
             <StackPanel
-                Grid.Column="1"
+                Grid.Column="2"
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="10">
-                <Button
-                    Padding="14,8"
-                    Background="#2563EB"
-                    Command="{Binding AddFileCommand}"
-                    FontWeight="SemiBold"
-                    Foreground="White">
-                    📁 Add Files
+                <Button Classes="ghost" Command="{Binding SelectOutputDirectoryCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path
+                            Width="16"
+                            Height="16"
+                            VerticalAlignment="Center"
+                            Data="M3,3 L8,3 L10,5 L15,5 L15,13 L3,13 Z"
+                            Stroke="{StaticResource BrushTextSecondary}"
+                            StrokeThickness="1.6" />
+                        <TextBlock VerticalAlignment="Center">Output Dir</TextBlock>
+                    </StackPanel>
                 </Button>
-                <Button
-                    Padding="14,8"
-                    Background="#334155"
-                    Command="{Binding SelectOutputDirectoryCommand}"
-                    Foreground="#E4E4E7">
-                    📂 Output Dir
+                <Button Classes="ghost" Command="{Binding ClearListCommand}">
+                    <TextBlock VerticalAlignment="Center">Clear List</TextBlock>
                 </Button>
-                <Button
-                    Padding="14,8"
-                    Background="#27272A"
-                    Command="{Binding ClearListCommand}"
-                    Foreground="#D5D5D9">
-                    🗑️ Clear List
+                <Button Classes="accent" Command="{Binding AddFileCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock VerticalAlignment="Center" FontSize="14">＋</TextBlock>
+                        <TextBlock VerticalAlignment="Center">Add Files</TextBlock>
+                    </StackPanel>
                 </Button>
-
             </StackPanel>
         </Grid>
 
-        <!--  Zona Central: Cola de Archivos (DataGrid)  -->
-        <Border
-            Name="DropZoneBorder"
-            Grid.Row="1"
-            Margin="0,8,0,0"
-            Padding="4"
-            Background="#18181B"
-            BorderBrush="#27272A"
-            BorderThickness="1"
-            CornerRadius="8"
-            DragDrop.AllowDrop="True">
-
-            <DataGrid
-                AutoGenerateColumns="False"
-                Background="Transparent"
-                BorderThickness="0"
-                CanUserReorderColumns="True"
-                CanUserResizeColumns="True"
-                GridLinesVisibility="Horizontal"
-                IsReadOnly="True"
-                ItemsSource="{Binding AudioFiles}"
-                RowHeight="40">
-                <DataGrid.Styles>
-                    <Style Selector="TextBlock">
-                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                        <Setter Property="TextWrapping" Value="NoWrap" />
-                    </Style>
-                </DataGrid.Styles>
-
-                <DataGrid.Columns>
-                    <DataGridTemplateColumn Width="88" Header="Status">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate x:DataType="models:AudioFileModel">
-                                <customControls:AudioStatusIndicator
-                                    Width="32"
-                                    Height="32"
-                                    HorizontalAlignment="Center"
-                                    Status="{Binding Status}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn
-                        Width="270"
-                        Binding="{Binding FileName}"
-                        Header="File Name" />
-                    <DataGridTextColumn
-                        Width="80"
-                        Binding="{Binding Codec}"
-                        Header="Codec" />
-                    <DataGridTextColumn
-                        Width="98"
-                        Binding="{Binding Duration}"
-                        Header="Duration" />
-
-                    <!--  Valores del archivo original  -->
-                    <DataGridTextColumn
-                        Width="120"
-                        Binding="{Binding Loudness}"
-                        Header="Original LUFS" />
-                    <DataGridTextColumn
-                        Width="120"
-                        Binding="{Binding Peak}"
-                        Header="Original Peak" />
-
-                    <!--  Valores del archivo normalizado  -->
-                    <DataGridTextColumn
-                        Width="120"
-                        Binding="{Binding NormalizedLoudness}"
-                        Header="Normalized LUFS" />
-                    <DataGridTextColumn
-                        Width="120"
-                        Binding="{Binding NormalizedPeak}"
-                        Header="Normalized Peak" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-
-        <!--  Panel Inferior: Ajustes Técnicos de Audio  -->
+        <!--
+            ==========================================================
+            CUERPO PRINCIPAL
+            Columna izquierda: controles de masterización
+            Columna derecha: tabla de archivos
+            ==========================================================
+        -->
         <Grid
-            Grid.Row="2"
-            Margin="0,16,0,0"
-            ColumnDefinitions="*, *"
+            Grid.Row="1"
+            ColumnDefinitions="*, 368"
             ColumnSpacing="16">
 
-            <!--  Panel Izquierdo: Configuración de Volumen y Techos  -->
-            <Border
-                Grid.Column="0"
-                Padding="20"
-                Background="#18181B"
-                BorderBrush="#27272A"
-                BorderThickness="1"
-                CornerRadius="10"
-                Focusable="True">
+            <!--  ***************** ZONA IZQUIERDO: COLA DE ARCHIVOS *****************  -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, *">
 
-                <StackPanel Spacing="4">
-                    <!--  Encabezado  -->
-                    <TextBlock
-                        Margin="0,0,0,16"
-                        FontSize="16"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Text="⚙️ DSP y Loudness Calibration" />
 
-                    <!--  1. Sección Target Loudness  -->
-                    <StackPanel Margin="24,0,10,0">
+                <!--  Zona de arrastre con el DataGrid  -->
+                <Border
+                    Name="DropZoneBorder"
+                    Grid.Row="1"
+                    Background="{StaticResource BrushBgPanel}"
+                    BorderBrush="Transparent"
+                    BorderThickness="0"
+                    ClipToBounds="True"
+                    CornerRadius="12"
+                    DragDrop.AllowDrop="True">
+
+                    <Grid>
+                        <DataGrid
+                            AutoGenerateColumns="False"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            CanUserReorderColumns="True"
+                            CanUserResizeColumns="True"
+                            ColumnHeaderHeight="52"
+                            CornerRadius="12"
+                            GridLinesVisibility="Horizontal"
+                            IsReadOnly="True"
+                            ItemsSource="{Binding AudioFiles}"
+                            RowHeight="60">
+
+                            <DataGrid.Styles>
+                                <!--  Texto general  -->
+                                <Style Selector="TextBlock">
+                                    <Setter Property="Foreground" Value="#E0E0E0" />
+                                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+
+                                <!--  Encabezados  -->
+                                <Style Selector="DataGridColumnHeader">
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <Border
+                                                Background="#11131A"
+                                                BorderBrush="Transparent"
+                                                BorderThickness="0">
+                                                <ContentPresenter
+                                                    Margin="0"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Content="{TemplateBinding Content}"
+                                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                    RecognizesAccessKey="True" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter>
+                                </Style>
+
+                                <Style Selector="DataGridColumnHeader TextBlock">
+                                    <Setter Property="TextAlignment" Value="Center" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="MaxLines" Value="2" />
+                                </Style>
+
+                                <!--  Fila normal  -->
+                                <Style Selector="DataGridRow">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                </Style>
+
+                                <!--  Fila seleccionada  -->
+                                <Style Selector="DataGridRow:selected">
+                                    <Setter Property="Background" Value="#0A4C7A" />
+                                    <!--  azul tenue  -->
+                                    <Setter Property="BorderBrush" Value="#00AFFF" />
+                                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                </Style>
+
+                                <!--  Fila con foco  -->
+                                <Style Selector="DataGridRow:focus">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0,0,0,0" />
+                                </Style>
+
+                                <!--  Celdas  -->
+                                <Style Selector="DataGridCell">
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0,0,0,0" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="FocusAdorner" Value="{x:Null}" />
+                                    <Setter Property="Focusable" Value="False" />
+
+                                </Style>
+
+                                <!--  Celda con foco  -->
+                                <Style Selector="DataGridCell:focus">
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="FocusAdorner" Value="{x:Null}" />
+
+                                    <Setter Property="Focusable" Value="False" />
+                                </Style>
+                            </DataGrid.Styles>
+
+                            <!--  Override del separador interno  -->
+                            <!--<Style Selector="DataGridColumnHeader /template/Border">
+								<Setter Property="BorderBrush" Value="Transparent"/>
+								<Setter Property="BorderThickness" Value="0"/>
+							</Style>-->
+
+                            <!--  Columnas  -->
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn
+                                    Width="60"
+                                    MinWidth="60"
+                                    Header="#">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="models:AudioFileModel">
+                                            <customControls:AudioStatusIndicator
+                                                Width="32"
+                                                Height="32"
+                                                HorizontalAlignment="Center"
+                                                Status="{Binding Status}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn
+                                    Width="120"
+                                    MinWidth="120"
+                                    Binding="{Binding FileName}"
+                                    Header="File Name" />
+                                <DataGridTextColumn
+                                    Width="98"
+                                    MinWidth="98"
+                                    Binding="{Binding Codec}"
+                                    Header="Codec" />
+                                <DataGridTextColumn
+                                    Width="108"
+                                    MinWidth="108"
+                                    Binding="{Binding Duration}"
+                                    Header="Duration" />
+                                <DataGridTextColumn
+                                    Width="98"
+                                    MinWidth="98"
+                                    Binding="{Binding Loudness}"
+                                    Header="LUFS" />
+                                <DataGridTextColumn
+                                    Width="98"
+                                    MinWidth="98"
+                                    Binding="{Binding Peak}"
+                                    Header="Peak" />
+                                <DataGridTextColumn
+                                    Width="98"
+                                    MinWidth="98"
+                                    Binding="{Binding NormalizedLoudness}"
+                                    Header="Norm.&#x0a;LUFS" />
+                                <DataGridTextColumn
+                                    Width="98"
+                                    MinWidth="98"
+                                    Binding="{Binding NormalizedPeak}"
+                                    Header="Norm.&#x0a;Peak" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <!--  Borde del Grid  -->
+                        <Border
+                            Background="Transparent"
+                            BorderBrush="{StaticResource BrushBorderDefault}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            IsHitTestVisible="False" />
+
+                        <!--  Mensaje de arrastre de archivos  -->
                         <TextBlock
-                            FontSize="13"
+                            Margin="20"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="16"
                             FontWeight="Medium"
-                            Foreground="#A1A1AA"
-                            Text="Target Loudness (LUFS)" />
+                            Foreground="{StaticResource BrushTextMuted}"
+                            IsVisible="{Binding ShowDropMessage}"
+                            Text="Drop WAV / FLAC here or use Add Files" />
 
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
-                            <!--  Slider  -->
-                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
-                                <TextBlock
-                                    Grid.Column="0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="{Binding MinTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                <Slider
-                                    Grid.Column="2"
-                                    Foreground="#2563EB"
-                                    Maximum="-6.0"
-                                    Minimum="-24.0"
-                                    Value="{Binding TargetLufs}" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="{Binding MaxTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                            </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
 
-                            <!--  Caja de valor  -->
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <TextBox
-                                    Width="42"
-                                    Height="26"
-                                    MinWidth="42"
-                                    Padding="1,0"
-                                    VerticalContentAlignment="Center"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    BorderThickness="0"
-                                    CornerRadius="4"
-                                    FontSize="13"
-                                    Foreground="#319CD7"
-                                    KeyDown="OnTargetLufsKeyDown"
-                                    LostFocus="OnTargetLufsLostFocus"
-                                    Text="{Binding TargetLufs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                    TextAlignment="Center" />
-
-                                <TextBlock
-                                    Margin="1,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="#E4E4E7"
-                                    Text="LUFS" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-
-                    <!--  2. Sección True Peak Ceiling  -->
-                    <StackPanel Margin="24,0,10,0">
-                        <TextBlock
-                            FontSize="13"
-                            FontWeight="Medium"
-                            Foreground="#A1A1AA"
-                            Text="True Peak Ceiling Threshold" />
-
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
-                            <!--  Slider para True Peak  -->
-                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
-                                <TextBlock
-                                    Grid.Column="0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="{Binding MinPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                <Slider
-                                    Grid.Column="2"
-                                    Maximum="-0.1"
-                                    Minimum="-3.0"
-                                    Value="{Binding TruePeakCeiling}" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="{Binding MaxPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                            </Grid>
-
-                            <StackPanel
-                                Grid.Column="2"
-                                HorizontalAlignment="Left"
-                                Orientation="Horizontal">
-                                <TextBox
-                                    Width="42"
-                                    Height="26"
-                                    MinWidth="42"
-                                    Padding="1,0"
-                                    VerticalContentAlignment="Center"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    BorderThickness="0"
-                                    CornerRadius="4"
-                                    FontSize="13"
-                                    Foreground="#32ADD6"
-                                    KeyDown="OnTruePeakKeyDown"
-                                    LostFocus="OnTruePeakLostFocus"
-                                    Text="{Binding TruePeakCeilingString, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                    TextAlignment="Center" />
-                                <TextBlock
-                                    Margin="1,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="#E4E4E7"
-                                    Text="dBTP" />
-                            </StackPanel>
-                        </Grid>
-
-                    </StackPanel>
-
-                    <!--  3 Sección Release Time (Nuevo)  -->
-                    <StackPanel Margin="24,0,10,0">
-                        <TextBlock
-                            FontSize="13"
-                            FontWeight="Medium"
-                            Foreground="#A1A1AA"
-                            Text="Release Time (Tiempo de Liberación)" />
-
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
-                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
-                                <TextBlock
-                                    Grid.Column="0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="5" />
-                                <Slider
-                                    Grid.Column="2"
-                                    Foreground="#D97706"
-                                    IsSnapToTickEnabled="True"
-                                    Maximum="500"
-                                    Minimum="5"
-                                    TickFrequency="1" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="500" />
-                            </Grid>
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <TextBox
-                                    Name="ReleaseTimeMsInput"
-                                    Width="42"
-                                    Height="26"
-                                    MinWidth="42"
-                                    Padding="1,0"
-                                    VerticalContentAlignment="Center"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    BorderThickness="0"
-                                    CornerRadius="4"
-                                    FontSize="13"
-                                    Foreground="#F59E0B"
-                                    KeyDown="OnReleaseTimeMsKeyDown"
-                                    LostFocus="OnReleaseTimeMsLostFocus"
-                                    Text="{Binding ReleaseTimeMsText, Mode=TwoWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                    TextAlignment="Center" />
-                                <TextBlock
-                                    Margin="1,0,0,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="#E4E4E7"
-                                    Text="ms" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-
-                    <!--  4. Sección Look-ahead Time (Nuevo)  -->
-                    <StackPanel Margin="24,0,10,0">
-                        <TextBlock
-                            FontSize="13"
-                            FontWeight="Medium"
-                            Foreground="#A1A1AA"
-                            Text="Look-ahead Time (Tiempo de Avance)" />
-
-                        <Grid VerticalAlignment="Center" ColumnDefinitions="*,64,88">
-                            <Grid ColumnDefinitions="28, 2, *, 2, 28">
-                                <TextBlock
-                                    Grid.Column="0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="0" />
-                                <Slider
-                                    Grid.Column="2"
-                                    Foreground="#10B981"
-                                    IsSnapToTickEnabled="True"
-                                    Maximum="15"
-                                    Minimum="0"
-                                    TickFrequency="0.1" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
-                                    Foreground="#A1A1AA"
-                                    Text="15" />
-                            </Grid>
-
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <TextBox
-                                    Name="LookAheadInput"
-                                    Width="42"
-                                    Height="26"
-                                    MinWidth="42"
-                                    Padding="1,0"
-                                    VerticalContentAlignment="Center"
-                                    Background="Transparent"
-                                    BorderBrush="Transparent"
-                                    BorderThickness="0"
-                                    CornerRadius="4"
-                                    FontSize="13"
-                                    Foreground="#10B981"
-                                    KeyDown="OnLookAheadKeyDown"
-                                    LostFocus="OnLookAheadLostFocus"
-                                    Text="{Binding LookAheadTimeMsText, Mode=TwoWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                    TextAlignment="Center" />
-                                <TextBlock
-                                    Margin="1,0,0,0"
-                                    VerticalAlignment="Center"
-                                    FontSize="12"
-                                    Foreground="#E4E4E7"
-                                    Text="ms" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-
-                </StackPanel>
-            </Border>
-
-
-
-            <!--  Panel Derecho: Ajustes del Limitador Soft-Limiter y Ejecución  -->
+            <!--  ***************** PANEL DERECHO: CONTROLES *****************  -->
             <Border
                 Grid.Column="1"
-                Padding="16"
-                Background="#18181B"
-                BorderBrush="#27272A"
+                Background="{StaticResource BrushBgPanel}"
+                BorderBrush="{StaticResource BrushBorderDefault}"
                 BorderThickness="1"
-                CornerRadius="8">
-                <Grid RowDefinitions="*, Auto, Auto">
-                    <StackPanel Grid.Row="0" Spacing="12">
-                        <TextBlock
-                            FontWeight="Bold"
-                            Foreground="White"
-                            Text="Mastering Execution &amp; Safety" />
+                CornerRadius="12"
+                Focusable="True">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="24" RowDefinitions="Auto, 28, Auto, 20, Auto, *, 54">
 
-                        <CheckBox
-                            Content="Strict Linear Mode (Protects Ballad Micro-dynamics)"
-                            Foreground="#E4E4E7"
-                            IsChecked="{Binding IsStrictLinearMode}" />
+                        <!--  1. DSP / Loudness Calibration  -->
+                        <Grid
+                            Grid.Row="0"
+                            VerticalAlignment="Center"
+                            ColumnDefinitions="*, Auto">
+                            <TextBlock
+                                FontSize="15"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource BrushTextPrimary}">
+                                <Run
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource BrushAccent}"
+                                    Text="DSP" />
+                                <Run Text=" · Loudness Calibration" />
+                            </TextBlock>
 
-                        <!--  Casilla para forzar ID3v2.3 en WAV y mantener carátulas  -->
-                        <CheckBox
-                            Content="Preserve Metadata &amp; Injected Cover Art (ID3v2.3)"
-                            Foreground="#E4E4E7"
-                            IsChecked="True" />
-                    </StackPanel>
+                            <Button
+                                Grid.Column="1"
+                                Width="24"
+                                Height="24"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Background="#2D2D2D"
+                                BorderBrush="#444"
+                                BorderThickness="1"
+                                Command="{Binding DefaultNormalizationValuesCommand}"
+                                CornerRadius="4"
+                                ToolTip.Tip="Resetear">
+                                <Path
+                                    Width="18"
+                                    Height="18"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Data="M12 5V1L8 5l4 4V6c3.31 0 6 2.69 6 6           0 1.66-.67 3.16-1.76 4.24l1.42 1.42          C19.07 16.07 20 14.13 20 12c0-4.42-3.58-8-8-8z          M6.34 6.34L4.92 7.76C3.93 8.74 3.26 10.24 3.26 12          c0 4.42 3.58 8 8 8v4l4-4-4-4v3          c-3.31 0-6-2.69-6-6 0-1.66.67-3.16 1.76-4.24z"
+                                    Fill="White"
+                                    Stretch="Uniform" />
+                            </Button>
 
-                    <!--  Botón de Ejecución Principal  -->
-                    <Button
-                        Grid.Row="1"
-                        Padding="12"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Center"
-                        Background="#059669"
-                        Command="{Binding StartNormalizationCommand}"
-                        FontWeight="Bold"
-                        Foreground="White">
-                        ▶ Run Batch Normalization
-                    </Button>
-                    <TextBlock
-                        Grid.Row="2"
-                        Margin="0,6,0,0"
-                        HorizontalAlignment="Center"
-                        FontSize="10"
-                        Foreground="#A1A1AA"
-                        Text="{Binding OutputDirectory, StringFormat='Salida: {0}'}" />
-                </Grid>
+                        </Grid>
+
+                        <!--  Separador  -->
+                        <Rectangle
+                            Grid.Row="1"
+                            Height="1"
+                            VerticalAlignment="Center"
+                            Fill="{StaticResource BrushBorderSubtle}" />
+
+                        <!--  2. Controles  -->
+                        <Grid Grid.Row="2" RowDefinitions="64,64,64,64">
+
+                            <!--  1. Target Loudness  -->
+                            <Grid Grid.Row="0">
+                                <Grid
+                                    Grid.Row="0"
+                                    VerticalAlignment="Stretch"
+                                    RowDefinitions="22,*">
+
+                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="Medium"
+                                            Foreground="{StaticResource BrushTextSecondary}"
+                                            Text="Target Loudness" />
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <TextBox
+                                                Width="46"
+                                                Height="20"
+                                                MinWidth="46"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                Classes="param"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushAccent}"
+                                                KeyDown="OnTargetLufsKeyDown"
+                                                LostFocus="OnTargetLufsLostFocus"
+                                                Text="{Binding TargetLufs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                TextAlignment="Center" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="11"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="LUFS" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="1" RowDefinitions="14,*">
+                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MinTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                        <Slider
+                                            Grid.Column="1"
+                                            Classes="active-accent"
+                                            Maximum="-6.0"
+                                            Minimum="-24.0"
+                                            TickFrequency="0.1"
+                                            Value="{Binding TargetLufs}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MaxTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            <!--  2. True Peak Ceiling  -->
+                            <Grid Grid.Row="1">
+                                <Grid
+                                    Grid.Row="0"
+                                    VerticalAlignment="Stretch"
+                                    RowDefinitions="22,*">
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="Medium"
+                                            Foreground="{StaticResource BrushTextSecondary}"
+                                            Text="True Peak Ceiling" />
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <TextBox
+                                                Width="46"
+                                                Height="24"
+                                                MinWidth="46"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                Classes="param"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushInfo}"
+                                                KeyDown="OnTruePeakKeyDown"
+                                                LostFocus="OnTruePeakLostFocus"
+                                                Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                TextAlignment="Center" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="11"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="dBTP" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="1" RowDefinitions="14,*">
+                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MinPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                        <Slider
+                                            Grid.Column="1"
+                                            Classes="active-teal"
+                                            Maximum="-0.1"
+                                            Minimum="-3.0"
+                                            TickFrequency="0.1"
+                                            Value="{Binding TruePeakCeiling}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MaxPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            <!--  3. Release Time  -->
+                            <Grid Grid.Row="2">
+                                <Grid
+                                    Grid.Row="0"
+                                    VerticalAlignment="Stretch"
+                                    RowDefinitions="22,*">
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="Medium"
+                                            Foreground="{StaticResource BrushTextSecondary}"
+                                            Text="Release Time" />
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <TextBox
+                                                Name="ReleaseTimeMsInput"
+                                                Width="46"
+                                                Height="24"
+                                                MinWidth="46"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                Classes="param"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushWarning}"
+                                                KeyDown="OnReleaseTimeMsKeyDown"
+                                                LostFocus="OnReleaseTimeMsLostFocus"
+                                                Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                TextAlignment="Center" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="11"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="ms" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="1" RowDefinitions="14,*">
+                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                        <Slider
+                                            Grid.Column="1"
+                                            Classes="active-amber"
+                                            IsSnapToTickEnabled="True"
+                                            Maximum="200"
+                                            Minimum="20"
+                                            TickFrequency="0.1"
+                                            Value="{Binding ReleaseTimeMs}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            <!--  4. Look-ahead Time  -->
+                            <Grid Grid.Row="3">
+                                <Grid
+                                    Grid.Row="0"
+                                    VerticalAlignment="Stretch"
+                                    RowDefinitions="22,*">
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="13"
+                                            FontWeight="Medium"
+                                            Foreground="{StaticResource BrushTextSecondary}"
+                                            Text="Look-ahead Time" />
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <TextBox
+                                                Name="LookAheadInput"
+                                                Width="46"
+                                                Height="24"
+                                                MinWidth="46"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                Classes="param"
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushSuccess}"
+                                                KeyDown="OnLookAheadKeyDown"
+                                                LostFocus="OnLookAheadLostFocus"
+                                                Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                TextAlignment="Center" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="11"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="ms" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+
+                                <Grid Grid.Row="1" RowDefinitions="14,*">
+                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                        <Slider
+                                            Grid.Column="1"
+                                            Classes="active-green"
+                                            IsSnapToTickEnabled="True"
+                                            Maximum="10"
+                                            Minimum="1"
+                                            TickFrequency="0.1"
+                                            Value="{Binding LookAheadTimeMs}" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            FontSize="10.5"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            <Grid Grid.Row="1" />
+                        </Grid>
+
+                        <!--  Separador  -->
+                        <Rectangle
+                            Grid.Row="3"
+                            Height="1"
+                            VerticalAlignment="Center"
+                            Fill="{StaticResource BrushBorderSubtle}" />
+
+                        <!--  3. Execution & Safety  -->
+                        <StackPanel
+                            Grid.Row="4"
+                            Margin="0,8,0,0"
+                            Spacing="16">
+
+                            <TextBlock
+                                FontSize="15"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource BrushTextPrimary}">
+                                <Run
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource BrushAccentTeal}"
+                                    Text="Execution" />
+                                <Run Text=" · Safety" />
+                            </TextBlock>
+
+                            <CheckBox
+                                Content="Strict Linear Mode (Protects Ballad Micro-dynamics)"
+                                Foreground="{StaticResource BrushTextSecondary}"
+                                IsChecked="{Binding IsStrictLinearMode}" />
+                            <CheckBox
+                                Content="Preserve Metadata (ID3v2.3)"
+                                Foreground="{StaticResource BrushTextSecondary}"
+                                IsChecked="True" />
+
+                            <!--  Directorio de salida  -->
+                            <Border
+                                Padding="10"
+                                Background="{StaticResource BrushBgPanelAlt}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock
+                                        FontSize="10.5"
+                                        Foreground="{StaticResource BrushTextMuted}"
+                                        Text="OUTPUT DIRECTORY" />
+                                    <TextBlock
+                                        FontSize="11.5"
+                                        Foreground="{StaticResource BrushTextSecondary}"
+                                        Text="{Binding OutputDirectory}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!--  4. Botón principal de ejecución  -->
+                        <Button
+                            Grid.Row="6"
+                            Height="44"
+                            HorizontalAlignment="Stretch"
+                            Classes="success"
+                            Command="{Binding StartNormalizationCommand}">
+                            <StackPanel
+                                HorizontalAlignment="Center"
+                                Orientation="Horizontal"
+                                Spacing="8">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    Foreground="White"
+                                    Text="▶" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Foreground="White"
+                                    Text="Run Batch Normalization" />
+                            </StackPanel>
+                        </Button>
+
+                    </Grid>
+                </ScrollViewer>
             </Border>
         </Grid>
 
-        <!--  Barra de Estado Global  -->
+        <!--
+            ==========================================================
+            BARRA DE ESTADO GLOBAL
+            ==========================================================
+        -->
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             Margin="0,14,0,0"
-            Padding="8,4"
-            Background="#18181B"
-            CornerRadius="4">
+            Padding="12,7"
+            Background="{StaticResource BrushBgPanel}"
+            BorderBrush="{StaticResource BrushBorderDefault}"
+            BorderThickness="1"
+            CornerRadius="8">
             <TextBlock
                 VerticalAlignment="Center"
                 FontFamily="Consolas,Monospace"
-                FontSize="11"
-                Foreground="#34D399"
+                FontSize="11.5"
+                Foreground="{StaticResource BrushSuccess}"
                 Text="{Binding SystemStatus}" />
         </Border>
+
     </Grid>
 </Window>

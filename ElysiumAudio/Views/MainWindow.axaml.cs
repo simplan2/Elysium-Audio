@@ -234,13 +234,13 @@ namespace ElysiumAudio.Views
             if (NumericRegex.IsMatch(input) &&
                 double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
             {
-                ViewModel.ReleaseTimeMsText = parsed.ToString("F1", CultureInfo.InvariantCulture); // clamp en el setter
-                tb.Text = ViewModel.ReleaseTimeMsText;
+                ViewModel.ReleaseTimeMs = parsed; // clamp en el setter
+                tb.Text = ViewModel.ReleaseTimeMs.ToString();
             }
             else
             {
                 // Restaurar el valor en caso de entrada de caracteres inválidos
-                tb.Text = ViewModel.ReleaseTimeMsText;
+                tb.Text = ViewModel.ReleaseTimeMs.ToString();
             }
         }
 
@@ -267,18 +267,20 @@ namespace ElysiumAudio.Views
                 }
             }
         }
-        private void ValidateLookAheadTimeMs(string text, TextBox tb)
+        private void ValidateLookAheadTimeMs(string input, TextBox tb)
         {
             if(ViewModel == null) return;
-            if(NumericRegex.IsMatch(text) && double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
+            // Validar que el input sea un número válido y esté en el rango permitido
+            if (NumericRegex.IsMatch(input) &&
+                double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
             {
-                ViewModel.LookAheadTimeMsText = parsed.ToString("F1", CultureInfo.InvariantCulture); // clamp en el setter
-                tb.Text = ViewModel.LookAheadTimeMsText;
+                ViewModel.LookAheadTimeMs = parsed; // clamp en el setter
+                tb.Text = ViewModel.LookAheadTimeMs.ToString();
             }
             else
             {
                 // Restaurar el valor en caso de entrada de caracteres inválidos
-                tb.Text = ViewModel.LookAheadTimeMsText;
+                tb.Text = ViewModel.LookAheadTimeMs.ToString();
             }
         }
 

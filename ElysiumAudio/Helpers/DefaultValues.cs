@@ -8,24 +8,25 @@ namespace ElysiumAudio.Helpers
     public static class DefaultValues
     {
         // Valor típico de LUFS objetivo para normalización de audio
-        public const double MIN_TARGET_LUFS = -24.0;
-        public const double MAX_TARGET_LUFS = -6.0;
-        public const double DEFAULT_TARGET_LUFS = -14.0;
+        // Loudness (LUFS) - ITU-R BS.1770
+        public const double MIN_TARGET_LUFS = -24.0;   // Broadcast / música clásica
+        public const double MAX_TARGET_LUFS = -6.0;    // Masters muy comprimidos (EDM, DJ)
+        public const double DEFAULT_TARGET_LUFS = -14.0; // Estándar de Spotify, YouTube, Tidal
 
-        // Valor típico de techo de pico verdadero en dBTP
-        public const double MIN_TRUE_PEAK_CEILING = -3.0;
-        public const double MAX_TRUE_PEAK_CEILING = -0.1;
-        public const double DEFAULT_TRUE_PEAK_CEILING = -1.0;
+        // True Peak Ceiling (dBTP) - evita clipping inter-sample
+        public const double MIN_TRUE_PEAK_CEILING = -3.0;   // Broadcast seguro
+        public const double MAX_TRUE_PEAK_CEILING = -0.1;   // Límite técnico
+        public const double DEFAULT_TRUE_PEAK_CEILING = -1.0; // Recomendado para streaming
 
-        // Tiempo de liberación del limitador en milisegundos
-        public const double MIN_RELEASE_TIME_MS = 20.0;
-        public const double MAX_RELEASE_TIME_MS = 200.0;
-        public const double DEFAULT_RELEASE_TIME_MS = 50.0;
+        // Release Time (ms) - tiempo de liberación del limitador
+        public const double MIN_RELEASE_TIME_MS = 20.0;   // Limitador rápido/agresivo
+        public const double MAX_RELEASE_TIME_MS = 200.0;  // Limitador suave/natural
+        public const double DEFAULT_RELEASE_TIME_MS = 50.0; // Balance entre control y transparencia
 
-        // Tiempo de anticipación del limitador en milisegundos
-        public const double MIN_LOOK_AHEAD_TIME_MS = 1.0;
-        public const double MAX_LOOK_AHEAD_TIME_MS = 10.0;
-        public const double DEFAULT_LOOK_AHEAD_TIME_MS = 5.0;
+        // Look-Ahead (ms) - anticipación del limitador
+        public const double MIN_LOOK_AHEAD_TIME_MS = 1.0;   // Latencia mínima
+        public const double MAX_LOOK_AHEAD_TIME_MS = 10.0;  // Máxima precisión
+        public const double DEFAULT_LOOK_AHEAD_TIME_MS = 5.0; // Estándar en limitadores modernos
 
         // Directorio de salida por defecto: subcarpeta "ElysiumAudio_Normalized" en el escritorio
         // Devuelve null si no se puede resolver (en cuyo caso se usa el directorio de entrada).
