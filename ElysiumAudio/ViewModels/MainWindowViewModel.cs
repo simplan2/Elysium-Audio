@@ -24,49 +24,34 @@ namespace ElysiumAudio.ViewModels
         #region Fields
         private readonly AudioEngineService _audioEngine = new();
         private readonly ISettingsService _settingsService;
-        private readonly Models.UserSettings _settings;
+
         #endregion
 
         #region Properties
 
         // 1. Enlazado al Slider LUFS y TextBox numérico de la interfaz
-        //[ObservableProperty]
-        //private string? _targetLufsText = DefaultValues.DEFAULT_TARGET_LUFS.ToString("F1", CultureInfo.InvariantCulture);
-
         [ObservableProperty]
         public double _targetLufs = DefaultValues.DEFAULT_TARGET_LUFS;
         public double MinTargetLufs { get; set; } = DefaultValues.MIN_TARGET_LUFS;
         public double MaxTargetLufs { get; set; } = DefaultValues.MAX_TARGET_LUFS;
 
         // 2. Enlazado al TextBox del techo de pico real
-        //[ObservableProperty]
-        //private string? _truePeakCeilingString = DefaultValues.DEFAULT_TRUE_PEAK_CEILING.ToString("F1", CultureInfo.InvariantCulture);
-
         [ObservableProperty]
         public double _truePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING;
         public double MinPeakCeiling { get; set; } = DefaultValues.MIN_TRUE_PEAK_CEILING;
         public double MaxPeakCeiling { get; set; } = DefaultValues.MAX_TRUE_PEAK_CEILING;
 
         // 3. Tiempo de liberacion del limitador en milisegundos
-        //[ObservableProperty]
-        //private string? _releaseTimeMsText = DefaultValues.DEFAULT_RELEASE_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
-
         [ObservableProperty]
         private double _releaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
-        public double MinReleaseTimeMs { get; set; } = DefaultValues.MIN_RELEASE_TIME_MS;
-        
+        public double MinReleaseTimeMs { get; set; } = DefaultValues.MIN_RELEASE_TIME_MS;        
         public double MaxReleaseTimeMs { get; set; } = DefaultValues.MAX_RELEASE_TIME_MS;     
 
         // 4. Tiempo de anticipación del limitador en milisegundos
-        //[ObservableProperty]
-        //private string? _lookAheadTimeMsText = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS.ToString("F1", CultureInfo.InvariantCulture);
-
-        [ObservableProperty]
+          [ObservableProperty]
         private double _lookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
-
         public double MinLookAheadTimeMs { get; set; } = DefaultValues.MIN_LOOK_AHEAD_TIME_MS;
         public double MaxLookAheadTimeMs { get; set; } = DefaultValues.MAX_LOOK_AHEAD_TIME_MS;
-
 
 
         [ObservableProperty]
@@ -82,47 +67,56 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private string _outputDirectory = DefaultValues.GetDefaultOutputDirectory()
             ?? Environment.CurrentDirectory;
-
+ 
         public ObservableCollection<AudioFileModel> AudioFiles { get; set; } = new();
-       
-        public bool ShowDropMessage => AudioFiles.Count == 0;
+
         #endregion
 
         #region constructors
 
-        public MainWindowViewModel() : this(new Services.SettingsService())
-        {
-        }
-
         public MainWindowViewModel(ISettingsService settingsService)
         {
             _settingsService = settingsService;
-            _settings = _settingsService.Load();
 
             // Cargar las preferencias guardadas del usuario
-            TargetLufs = _settings.TargetLufs;
-            TruePeakCeiling = _settings.TruePeakCeiling;
-            ReleaseTimeMs = _settings.ReleaseTimeMs;
-            LookAheadTimeMs = _settings.LookAheadTimeMs;
+            TargetLufs = _settingsService.Current.TargetLufs;
+            TruePeakCeiling = _settingsService.Current.TruePeakCeiling;
+            ReleaseTimeMs = _settingsService.Current.ReleaseTimeMs;
+            LookAheadTimeMs = _settingsService.Current.LookAheadTimeMs;
 
-            if (!string.IsNullOrWhiteSpace(_settings.OutputDirectory) && Directory.Exists(_settings.OutputDirectory))
+            if (!string.IsNullOrWhiteSpace(_settingsService.Current.OutputDirectory) && Directory.Exists(_settingsService.Current.OutputDirectory))
             {
-                OutputDirectory = _settings.OutputDirectory;
+                OutputDirectory = _settingsService.Current.OutputDirectory;
             }
 
-            AudioFiles.CollectionChanged += AudioFiles_CollectionChanged;
+            // Reaccionar a cambios externos del modelo de configuración
+            _settingsService.SettingsChanged += OnSettingsChanged;
         }
 
-        private void AudioFiles_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        // Sincroniza las propiedades del ViewModel si el modelo de configuración cambia
+        // por otra vía distinta a este ViewModel (ej. reset, otra ventana, etc.).
+        // El guard (when) evita bucles: si el cambio proviene de aquí, el valor ya coincide.
+        private void OnSettingsChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            base.OnPropertyChanged(nameof(ShowDropMessage));
-        }
-
-        // Guarda todas las preferencias del modelo en el servicio de persistencia.
-        // Se invoca al cerrar la aplicación para escribir los datos una sola vez.
-        public void SaveSettings()
-        {
-            _settingsService.Save(_settings);
+            var settings = _settingsService.Current;
+            switch (e.PropertyName)
+            {
+                case nameof(Models.UserSettings.TargetLufs) when TargetLufs != settings.TargetLufs:
+                    TargetLufs = settings.TargetLufs;
+                    break;
+                case nameof(Models.UserSettings.TruePeakCeiling) when TruePeakCeiling != settings.TruePeakCeiling:
+                    TruePeakCeiling = settings.TruePeakCeiling;
+                    break;
+                case nameof(Models.UserSettings.ReleaseTimeMs) when ReleaseTimeMs != settings.ReleaseTimeMs:
+                    ReleaseTimeMs = settings.ReleaseTimeMs;
+                    break;
+                case nameof(Models.UserSettings.LookAheadTimeMs) when LookAheadTimeMs != settings.LookAheadTimeMs:
+                    LookAheadTimeMs = settings.LookAheadTimeMs;
+                    break;
+                case nameof(Models.UserSettings.OutputDirectory) when OutputDirectory != settings.OutputDirectory:
+                    OutputDirectory = settings.OutputDirectory;
+                    break;
+            }
         }
         #endregion
 
@@ -293,7 +287,10 @@ namespace ElysiumAudio.ViewModels
                 if (folder != null)
                 {
                     OutputDirectory = folder.Path.LocalPath;
-                    _settings.OutputDirectory = OutputDirectory;
+                    if (_settingsService.Current.OutputDirectory != OutputDirectory)
+                    {
+                        _settingsService.Current.OutputDirectory = OutputDirectory;
+                    }
                     SystemStatus = $"Directorio de salida: {OutputDirectory}";
                 }
             }
@@ -364,7 +361,7 @@ namespace ElysiumAudio.ViewModels
 
 
         // =========================================================================
-        // SINK 1: EVENTOS CUANDO EL USUARIO MUEVE LOS CONTROLES NUMÉRICOS (SLIDERS)
+        // EVENTOS CUANDO EL USUARIO MUEVE LOS CONTROLES NUMÉRICOS (SLIDERS)
         // =========================================================================
 
         partial void OnTargetLufsChanged(double value)
@@ -373,13 +370,18 @@ namespace ElysiumAudio.ViewModels
             double clamped = Math.Clamp(value, DefaultValues.MIN_TARGET_LUFS, DefaultValues.MAX_TARGET_LUFS);
             clamped = Math.Round(clamped, 1);
 
-            if (Math.Abs(_targetLufs - clamped) > 0.01)
+            if (Math.Abs(value - clamped) > 0.01)
             {
-                _targetLufs = clamped;
+                TargetLufs = clamped;
+                // Aquí sí hacemos return, porque la reasignación volverá a llamar a este método
+                return;
             }
 
-            // Actualizar el modelo de preferencias del usuario
-            _settings.TargetLufs = _targetLufs;
+            // Solo llegamos aquí cuando el valor ya está clamped
+            if (_settingsService.Current.TargetLufs != TargetLufs)
+            {
+                _settingsService.Current.TargetLufs = TargetLufs;
+            }
         }
 
         partial void OnTruePeakCeilingChanged(double value)
@@ -388,27 +390,35 @@ namespace ElysiumAudio.ViewModels
             double clamped = Math.Clamp(value, DefaultValues.MIN_TRUE_PEAK_CEILING, DefaultValues.MAX_TRUE_PEAK_CEILING);
             clamped = Math.Round(clamped, 1);
 
-            if (Math.Abs(_truePeakCeiling - clamped) > 0.01)
+            if (Math.Abs(value - clamped) > 0.01)
             {
-                _truePeakCeiling = clamped;
+                TruePeakCeiling = clamped;
+                return; // Evitamos bucles infinitos al reasignar
             }
 
             // Actualizar el modelo de preferencias del usuario
-            _settings.TruePeakCeiling = _truePeakCeiling;
+            if (_settingsService.Current.TruePeakCeiling != TruePeakCeiling)
+            {
+                _settingsService.Current.TruePeakCeiling = TruePeakCeiling;
+            }
         }
 
-        // Esta función se invoca cuando el usuario mueve el slider de ReleaseTimeMs, y actualiza tanto la propiedad como el texto asociado.
+        // Esta función se invoca cuando el usuario mueve el slider de ReleaseTimeMs
         partial void OnLookAheadTimeMsChanged(double value)
         {
             double clamped = Math.Clamp(value, DefaultValues.MIN_LOOK_AHEAD_TIME_MS, DefaultValues.MAX_LOOK_AHEAD_TIME_MS);
             clamped = Math.Round(clamped, 1);
 
-            if (Math.Abs(_lookAheadTimeMs - clamped) > 0.01)
+            if (Math.Abs(value - clamped) > 0.01)
             {
-                _lookAheadTimeMs = clamped;
+                LookAheadTimeMs = clamped;
+                return; // Evitamos bucles infinitos al reasignar
             }
 
-            _settings.LookAheadTimeMs = _lookAheadTimeMs;
+            if (_settingsService.Current.LookAheadTimeMs != LookAheadTimeMs)
+            {
+                _settingsService.Current.LookAheadTimeMs = LookAheadTimeMs;
+            }
         }
 
         partial void OnReleaseTimeMsChanged(double value)
@@ -416,15 +426,18 @@ namespace ElysiumAudio.ViewModels
             double clamped = Math.Clamp(value, DefaultValues.MIN_RELEASE_TIME_MS, DefaultValues.MAX_RELEASE_TIME_MS);
             clamped = Math.Round(clamped, 1);
 
-            if(Math.Abs(_releaseTimeMs - clamped) > 0.01)
+            if(Math.Abs(value - clamped) > 0.01)
             {
-                _releaseTimeMs = clamped;
+                ReleaseTimeMs = clamped;
+                return; // Evitamos bucles infinitos al reasignar
             }
 
-            _settings.ReleaseTimeMs = _releaseTimeMs;
+            if (_settingsService.Current.ReleaseTimeMs != ReleaseTimeMs)
+            {
+                _settingsService.Current.ReleaseTimeMs = ReleaseTimeMs;
+            }
         }
 
-      
         #endregion
 
 

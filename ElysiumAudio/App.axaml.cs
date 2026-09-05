@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using ElysiumAudio.Services;
 using ElysiumAudio.ViewModels;
 using ElysiumAudio.Views;
+using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 
 namespace ElysiumAudio
@@ -22,16 +23,33 @@ namespace ElysiumAudio
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Creamos e inyectamos el servicio de configuración
-                var settingsService = new SettingsService();
-                var viewModel = new MainWindowViewModel(settingsService);
+                var services = new ServiceCollection();
+
+                // Aquí puedes registrar otros servicios si es necesario
+                services.AddSingleton<ISettingsService, SettingsService>();
+                // ViewModels
+                services.AddSingleton<MainWindowViewModel>();
+
+                var provider = services.BuildServiceProvider();
+
 
                 desktop.MainWindow = new MainWindow
                 {
-                    DataContext = viewModel,
+                    DataContext = provider.GetService<MainWindowViewModel>(),
                 };
 
-                // Guardar todas las preferencias del usuario al cerrar la app
-                desktop.MainWindow.Closing += (_, _) => viewModel.SaveSettings();
+                // Guardar las preferencias al cerrar la ventana (cierre con 'X'),
+                // y como salvaguarda también al salir completamente de la aplicación.
+                desktop.MainWindow.Closing += (_, _) =>
+                {
+                    provider.GetService<ISettingsService>()?.Save();
+                };
+
+                desktop.Exit += (sender, e) =>
+                {
+                    var settingsService = provider.GetService<ISettingsService>();
+                    settingsService?.Save();
+                };
             }
 
             base.OnFrameworkInitializationCompleted();

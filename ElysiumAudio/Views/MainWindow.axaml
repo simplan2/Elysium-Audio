@@ -28,6 +28,7 @@
     </Design.DataContext>
 
     <Window.Resources>
+        <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         <conv:DynamicNumberFormatConverter x:Key="DynamicNumberFormatConverter" />
     </Window.Resources>
 
@@ -42,78 +43,21 @@
             Grid.Row="0"
             Margin="0,0,0,16"
             VerticalAlignment="Center"
-            ColumnDefinitions="Auto, *, Auto">
-
-            <!--  Logo + Título  -->
-            <!--<StackPanel
+            ColumnDefinitions="*, 368"
+            ColumnSpacing="16">
+          
+            <!--  Botones de Acción  -->
+            <StackPanel
                 Grid.Column="0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
-                Spacing="14">
-                <Border
-                    Width="42"
-                    Height="42"
-                    Background="{StaticResource BrushAccentDim}"
-                    CornerRadius="10">
-                    <TextBlock
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        FontSize="20"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource BrushAccent}"
-                        Text="E" />
-                </Border>
-                <StackPanel VerticalAlignment="Center" Spacing="1">
-                    <TextBlock
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource BrushTextPrimary}"
-                        LetterSpacing="1"
-                        Text="ELYSIUM AUDIO" />
-                    <TextBlock
-                        FontSize="11.5"
-                        Foreground="{StaticResource BrushTextMuted}"
-                        Text="Pure linear normalizer · Hi-Res Mastering Suite" />
-                </StackPanel>
-            </StackPanel>-->
-
-            <!--  Barra de la cola  -->
-            <Grid
-                Grid.Row="0"
-                Margin="0,0,0,0"
-                VerticalAlignment="Bottom"
-                ColumnDefinitions="*, Auto">
-
-                <StackPanel
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="10">
-                    <TextBlock
-                        FontSize="15"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource BrushTextPrimary}"
-                        Text="Queue" />
-                    <Border
-                        Padding="8,2"
-                        Background="{StaticResource BrushAccentDim}"
-                        CornerRadius="20">
-                        <TextBlock
-                            FontSize="11"
-                            FontWeight="SemiBold"
-                            Foreground="{StaticResource BrushAccent}"
-                            Text="{Binding AudioFiles.Count, StringFormat={}{0} files}" />
-                    </Border>
-                </StackPanel>
-
-            </Grid>
-
-            <!--  Botones de Acción  -->
-            <StackPanel
-                Grid.Column="2"
-                VerticalAlignment="Center"
-                Orientation="Horizontal"
                 Spacing="10">
+                <Button Classes="accent" Command="{Binding AddFileCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock VerticalAlignment="Center" FontSize="14">＋</TextBlock>
+                        <TextBlock VerticalAlignment="Center">Add Files</TextBlock>
+                    </StackPanel>
+                </Button>
                 <Button Classes="ghost" Command="{Binding SelectOutputDirectoryCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Path
@@ -129,13 +73,31 @@
                 <Button Classes="ghost" Command="{Binding ClearListCommand}">
                     <TextBlock VerticalAlignment="Center">Clear List</TextBlock>
                 </Button>
-                <Button Classes="accent" Command="{Binding AddFileCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock VerticalAlignment="Center" FontSize="14">＋</TextBlock>
-                        <TextBlock VerticalAlignment="Center">Add Files</TextBlock>
-                    </StackPanel>
-                </Button>
+
             </StackPanel>
+
+			<!--  Enlace a Configuraciones avanzadas  -->
+			<Grid
+                Grid.Column="1"
+                Margin="0,0,10,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                ColumnDefinitions="*, Auto">
+
+				<StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="10">
+					<TextBlock
+                        FontSize="15"
+                        FontWeight="Bold"
+                        Foreground="{StaticResource BrushTextPrimary}"
+                        Text="Settings" />
+			
+				</StackPanel>
+
+			</Grid>
         </Grid>
 
         <!--
@@ -186,6 +148,7 @@
                                     <Setter Property="Foreground" Value="#E0E0E0" />
                                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                                     <Setter Property="VerticalAlignment" Value="Center" />
+                                    <Setter Property="FontSize" Value="13" />
                                 </Style>
 
                                 <!--  Encabezados  -->
@@ -222,7 +185,7 @@
 
                                 <!--  Fila seleccionada  -->
                                 <Style Selector="DataGridRow:selected">
-                                    <Setter Property="Background" Value="#0A4C7A" />
+                                    <Setter Property="Background" Value="#1E2022" />
                                     <!--  azul tenue  -->
                                     <Setter Property="BorderBrush" Value="#00AFFF" />
                                     <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -256,16 +219,10 @@
                                 </Style>
                             </DataGrid.Styles>
 
-                            <!--  Override del separador interno  -->
-                            <!--<Style Selector="DataGridColumnHeader /template/Border">
-								<Setter Property="BorderBrush" Value="Transparent"/>
-								<Setter Property="BorderThickness" Value="0"/>
-							</Style>-->
-
                             <!--  Columnas  -->
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn
-                                    Width="60"
+                                    Width="0.5*"
                                     MinWidth="60"
                                     Header="#">
                                     <DataGridTemplateColumn.CellTemplate>
@@ -280,37 +237,37 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="120"
+                                    Width="2*"
                                     MinWidth="120"
                                     Binding="{Binding FileName}"
                                     Header="File Name" />
                                 <DataGridTextColumn
-                                    Width="98"
+                                    Width="*"
                                     MinWidth="98"
                                     Binding="{Binding Codec}"
                                     Header="Codec" />
                                 <DataGridTextColumn
-                                    Width="108"
+                                    Width="*"
                                     MinWidth="108"
                                     Binding="{Binding Duration}"
                                     Header="Duration" />
                                 <DataGridTextColumn
-                                    Width="98"
+                                    Width="*"
                                     MinWidth="98"
                                     Binding="{Binding Loudness}"
                                     Header="LUFS" />
                                 <DataGridTextColumn
-                                    Width="98"
-                                    MinWidth="98"
-                                    Binding="{Binding Peak}"
-                                    Header="Peak" />
-                                <DataGridTextColumn
-                                    Width="98"
+                                    Width="*"
                                     MinWidth="98"
                                     Binding="{Binding NormalizedLoudness}"
                                     Header="Norm.&#x0a;LUFS" />
                                 <DataGridTextColumn
-                                    Width="98"
+                                    Width="*"
+                                    MinWidth="98"
+                                    Binding="{Binding Peak}"
+                                    Header="Peak" />
+                                <DataGridTextColumn
+                                    Width="*"
                                     MinWidth="98"
                                     Binding="{Binding NormalizedPeak}"
                                     Header="Norm.&#x0a;Peak" />
@@ -333,7 +290,7 @@
                             FontSize="16"
                             FontWeight="Medium"
                             Foreground="{StaticResource BrushTextMuted}"
-                            IsVisible="{Binding ShowDropMessage}"
+                            IsVisible="{Binding AudioFiles.Count, Converter={StaticResource CountToVisibilityConverter}}"
                             Text="Drop WAV / FLAC here or use Add Files" />
 
                     </Grid>
@@ -349,7 +306,7 @@
                 CornerRadius="12"
                 Focusable="True">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <Grid Margin="24" RowDefinitions="Auto, 28, Auto, 20, Auto, *, 54">
+                    <Grid Margin="24" RowDefinitions="Auto, 20, Auto, 20, Auto, *, 48">
 
                         <!--  1. DSP / Loudness Calibration  -->
                         <Grid
@@ -371,6 +328,8 @@
                                 Grid.Column="1"
                                 Width="24"
                                 Height="24"
+                                MinWidth="24"
+                                MinHeight="24"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 HorizontalContentAlignment="Center"
@@ -397,6 +356,7 @@
                         <Rectangle
                             Grid.Row="1"
                             Height="1"
+                            Margin="0,0,0,12"
                             VerticalAlignment="Center"
                             Fill="{StaticResource BrushBorderSubtle}" />
 
@@ -697,7 +657,7 @@
                         <StackPanel
                             Grid.Row="4"
                             Margin="0,8,0,0"
-                            Spacing="16">
+                            Spacing="14">
 
                             <TextBlock
                                 FontSize="15"
@@ -711,9 +671,10 @@
                             </TextBlock>
 
                             <CheckBox
-                                Content="Strict Linear Mode (Protects Ballad Micro-dynamics)"
+                                Content="Strict Linear Mode"
                                 Foreground="{StaticResource BrushTextSecondary}"
                                 IsChecked="{Binding IsStrictLinearMode}" />
+							
                             <CheckBox
                                 Content="Preserve Metadata (ID3v2.3)"
                                 Foreground="{StaticResource BrushTextSecondary}"

@@ -160,6 +160,7 @@ namespace ElysiumAudio.Views
                     double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
                 {
                     ViewModel.TargetLufs = parsed; // clamp en el setter
+                    tb.Text = ViewModel.TargetLufs.ToString("F1", CultureInfo.InvariantCulture);
                 }
                 else
                 {
@@ -235,12 +236,12 @@ namespace ElysiumAudio.Views
                 double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
             {
                 ViewModel.ReleaseTimeMs = parsed; // clamp en el setter
-                tb.Text = ViewModel.ReleaseTimeMs.ToString();
+                tb.Text = ViewModel.ReleaseTimeMs.ToString("F1", CultureInfo.InvariantCulture);
             }
             else
             {
                 // Restaurar el valor en caso de entrada de caracteres inválidos
-                tb.Text = ViewModel.ReleaseTimeMs.ToString();
+                tb.Text = ViewModel.ReleaseTimeMs.ToString("F1", CultureInfo.InvariantCulture);
             }
         }
 
@@ -275,12 +276,12 @@ namespace ElysiumAudio.Views
                 double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
             {
                 ViewModel.LookAheadTimeMs = parsed; // clamp en el setter
-                tb.Text = ViewModel.LookAheadTimeMs.ToString();
+                tb.Text = ViewModel.LookAheadTimeMs.ToString("F1", CultureInfo.InvariantCulture);
             }
             else
             {
                 // Restaurar el valor en caso de entrada de caracteres inválidos
-                tb.Text = ViewModel.LookAheadTimeMs.ToString();
+                tb.Text = ViewModel.LookAheadTimeMs.ToString("F1", CultureInfo.InvariantCulture);
             }
         }
 
