@@ -334,118 +334,143 @@ namespace ElysiumAudio.Services
 
 
 
-        // PASADA 2: Renderizado físico del limitador Soft-Limiter utilizando firmas válidas de 1 solo argumento string
+        // PASADA 2: Renderizado físico del limitador Soft-Limiter
+        // Procesa en un directorio temporal con nombres ASCII puros (GUID) porque
+        // libsndfile (SoundFileReader/SoundFileWriter) abre por ruta con fopen()
+        // estilo C y falla con tildes/eñes si los nombres cortos 8.3 están
+        // deshabilitados en el disco. El archivo final se copia con .NET (File.Copy),
+        // que sí soporta rutas Unicode.
         public void ApplyNormalizationWithLimiter(string inputPath, string outputPath, float gainDb, float maxPeakLimitDb, float releaseMs = 40f, float lookAheadMs = 5f)
         {
             float linearGain = (float)Math.Pow(10, gainDb / 20.0);
             float ceilingLinear = (float)Math.Pow(10, maxPeakLimitDb / 20.0);
 
-            string safeInputPath = GetSafePathForNativeLibraries(inputPath);
-            string safeOutputPath = GetSafePathForNativeLibraries(outputPath);
+            string tempDir = Path.Combine(Path.GetTempPath(), "ElysiumAudio", Guid.NewGuid().ToString("N"));
+            string tempInput = Path.Combine(tempDir, "input" + Path.GetExtension(inputPath));
+            string tempOutput = Path.Combine(tempDir, "output" + Path.GetExtension(outputPath));
 
-            using (var reader = new SoundFileReader(safeInputPath))
+            try
             {
-                var waveFormat = reader.WaveFormat;
-                var sampleProvider = reader.ToSampleProvider();
+                Directory.CreateDirectory(tempDir);
+                File.Copy(inputPath, tempInput, true);
 
-                // 1. Estructura del Búfer Circular Fijo (Reemplaza la cola lenta)
-                int lookAheadSize = (int)((lookAheadMs / 1000.0) * waveFormat.SampleRate) * waveFormat.Channels;
-                if (lookAheadSize < 1) lookAheadSize = 1;
-
-                float[] delayBuffer = new float[lookAheadSize];
-                int writeIndex = 0;
-                int readIndex = 0;
-                int count = 0;
-
-                // Variables para rastrear el pico de forma instantánea sin bucles foreach
-                float currentMaxInQueue = 0f;
-
-                float releaseFactor = (float)Math.Exp(-1.0 / (waveFormat.SampleRate * (releaseMs / 1000.0)));
-                float currentGain = 1.0f;
-
-                using (var writer = new SoundFileWriter(safeOutputPath, waveFormat,
-                    Path.GetExtension(outputPath).ToLower() == ".flac" ? SoundFileMajorFormat.Flac : SoundFileMajorFormat.Wav))
+                using (var reader = new SoundFileReader(tempInput))
                 {
-                    float[] floatBuffer = new float[waveFormat.SampleRate * waveFormat.Channels];
-                    int samplesRead;
+                    var waveFormat = reader.WaveFormat;
+                    var sampleProvider = reader.ToSampleProvider();
 
-                    while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
+                    // 1. Estructura del Búfer Circular Fijo (Reemplaza la cola lenta)
+                    int lookAheadSize = (int)((lookAheadMs / 1000.0) * waveFormat.SampleRate) * waveFormat.Channels;
+                    if (lookAheadSize < 1) lookAheadSize = 1;
+
+                    float[] delayBuffer = new float[lookAheadSize];
+                    int writeIndex = 0;
+                    int readIndex = 0;
+                    int count = 0;
+
+                    // Variables para rastrear el pico de forma instantánea sin bucles foreach
+                    float currentMaxInQueue = 0f;
+
+                    float releaseFactor = (float)Math.Exp(-1.0 / (waveFormat.SampleRate * (releaseMs / 1000.0)));
+                    float currentGain = 1.0f;
+
+                    using (var writer = new SoundFileWriter(tempOutput, waveFormat,
+                        Path.GetExtension(outputPath).ToLower() == ".flac" ? SoundFileMajorFormat.Flac : SoundFileMajorFormat.Wav))
                     {
-                        for (int i = 0; i < samplesRead; i++)
+                        float[] floatBuffer = new float[waveFormat.SampleRate * waveFormat.Channels];
+                        int samplesRead;
+
+                        while ((samplesRead = sampleProvider.Read(floatBuffer.AsSpan())) > 0)
                         {
-                            float gainAppliedSample = floatBuffer[i] * linearGain;
-                            float absInput = Math.Abs(gainAppliedSample);
-
-                            float delayedSample = 0f;
-
-                            // 2. Gestión del Búfer Circular Indexado
-                            if (count >= lookAheadSize)
+                            for (int i = 0; i < samplesRead; i++)
                             {
-                                // Extraemos la muestra retrasada 5ms de forma instantánea
-                                delayedSample = delayBuffer[readIndex];
-                                float absLeaving = Math.Abs(delayedSample);
+                                float gainAppliedSample = floatBuffer[i] * linearGain;
+                                float absInput = Math.Abs(gainAppliedSample);
 
-                                readIndex = (readIndex + 1) % lookAheadSize;
-                                count--;
+                                float delayedSample = 0f;
 
-                                // Si la muestra que sale era el pico máximo, recalculamos el nuevo pico una sola vez
-                                if (absLeaving >= currentMaxInQueue)
+                                // 2. Gestión del Búfer Circular Indexado
+                                if (count >= lookAheadSize)
                                 {
-                                    currentMaxInQueue = 0f;
-                                    for (int j = 0; j < lookAheadSize; j++)
+                                    // Extraemos la muestra retrasada 5ms de forma instantánea
+                                    delayedSample = delayBuffer[readIndex];
+                                    float absLeaving = Math.Abs(delayedSample);
+
+                                    readIndex = (readIndex + 1) % lookAheadSize;
+                                    count--;
+
+                                    // Si la muestra que sale era el pico máximo, recalculamos el nuevo pico una sola vez
+                                    if (absLeaving >= currentMaxInQueue)
                                     {
-                                        float absVal = Math.Abs(delayBuffer[j]);
-                                        if (absVal > currentMaxInQueue) currentMaxInQueue = absVal;
+                                        currentMaxInQueue = 0f;
+                                        for (int j = 0; j < lookAheadSize; j++)
+                                        {
+                                            float absVal = Math.Abs(delayBuffer[j]);
+                                            if (absVal > currentMaxInQueue) currentMaxInQueue = absVal;
+                                        }
                                     }
                                 }
+
+                                // Insertar la muestra nueva en el búfer circular
+                                delayBuffer[writeIndex] = gainAppliedSample;
+                                writeIndex = (writeIndex + 1) % lookAheadSize;
+                                count++;
+
+                                // Evaluar de inmediato si la muestra entrante es el nuevo pico máximo del futuro
+                                if (absInput > currentMaxInQueue)
+                                {
+                                    currentMaxInQueue = absInput;
+                                }
+
+                                // 3. Cálculo de la Atenuación Predictiva Instantánea
+                                float targetGain = 1.0f;
+                                if (currentMaxInQueue > ceilingLinear)
+                                {
+                                    targetGain = ceilingLinear / currentMaxInQueue;
+                                }
+
+                                // Aplicar envolvente del limitador (Ataque predictivo / Liberación suave)
+                                if (targetGain < currentGain)
+                                {
+                                    currentGain = targetGain;
+                                }
+                                else
+                                {
+                                    currentGain = releaseFactor * currentGain + (1.0f - releaseFactor) * targetGain;
+                                }
+
+                                // Mapear la muestra procesada al búfer de salida
+                                floatBuffer[i] = delayedSample * currentGain;
                             }
 
-                            // Insertar la muestra nueva en el búfer circular
-                            delayBuffer[writeIndex] = gainAppliedSample;
-                            writeIndex = (writeIndex + 1) % lookAheadSize;
-                            count++;
-
-                            // Evaluar de inmediato si la muestra entrante es el nuevo pico máximo del futuro
-                            if (absInput > currentMaxInQueue)
-                            {
-                                currentMaxInQueue = absInput;
-                            }
-
-                            // 3. Cálculo de la Atenuación Predictiva Instantánea
-                            float targetGain = 1.0f;
-                            if (currentMaxInQueue > ceilingLinear)
-                            {
-                                targetGain = ceilingLinear / currentMaxInQueue;
-                            }
-
-                            // Aplicar envolvente del limitador (Ataque predictivo / Liberación suave)
-                            if (targetGain < currentGain)
-                            {
-                                currentGain = targetGain;
-                            }
-                            else
-                            {
-                                currentGain = releaseFactor * currentGain + (1.0f - releaseFactor) * targetGain;
-                            }
-
-                            // Mapear la muestra procesada al búfer de salida
-                            floatBuffer[i] = delayedSample * currentGain;
+                            writer.WriteSamples(floatBuffer.AsSpan(0, samplesRead));
                         }
 
-                        writer.WriteSamples(floatBuffer.AsSpan(0, samplesRead));
-                    }
+                        // 4. Vaciado Rápido del Búfer Circular al terminar la canción
+                        while (count > 0)
+                        {
+                            float delayedSample = delayBuffer[readIndex];
+                            readIndex = (readIndex + 1) % lookAheadSize;
+                            count--;
 
-                    // 4. Vaciado Rápido del Búfer Circular al terminar la canción
-                    while (count > 0)
-                    {
-                        float delayedSample = delayBuffer[readIndex];
-                        readIndex = (readIndex + 1) % lookAheadSize;
-                        count--;
-
-                        float[] flushBuffer = new float[] { delayedSample * currentGain };
-                        writer.WriteSamples(flushBuffer.AsSpan());
+                            float[] flushBuffer = new float[] { delayedSample * currentGain };
+                            writer.WriteSamples(flushBuffer.AsSpan());
+                        }
                     }
                 }
+
+                // Copiar el resultado final a la ruta destino (admite tildes/eñes)
+                string outputDir = Path.GetDirectoryName(outputPath) ?? "";
+                if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+                File.Copy(tempOutput, outputPath, true);
+            }
+            finally
+            {
+                try { if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true); }
+                catch { /* La limpieza falló; no bloquea el flujo principal */ }
             }
         }
 

@@ -55,13 +55,26 @@ namespace ElysiumAudio.ViewModels
 
 
         [ObservableProperty]
-        private bool _isStrictLinearMode = true;
-
-        [ObservableProperty]
         private string _systemStatus = "Engine ready. Core optimized for bit-perfect mastering.";
 
         [ObservableProperty]
         private bool _isProcessing;
+
+        // Formato de salida para los archivos normalizados
+        [ObservableProperty]
+        private OutputFormat _outputFormat = OutputFormat.SameAsSource;
+
+        // Opciones legibles para el ComboBox (los nombres deben coincidir con OutputFormat)
+        public string[] OutputFormatOptions { get; } = { "Mantener formato original", "WAV", "FLAC" };
+
+        // Presets de normalización para plataformas de streaming
+        public ObservableCollection<NormalizationPreset> Presets { get; } = new();
+
+        // Flag interno: evita bucles al aplicar un preset (los handlers no reaccionan a Custom)
+        private bool _isApplyingPreset;
+
+        [ObservableProperty]
+        private NormalizationPreset? _selectedPreset;
 
         // Directorio de salida donde se guardan los archivos normalizados
         [ObservableProperty]
@@ -89,8 +102,116 @@ namespace ElysiumAudio.ViewModels
                 OutputDirectory = _settingsService.Current.OutputDirectory;
             }
 
+            OutputFormat = _settingsService.Current.OutputFormat;
+
+            // Cargar los presets predefinidos para plataformas de streaming
+            LoadPresets();
+
             // Reaccionar a cambios externos del modelo de configuración
             _settingsService.SettingsChanged += OnSettingsChanged;
+        }
+
+        private void LoadPresets()
+        {
+            // "Predeterminado" siempre usa los valores de fábrica (DefaultValues).
+            // Al aplicarlo, los handlers lo devuelven a Custom al primer ajuste manual.
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "Predeterminado",
+                TargetLufs = DefaultValues.DEFAULT_TARGET_LUFS,
+                TruePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING,
+                ReleaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS,
+                LookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS
+            });
+
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "Custom",
+                IsCustom = true,
+                TargetLufs = TargetLufs,
+                TruePeakCeiling = TruePeakCeiling,
+                ReleaseTimeMs = ReleaseTimeMs,
+                LookAheadTimeMs = LookAheadTimeMs
+            });
+
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "Spotify",
+                TargetLufs = -14.0,
+                TruePeakCeiling = -1.0,
+                ReleaseTimeMs = 50.0,
+                LookAheadTimeMs = 5.0
+            });
+
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "YouTube",
+                TargetLufs = -14.0,
+                TruePeakCeiling = -1.0,
+                ReleaseTimeMs = 50.0,
+                LookAheadTimeMs = 5.0
+            });
+
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "Apple Music",
+                TargetLufs = -16.0,
+                TruePeakCeiling = -1.0,
+                ReleaseTimeMs = 50.0,
+                LookAheadTimeMs = 5.0
+            });
+
+            Presets.Add(new NormalizationPreset
+            {
+                Name = "Podcast / Narración",
+                TargetLufs = -16.0,
+                TruePeakCeiling = -1.0,
+                ReleaseTimeMs = 50.0,
+                LookAheadTimeMs = 5.0
+            });
+
+            SelectedPreset = Presets.FirstOrDefault(p => p.IsCustom);
+        }
+
+        // Al elegir un preset distinto de Custom, se aplican sus valores a los controles.
+        // El flag _isApplyingPreset evita que los handlers los devuelvan a Custom.
+        partial void OnOutputFormatChanged(OutputFormat value)
+        {
+            if (_settingsService.Current.OutputFormat != value)
+            {
+                _settingsService.Current.OutputFormat = value;
+            }
+        }
+
+        partial void OnSelectedPresetChanged(NormalizationPreset? value)
+        {
+            if (value == null || value.IsCustom) return;
+
+            _isApplyingPreset = true;
+            try
+            {
+                TargetLufs = value.TargetLufs;
+                TruePeakCeiling = value.TruePeakCeiling;
+                ReleaseTimeMs = value.ReleaseTimeMs;
+                LookAheadTimeMs = value.LookAheadTimeMs;
+            }
+            finally
+            {
+                _isApplyingPreset = false;
+            }
+        }
+
+        // Si el usuario toca un control manualmente, el preset pasa a Custom
+        // (los valores ya no coinciden con el preset predefinido).
+        private void ReturnToCustomPreset()
+        {
+            if (_isApplyingPreset) return;
+
+            var custom = Presets.FirstOrDefault(p => p.IsCustom);
+            if (custom != null && SelectedPreset != custom)
+            {
+                SelectedPreset = custom;
+            }
         }
 
         // Sincroniza las propiedades del ViewModel si el modelo de configuración cambia
@@ -115,6 +236,9 @@ namespace ElysiumAudio.ViewModels
                     break;
                 case nameof(Models.UserSettings.OutputDirectory) when OutputDirectory != settings.OutputDirectory:
                     OutputDirectory = settings.OutputDirectory;
+                    break;
+                case nameof(Models.UserSettings.OutputFormat) when OutputFormat != settings.OutputFormat:
+                    OutputFormat = settings.OutputFormat;
                     break;
             }
         }
@@ -187,6 +311,15 @@ namespace ElysiumAudio.ViewModels
                     string filenameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
                     string ext = Path.GetExtension(file.FilePath);
 
+                    // Formato de salida: si el usuario elige WAV o FLAC, se convierte,
+                    // si no, se conserva la extensión del archivo original.
+                    string outputExt = OutputFormat switch
+                    {
+                        OutputFormat.Wav => ".wav",
+                        OutputFormat.Flac => ".flac",
+                        _ => ext
+                    };
+
                     // Si el directorio de salida coincide con el de entrada, agregamos "_normalized"
                     // para no pisar el archivo original; si son distintos, conservamos el nombre.
                     string outputDir = OutputDirectory ?? inputDirectory;
@@ -196,8 +329,8 @@ namespace ElysiumAudio.ViewModels
                         StringComparison.OrdinalIgnoreCase);
 
                     string outputFileName = sameDir
-                        ? $"{filenameWithoutExt}_normalized{ext}"
-                        : $"{filenameWithoutExt}{ext}";
+                        ? $"{filenameWithoutExt}_normalized{outputExt}"
+                        : $"{filenameWithoutExt}{outputExt}";
 
                     string outputPath = OutputPathHelper.GetUniqueOutputPath(
                         Path.Combine(outputDir, outputFileName));
@@ -296,15 +429,6 @@ namespace ElysiumAudio.ViewModels
             }
         }
 
-        [RelayCommand]
-        private void DefaultNormalizationValues()
-        {
-            TargetLufs = DefaultValues.DEFAULT_TARGET_LUFS;
-            TruePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING;
-            ReleaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
-            LookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
-        }
-
         #endregion
 
         #region Methods
@@ -378,6 +502,8 @@ namespace ElysiumAudio.ViewModels
             }
 
             // Solo llegamos aquí cuando el valor ya está clamped
+            ReturnToCustomPreset();
+
             if (_settingsService.Current.TargetLufs != TargetLufs)
             {
                 _settingsService.Current.TargetLufs = TargetLufs;
@@ -397,6 +523,8 @@ namespace ElysiumAudio.ViewModels
             }
 
             // Actualizar el modelo de preferencias del usuario
+            ReturnToCustomPreset();
+
             if (_settingsService.Current.TruePeakCeiling != TruePeakCeiling)
             {
                 _settingsService.Current.TruePeakCeiling = TruePeakCeiling;
@@ -415,6 +543,8 @@ namespace ElysiumAudio.ViewModels
                 return; // Evitamos bucles infinitos al reasignar
             }
 
+            ReturnToCustomPreset();
+
             if (_settingsService.Current.LookAheadTimeMs != LookAheadTimeMs)
             {
                 _settingsService.Current.LookAheadTimeMs = LookAheadTimeMs;
@@ -431,6 +561,8 @@ namespace ElysiumAudio.ViewModels
                 ReleaseTimeMs = clamped;
                 return; // Evitamos bucles infinitos al reasignar
             }
+
+            ReturnToCustomPreset();
 
             if (_settingsService.Current.ReleaseTimeMs != ReleaseTimeMs)
             {

@@ -308,12 +308,13 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <Grid Margin="24" RowDefinitions="Auto, 20, Auto, 20, Auto, *, 48">
 
-                        <!--  1. DSP / Loudness Calibration  -->
+<!--  1. DSP / Loudness Calibration  -->
                         <Grid
                             Grid.Row="0"
                             VerticalAlignment="Center"
-                            ColumnDefinitions="*, Auto">
+                            RowDefinitions="Auto, Auto">
                             <TextBlock
+                                Grid.Row="0"
                                 FontSize="15"
                                 FontWeight="Bold"
                                 Foreground="{StaticResource BrushTextPrimary}">
@@ -324,32 +325,21 @@
                                 <Run Text=" · Loudness Calibration" />
                             </TextBlock>
 
-                            <Button
-                                Grid.Column="1"
-                                Width="24"
-                                Height="24"
-                                MinWidth="24"
-                                MinHeight="24"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                Background="#2D2D2D"
-                                BorderBrush="#444"
-                                BorderThickness="1"
-                                Command="{Binding DefaultNormalizationValuesCommand}"
-                                CornerRadius="4"
-                                ToolTip.Tip="Resetear">
-                                <Path
-                                    Width="18"
-                                    Height="18"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Data="M12 5V1L8 5l4 4V6c3.31 0 6 2.69 6 6           0 1.66-.67 3.16-1.76 4.24l1.42 1.42          C19.07 16.07 20 14.13 20 12c0-4.42-3.58-8-8-8z          M6.34 6.34L4.92 7.76C3.93 8.74 3.26 10.24 3.26 12          c0 4.42 3.58 8 8 8v4l4-4-4-4v3          c-3.31 0-6-2.69-6-6 0-1.66.67-3.16 1.76-4.24z"
-                                    Fill="White"
-                                    Stretch="Uniform" />
-                            </Button>
-
+                            <!--  Presets de normalización por plataforma  -->
+                            <ComboBox
+                                Grid.Row="1"
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding Presets}"
+                                SelectedItem="{Binding SelectedPreset}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
+                                            Foreground="{StaticResource BrushTextPrimary}"
+                                            Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </Grid>
 
                         <!--  Separador  -->
@@ -670,11 +660,19 @@
                                 <Run Text=" · Safety" />
                             </TextBlock>
 
-                            <CheckBox
-                                Content="Strict Linear Mode"
-                                Foreground="{StaticResource BrushTextSecondary}"
-                                IsChecked="{Binding IsStrictLinearMode}" />
-							
+                            <!--  Formato de salida  -->
+                            <StackPanel Spacing="6">
+                                <TextBlock
+                                    FontSize="10.5"
+                                    FontWeight="SemiBold"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="OUTPUT FORMAT" />
+                                <ComboBox
+                                    HorizontalAlignment="Stretch"
+                                    ItemsSource="{Binding OutputFormatOptions}"
+                                    SelectedIndex="{Binding OutputFormat, Mode=TwoWay}" />
+                            </StackPanel>
+
                             <CheckBox
                                 Content="Preserve Metadata (ID3v2.3)"
                                 Foreground="{StaticResource BrushTextSecondary}"

@@ -106,6 +106,40 @@
         <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
     </Style>
 
+    <!-- ============================= COMBOBOX ============================= -->
+    <!-- Selector de presets: fondo oscuro consistente con la paleta -->
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{StaticResource BrushBgInput}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="ComboBox:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+    <Style Selector="ComboBox:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="10,6" />
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+    </Style>
+    <Style Selector="ComboBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+    </Style>
+    <Style Selector="ComboBoxItem:selected /template/ TextBlock">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
     <!-- ============================= CHECKBOX ============================= -->
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />

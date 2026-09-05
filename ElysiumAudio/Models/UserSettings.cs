@@ -21,7 +21,10 @@ namespace ElysiumAudio.Models
         [ObservableProperty]
         private double lookAheadTimeMs = Helpers.DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
 
-        [ObservableProperty]
+[ObservableProperty]
         private string outputDirectory = string.Empty;
+
+        [ObservableProperty]
+        private OutputFormat outputFormat = OutputFormat.SameAsSource;
     }
 }
