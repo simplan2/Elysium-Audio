@@ -8,6 +8,7 @@ using ElysiumAudio.Helpers;
 using ElysiumAudio.Models;
 using ElysiumAudio.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -44,11 +45,11 @@ namespace ElysiumAudio.ViewModels
         // 3. Tiempo de liberacion del limitador en milisegundos
         [ObservableProperty]
         private double _releaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS;
-        public double MinReleaseTimeMs { get; set; } = DefaultValues.MIN_RELEASE_TIME_MS;        
-        public double MaxReleaseTimeMs { get; set; } = DefaultValues.MAX_RELEASE_TIME_MS;     
+        public double MinReleaseTimeMs { get; set; } = DefaultValues.MIN_RELEASE_TIME_MS;
+        public double MaxReleaseTimeMs { get; set; } = DefaultValues.MAX_RELEASE_TIME_MS;
 
         // 4. Tiempo de anticipación del limitador en milisegundos
-          [ObservableProperty]
+        [ObservableProperty]
         private double _lookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
         public double MinLookAheadTimeMs { get; set; } = DefaultValues.MIN_LOOK_AHEAD_TIME_MS;
         public double MaxLookAheadTimeMs { get; set; } = DefaultValues.MAX_LOOK_AHEAD_TIME_MS;
@@ -67,6 +68,37 @@ namespace ElysiumAudio.ViewModels
         // Opciones legibles para el ComboBox (los nombres deben coincidir con OutputFormat)
         public string[] OutputFormatOptions { get; } = { "Mantener formato original", "WAV", "FLAC" };
 
+        private static string FormatToOptionText(OutputFormat format) => format switch
+        {
+            OutputFormat.Wav => "WAV",
+            OutputFormat.Flac => "FLAC",
+            _ => "Mantener formato original"
+        };
+
+        private string _selectedFormat = "WAV";
+        public string SelectedFormat
+        {
+            get => _selectedFormat;
+            set
+            {
+                if (_selectedFormat != value)
+                {
+                    _selectedFormat = value;
+                    OnPropertyChanged(nameof(SelectedFormat));
+                    // Actualizar la propiedad OutputFormat según la selección del ComboBox
+                    OutputFormat = value switch
+                    {
+                        "Mantener formato original" => OutputFormat.SameAsSource,
+                        "WAV" => OutputFormat.Wav,
+                        "FLAC" => OutputFormat.Flac,
+                        _ => OutputFormat.SameAsSource
+                    };
+                }
+
+                IsFlyoutOpen = false;
+            }
+        }
+
         // Presets de normalización para plataformas de streaming
         public ObservableCollection<NormalizationPreset> Presets { get; } = new();
 
@@ -80,9 +112,14 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private string _outputDirectory = DefaultValues.GetDefaultOutputDirectory()
             ?? Environment.CurrentDirectory;
- 
+
         public ObservableCollection<AudioFileModel> AudioFiles { get; set; } = new();
 
+        [ObservableProperty]
+        private bool _isFlyoutOpen;
+
+        [ObservableProperty]
+        private bool _isPresetsFlyoutOpen;
         #endregion
 
         #region constructors
@@ -177,6 +214,10 @@ namespace ElysiumAudio.ViewModels
         // El flag _isApplyingPreset evita que los handlers los devuelvan a Custom.
         partial void OnOutputFormatChanged(OutputFormat value)
         {
+            // Sincroniza el texto mostrado en la UI cuando el formato cambia
+            // (ya sea por selección del usuario o por carga del settings).
+            SelectedFormat = FormatToOptionText(value);
+
             if (_settingsService.Current.OutputFormat != value)
             {
                 _settingsService.Current.OutputFormat = value;
@@ -185,6 +226,9 @@ namespace ElysiumAudio.ViewModels
 
         partial void OnSelectedPresetChanged(NormalizationPreset? value)
         {
+            // Al elegir un preset se cierra el selector desplegable
+            IsPresetsFlyoutOpen = false;
+
             if (value == null || value.IsCustom) return;
 
             _isApplyingPreset = true;
@@ -250,6 +294,44 @@ namespace ElysiumAudio.ViewModels
         private async Task AddFile()
         {
             await OnAddFile();
+        }
+
+        // Comando para añadir todos los archivos de audio de una carpeta
+        [RelayCommand]
+        private async Task AddDirectory()
+        {
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return;
+
+            var topLevel = TopLevel.GetTopLevel(desktop.MainWindow);
+            if (topLevel == null) return;
+
+            var options = new FolderPickerOpenOptions
+            {
+                Title = "Selecciona una carpeta con pistas de audio",
+                AllowMultiple = false
+            };
+
+            var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(options);
+            var folder = folders.FirstOrDefault();
+            if (folder == null) return;
+
+            string dirPath = folder.Path.LocalPath;
+
+            var audioExtensions = new[] { ".wav", ".flac" };
+            var files = Directory.GetFiles(dirPath)
+                .Where(f => audioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (files.Count == 0)
+            {
+                SystemStatus = "La carpeta seleccionada no contiene archivos WAV o FLAC.";
+                return;
+            }
+
+            int added = AddFilesToQueue(files);
+            SystemStatus = $"Se añadieron {added} archivo(s) a la cola desde: {Path.GetFileName(dirPath)}";
         }
 
         // Comando para iniciar la normalización por lotes
@@ -428,7 +510,44 @@ namespace ElysiumAudio.ViewModels
                 }
             }
         }
+        
+        [RelayCommand]
+        private void ExploreOutputDirectory()
+        {
+            if (!string.IsNullOrWhiteSpace(OutputDirectory) && Directory.Exists(OutputDirectory))
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = OutputDirectory,
+                        UseShellExecute = true,
+                        Verb = "open"
+                    });
+                }
+                catch (Exception ex)
+                {
+                    SystemStatus = $"Error al abrir el directorio: {ex.Message}";
+                }
+            }
+            else
+            {
+                SystemStatus = "El directorio de salida no es válido o no existe.";
+            }
+        }
 
+        [RelayCommand]
+        private void TogglePopup()
+        {
+            IsFlyoutOpen = !IsFlyoutOpen;
+        }
+
+        [RelayCommand]
+        private void TogglePresetsPopup()
+        {
+            IsPresetsFlyoutOpen = !IsPresetsFlyoutOpen;
+        }      
+      
         #endregion
 
         #region Methods
@@ -437,7 +556,7 @@ namespace ElysiumAudio.ViewModels
         {
             // Obtener de forma segura el StorageProvider desde el ciclo de vida de la App de Avalonia
             if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
+            { 
                 var topLevel = TopLevel.GetTopLevel(desktop.MainWindow);
                 if (topLevel == null) return;
 
@@ -459,28 +578,39 @@ namespace ElysiumAudio.ViewModels
 
                 if (files != null && files.Any())
                 {
-                    foreach (var file in files)
-                    {
-                        string localPath = file.Path.LocalPath;
+                    var paths = files
+                        .Select(f => f.Path.LocalPath)
+                        .ToList();
 
-                        // Evitamos duplicados en la tabla de la interfaz
-                        if (AudioFiles.Any(f => f.FilePath == localPath)) continue;
-
-                        // Añadimos a la tabla de forma reactiva
-                        AudioFiles.Add(new AudioFileModel
-                        {
-                            FilePath = localPath,
-                            FileName = Path.GetFileName(localPath),
-                            Codec = Path.GetExtension(localPath).ToUpper().Replace(".", ""),
-                            Duration = "--:--",
-                            StatusMessage = "Pending",
-                            Peak = "0.0 dBFS",
-                            Loudness = "-0.0 LUFS"
-                        });
-                    }
-                    SystemStatus = $"Se añadieron {files.Count} archivos a la cola de procesamiento.";
+                    int added = AddFilesToQueue(paths);
+                    SystemStatus = $"Se añadieron {added} archivos a la cola de procesamiento.";
                 }
             }
+        }
+
+        // Añade archivos a la cola evitando duplicados; devuelve cuántos se agregaron.
+        private int AddFilesToQueue(IEnumerable<string> filePaths)
+        {
+            int added = 0;
+            foreach (var localPath in filePaths)
+            {
+                // Evitamos duplicados en la tabla de la interfaz
+                if (AudioFiles.Any(f => f.FilePath == localPath)) continue;
+
+                // Añadimos a la tabla de forma reactiva
+                AudioFiles.Add(new AudioFileModel
+                {
+                    FilePath = localPath,
+                    FileName = Path.GetFileName(localPath),
+                    Codec = Path.GetExtension(localPath).ToUpper().Replace(".", ""),
+                    Duration = "--:--",
+                    StatusMessage = "Pending",
+                    Peak = "0.0 dBFS",
+                    Loudness = "-0.0 LUFS"
+                });
+                added++;
+            }
+            return added;
         }
 
 

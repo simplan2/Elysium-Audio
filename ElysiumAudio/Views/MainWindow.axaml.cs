@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
@@ -217,10 +218,10 @@ namespace ElysiumAudio.Views
                 }
             }
         }
-        
+
         private void OnReleaseTimeMsLostFocus(object? sender, RoutedEventArgs e)
         {
-            if(sender is TextBox tb)
+            if (sender is TextBox tb)
             {
                 if (!string.IsNullOrWhiteSpace(tb.Text))
                 {
@@ -249,7 +250,7 @@ namespace ElysiumAudio.Views
         // Validación de LookAheadTimeMs
         private void OnLookAheadKeyDown(object? sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Enter && sender is TextBox tb)
+            if (e.Key == Key.Enter && sender is TextBox tb)
             {
                 if (!string.IsNullOrEmpty(tb.Text))
                 {
@@ -270,7 +271,7 @@ namespace ElysiumAudio.Views
         }
         private void ValidateLookAheadTimeMs(string input, TextBox tb)
         {
-            if(ViewModel == null) return;
+            if (ViewModel == null) return;
             // Validar que el input sea un número válido y esté en el rango permitido
             if (NumericRegex.IsMatch(input) &&
                 double.TryParse(input, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
@@ -285,6 +286,22 @@ namespace ElysiumAudio.Views
             }
         }
 
-       
+        private void OnFlyoutClosed(object sender, EventArgs e)
+        {
+            // Sincronizar con ViewModel si es necesario
+            if (ViewModel != null)
+            {
+                ViewModel.IsFlyoutOpen = false;
+            }
+        }
+
+        private void OnPresetsFlyoutClosed(object sender, EventArgs e)
+        {
+            // Sincronizar con ViewModel si es necesario
+            if (ViewModel != null)
+            {
+                ViewModel.IsPresetsFlyoutOpen = false;
+            }
+        }
     }
 }

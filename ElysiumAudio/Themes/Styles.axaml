@@ -175,4 +175,40 @@
         <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
     </Style>
 
+	<!-- ============================= ListBox Popup ============================= -->
+	<Style Selector="ListBox.dark-popup">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+		<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+	</Style>
+
+	<Style Selector="ListBox.dark-popup ListBoxItem">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="Height" Value="38" />
+		<Setter Property="BorderThickness" Value="0" />
+	</Style>
+
+	<Style Selector="ListBox.dark-popup ListBoxItem:pointerover">
+		<Setter Property="Background" Value="#235B76" />
+		<Setter Property="CornerRadius" Value="0" />
+	</Style>
+
+	<Style Selector="ListBox.dark-popup ListBoxItem:selected">
+		<Setter Property="Background" Value="#235B76" />
+		<Setter Property="CornerRadius" Value="0" />
+	</Style>
+
+	<Style Selector="ListBox.dark-popup ListBoxItem:selected:pointerover">
+		<Setter Property="Background" Value="#3A7AAA" />
+		<Setter Property="CornerRadius" Value="0" />
+	</Style>
+
+	<Style Selector="FlyoutPresenter">
+		<Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}"/>
+		<Setter Property="Padding" Value="0,5"/>
+		<Setter Property="BorderThickness" Value="0"/>
+	</Style>
 </Styles>

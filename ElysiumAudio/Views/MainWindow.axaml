@@ -12,7 +12,7 @@
     xmlns:vm="using:ElysiumAudio.ViewModels"
     Title="Elysium Audio"
     Width="1200"
-    Height="760"
+    Height="748"
     MinWidth="1024"
     MinHeight="640"
     d:DesignHeight="720"
@@ -41,63 +41,66 @@
         -->
         <Grid
             Grid.Row="0"
-            Margin="0,0,0,16"
+            Margin="0,0,0,14"
             VerticalAlignment="Center"
             ColumnDefinitions="*, 368"
             ColumnSpacing="16">
-          
+
             <!--  Botones de Acción  -->
             <StackPanel
                 Grid.Column="0"
                 VerticalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="10">
+				
                 <Button Classes="accent" Command="{Binding AddFileCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock VerticalAlignment="Center" FontSize="14">＋</TextBlock>
                         <TextBlock VerticalAlignment="Center">Add Files</TextBlock>
                     </StackPanel>
                 </Button>
-                <Button Classes="ghost" Command="{Binding SelectOutputDirectoryCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Path
+				
+				<Button Classes="ghost" Command="{Binding AddDirectoryCommand}">
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Path
                             Width="16"
                             Height="16"
                             VerticalAlignment="Center"
                             Data="M3,3 L8,3 L10,5 L15,5 L15,13 L3,13 Z"
                             Stroke="{StaticResource BrushTextSecondary}"
                             StrokeThickness="1.6" />
-                        <TextBlock VerticalAlignment="Center">Output Dir</TextBlock>
-                    </StackPanel>
-                </Button>
+						<TextBlock VerticalAlignment="Center">Add Dir</TextBlock>
+					</StackPanel>
+				</Button>
+				
                 <Button Classes="ghost" Command="{Binding ClearListCommand}">
                     <TextBlock VerticalAlignment="Center">Clear List</TextBlock>
                 </Button>
 
             </StackPanel>
 
-			<!--  Enlace a Configuraciones avanzadas  -->
-			<Grid
+            <!--  Enlace a Configuraciones avanzadas  -->
+            <Grid
                 Grid.Column="1"
                 Margin="0,0,10,0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 ColumnDefinitions="*, Auto">
 
-				<StackPanel
+                <StackPanel
                     Grid.Column="0"
                     VerticalAlignment="Center"
                     Orientation="Horizontal"
                     Spacing="10">
-					<TextBlock
+                    <TextBlock
                         FontSize="15"
                         FontWeight="Bold"
                         Foreground="{StaticResource BrushTextPrimary}"
                         Text="Settings" />
-			
-				</StackPanel>
 
-			</Grid>
+                </StackPanel>
+
+            </Grid>
         </Grid>
 
         <!--
@@ -113,13 +116,16 @@
             ColumnSpacing="16">
 
             <!--  ***************** ZONA IZQUIERDO: COLA DE ARCHIVOS *****************  -->
-            <Grid Grid.Column="0" RowDefinitions="Auto, *">
+            <Grid
+                Grid.Column="0"
+                RowDefinitions="*, 80"
+                RowSpacing="16">
 
 
                 <!--  Zona de arrastre con el DataGrid  -->
                 <Border
                     Name="DropZoneBorder"
-                    Grid.Row="1"
+                    Grid.Row="0"
                     Background="{StaticResource BrushBgPanel}"
                     BorderBrush="Transparent"
                     BorderThickness="0"
@@ -295,6 +301,119 @@
 
                     </Grid>
                 </Border>
+
+                <Border
+                    Grid.Row="1"
+                    Padding="16,10"
+                    Background="{StaticResource BrushBgPanel}"
+                    BorderBrush="{StaticResource BrushBorderDefault}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <Grid ColumnDefinitions="1.2*,16,2.0*,16,1*">
+
+                        <!--  Formato de salida  -->
+                        <Button
+                            x:Name="FormatButton"
+                            HorizontalAlignment="Stretch"
+                            Background="{StaticResource BrushBgPanelAlt}"
+                            Classes="ghost"
+                            Command="{Binding TogglePopupCommand}">
+                            <Button.Flyout>
+                                <Flyout
+                                    IsOpen="{Binding IsFlyoutOpen}"
+                                    Placement="Bottom"
+                                    ShowMode="Standard"
+									Closed="OnFlyoutClosed">
+
+                                    <ListBox MinWidth="200"
+                                        Background="{StaticResource BrushBgPanelAlt}"
+                                        Classes="dark-popup"
+                                        ItemsSource="{Binding OutputFormatOptions}"
+                                        SelectedItem="{Binding SelectedFormat}"
+                                        SelectionMode="Single">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock
+                                                    Margin="20,0" VerticalAlignment="Center" FontSize="12"
+                                                    Text="{Binding}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Flyout>
+                            </Button.Flyout>
+
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    FontSize="10.5"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="OUTPUT FORMAT" />
+                                <TextBlock
+                                    FontSize="11.5"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{Binding SelectedFormat}" />
+                            </StackPanel>
+                        </Button>
+
+
+
+                        <!--  Directorio de salida  -->
+                        <Border
+                            Grid.Column="2"
+                            Height="50"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource BrushBgPanelAlt}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="0"
+                            CornerRadius="8">
+
+                            <Button
+                                HorizontalAlignment="Stretch"
+                                Background="{StaticResource BrushBgPanelAlt}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                Classes="ghost"
+                                Command="{Binding SelectOutputDirectoryCommand}">
+                                <StackPanel Spacing="4">
+                                    <TextBlock
+                                        FontSize="10.5"
+                                        Foreground="{StaticResource BrushTextMuted}"
+                                        Text="OUTPUT DIRECTORY" />
+                                    <TextBlock
+                                        FontSize="11.5"
+                                        Foreground="{StaticResource BrushTextSecondary}"
+                                        Text="{Binding OutputDirectory}"
+                                        TextWrapping="NoWrap" />
+                                </StackPanel>
+                            </Button>
+                        </Border>
+
+                        <!--  Explorar Directorio  -->
+                        <Border
+                            Grid.Column="4"
+                            Height="50"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource BrushBgPanelAlt}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="0"
+                            CornerRadius="8">
+                            <Button
+                                Height="50"
+                                HorizontalAlignment="Stretch"
+                                Background="{StaticResource BrushBgPanelAlt}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                Classes="ghost"
+                                Command="{Binding ExploreOutputDirectoryCommand}">
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="10.5"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="EXPLORE DIRECTORY"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="NoWrap" />
+                            </Button>
+                        </Border>
+                    </Grid>
+                </Border>
             </Grid>
 
             <!--  ***************** PANEL DERECHO: CONTROLES *****************  -->
@@ -306,15 +425,16 @@
                 CornerRadius="12"
                 Focusable="True">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <Grid Margin="24" RowDefinitions="Auto, 20, Auto, 20, Auto, *, 48">
+                    <Grid Margin="20,24" RowDefinitions="Auto, Auto, Auto, 20, Auto, *, 48">
 
-<!--  1. DSP / Loudness Calibration  -->
+                        <!--  1. DSP / Loudness Calibration  -->
                         <Grid
                             Grid.Row="0"
                             VerticalAlignment="Center"
                             RowDefinitions="Auto, Auto">
                             <TextBlock
                                 Grid.Row="0"
+                                Margin="4,0"
                                 FontSize="15"
                                 FontWeight="Bold"
                                 Foreground="{StaticResource BrushTextPrimary}">
@@ -324,31 +444,22 @@
                                     Text="DSP" />
                                 <Run Text=" · Loudness Calibration" />
                             </TextBlock>
-
-                            <!--  Presets de normalización por plataforma  -->
-                            <ComboBox
-                                Grid.Row="1"
-                                Margin="0,10,0,0"
-                                HorizontalAlignment="Stretch"
-                                ItemsSource="{Binding Presets}"
-                                SelectedItem="{Binding SelectedPreset}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock
-                                            Foreground="{StaticResource BrushTextPrimary}"
-                                            Text="{Binding Name}" />
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
                         </Grid>
 
-                        <!--  Separador  -->
-                        <Rectangle
+                        <!--  1. Presets de normalización por plataforma  -->
+                        <ComboBox
                             Grid.Row="1"
-                            Height="1"
-                            Margin="0,0,0,12"
+                            Margin="0,16,0,16"
+                            HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
-                            Fill="{StaticResource BrushBorderSubtle}" />
+                            ItemsSource="{Binding Presets}"
+                            SelectedItem="{Binding SelectedPreset}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="{StaticResource BrushTextPrimary}" Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
 
                         <!--  2. Controles  -->
                         <Grid Grid.Row="2" RowDefinitions="64,64,64,64">
@@ -660,43 +771,15 @@
                                 <Run Text=" · Safety" />
                             </TextBlock>
 
-                            <!--  Formato de salida  -->
-                            <StackPanel Spacing="6">
-                                <TextBlock
-                                    FontSize="10.5"
-                                    FontWeight="SemiBold"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="OUTPUT FORMAT" />
-                                <ComboBox
-                                    HorizontalAlignment="Stretch"
-                                    ItemsSource="{Binding OutputFormatOptions}"
-                                    SelectedIndex="{Binding OutputFormat, Mode=TwoWay}" />
-                            </StackPanel>
-
+                            <!--  Preservar Metadatos  -->
                             <CheckBox
                                 Content="Preserve Metadata (ID3v2.3)"
                                 Foreground="{StaticResource BrushTextSecondary}"
                                 IsChecked="True" />
 
-                            <!--  Directorio de salida  -->
-                            <Border
-                                Padding="10"
-                                Background="{StaticResource BrushBgPanelAlt}"
-                                BorderBrush="{StaticResource BrushBorderSubtle}"
-                                BorderThickness="1"
-                                CornerRadius="8">
-                                <StackPanel Spacing="4">
-                                    <TextBlock
-                                        FontSize="10.5"
-                                        Foreground="{StaticResource BrushTextMuted}"
-                                        Text="OUTPUT DIRECTORY" />
-                                    <TextBlock
-                                        FontSize="11.5"
-                                        Foreground="{StaticResource BrushTextSecondary}"
-                                        Text="{Binding OutputDirectory}"
-                                        TextWrapping="Wrap" />
-                                </StackPanel>
-                            </Border>
+
+
+
                         </StackPanel>
 
                         <!--  4. Botón principal de ejecución  -->
