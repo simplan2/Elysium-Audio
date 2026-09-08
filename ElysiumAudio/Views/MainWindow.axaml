@@ -297,7 +297,7 @@
                             FontWeight="Medium"
                             Foreground="{StaticResource BrushTextMuted}"
                             IsVisible="{Binding AudioFiles.Count, Converter={StaticResource CountToVisibilityConverter}}"
-                            Text="Drop WAV / FLAC here or use Add Files" />
+                            Text="Drop WAV / FLAC files or folders here" />
 
                     </Grid>
                 </Border>
@@ -353,8 +353,6 @@
                                     Text="{Binding SelectedFormat}" />
                             </StackPanel>
                         </Button>
-
-
 
                         <!--  Directorio de salida  -->
                         <Border
@@ -449,7 +447,7 @@
                         <!--  1. Presets de normalización por plataforma  -->
                         <ComboBox
                             Grid.Row="1"
-                            Margin="0,16,0,16"
+                            Margin="0,18,0,18"
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
                             ItemsSource="{Binding Presets}"

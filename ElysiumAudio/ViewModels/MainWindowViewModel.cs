@@ -318,11 +318,7 @@ namespace ElysiumAudio.ViewModels
 
             string dirPath = folder.Path.LocalPath;
 
-            var audioExtensions = new[] { ".wav", ".flac" };
-            var files = Directory.GetFiles(dirPath)
-                .Where(f => audioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var files = ResolveAudioPaths(new[] { dirPath });
 
             if (files.Count == 0)
             {
@@ -552,6 +548,66 @@ namespace ElysiumAudio.ViewModels
 
         #region Methods
 
+        private static readonly string[] AudioExtensions = { ".wav", ".flac" };
+
+        // Resuelve una lista de paths (archivos y/o carpetas) a archivos de audio válidos.
+        // Las carpetas se escanean recursivamente.
+        public static List<string> ResolveAudioPaths(IEnumerable<string> paths)
+        {
+            var result = new List<string>();
+            foreach (var p in paths)
+            {
+                if (Directory.Exists(p))
+                {
+                    try
+                    {
+                        result.AddRange(
+                            Directory.EnumerateFiles(p, "*.*", SearchOption.AllDirectories)
+                                .Where(f => AudioExtensions.Contains(
+                                    Path.GetExtension(f).ToLowerInvariant())));
+                    }
+                    catch { }
+                }
+                else if (File.Exists(p) &&
+                         AudioExtensions.Contains(
+                             Path.GetExtension(p).ToLowerInvariant()))
+                {
+                    result.Add(p);
+                }
+            }
+            return result;
+        }
+
+        // Añade archivos a la cola evitando duplicados; devuelve cuántos se agregaron.
+        public int AddFilesToQueue(IEnumerable<string> filePaths)
+        {
+            int added = 0;
+            foreach (var localPath in filePaths)
+            {
+                if (AudioFiles.Any(f => f.FilePath == localPath)) continue;
+
+                var track = new ATL.Track(localPath);
+                TimeSpan duration = TimeSpan.FromSeconds(track.Duration);
+                string formattedDuration = duration.ToString(
+                    duration.Hours > 0 ? "h\\:mm\\:ss" : "mm\\:ss");
+
+                AudioFiles.Add(new AudioFileModel
+                {
+                    FilePath = localPath,
+                    FileName = Path.GetFileName(localPath),
+                    Codec = Path.GetExtension(localPath).ToUpper().Replace(".", ""),
+                    Duration = formattedDuration,
+                    StatusMessage = "Pending",
+                    Peak = "—",
+                    Loudness = "—",
+                    NormalizedPeak = "—",
+                    NormalizedLoudness = "—"
+                });
+                added++;
+            }
+            return added;
+        }
+
         private async Task OnAddFile()
         {
             // Obtener de forma segura el StorageProvider desde el ciclo de vida de la App de Avalonia
@@ -587,32 +643,6 @@ namespace ElysiumAudio.ViewModels
                 }
             }
         }
-
-        // Añade archivos a la cola evitando duplicados; devuelve cuántos se agregaron.
-        private int AddFilesToQueue(IEnumerable<string> filePaths)
-        {
-            int added = 0;
-            foreach (var localPath in filePaths)
-            {
-                // Evitamos duplicados en la tabla de la interfaz
-                if (AudioFiles.Any(f => f.FilePath == localPath)) continue;
-
-                // Añadimos a la tabla de forma reactiva
-                AudioFiles.Add(new AudioFileModel
-                {
-                    FilePath = localPath,
-                    FileName = Path.GetFileName(localPath),
-                    Codec = Path.GetExtension(localPath).ToUpper().Replace(".", ""),
-                    Duration = "--:--",
-                    StatusMessage = "Pending",
-                    Peak = "0.0 dBFS",
-                    Loudness = "-0.0 LUFS"
-                });
-                added++;
-            }
-            return added;
-        }
-
 
         // =========================================================================
         // EVENTOS CUANDO EL USUARIO MUEVE LOS CONTROLES NUMÉRICOS (SLIDERS)

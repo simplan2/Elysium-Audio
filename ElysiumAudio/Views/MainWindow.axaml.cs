@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using ElysiumAudio.ViewModels;
-using NAudio.SoundFile;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -49,86 +48,36 @@ namespace ElysiumAudio.Views
             }
         }
 
-        // Este método se llama cuando un archivo es soltado sobre la ventana. Se filtran los archivos válidos y se agregan a la lista de reproducción.
+        // Este método se llama cuando archivos o carpetas son soltados sobre la ventana.
+        // Resuelve archivos WAV/FLAC recursivamente y los agrega a la cola.
         private async void OnDrop(object? sender, DragEventArgs e)
         {
-            if (e.DataTransfer.Formats.Contains(DataFormat.File))
+            if (!e.DataTransfer.Formats.Contains(DataFormat.File)) return;
+
+            var files = e.DataTransfer.TryGetFiles();
+            var vm = ViewModel;
+            if (files == null || vm == null) return;
+
+            var rawPaths = files
+                .Select(f => f.TryGetLocalPath())
+                .Where(p => !string.IsNullOrEmpty(p))
+                .Select(p => Path.GetFullPath(p!).Normalize(NormalizationForm.FormC))
+                .ToList();
+
+            var validPaths = MainWindowViewModel.ResolveAudioPaths(rawPaths);
+
+            if (validPaths.Count == 0)
             {
-                var files = e.DataTransfer.TryGetFiles();
-                var vm = ViewModel;
-                if (files != null && vm != null)
-                {
-                    var validPaths = new List<string>();
-                    foreach (var file in files)
-                    {
-                        string? localPath = file.TryGetLocalPath();
-                        if (string.IsNullOrEmpty(localPath)) continue;
-
-                        string path = Path.GetFullPath(localPath)
-                            .Normalize(NormalizationForm.FormC);
-
-                        string ext = Path.GetExtension(path).ToLowerInvariant();
-                        if (ext == ".wav" || ext == ".flac")
-                        {
-                            validPaths.Add(path);
-                        }
-                    }
-
-                    if (validPaths.Count == 0) return;
-
-                    vm.SystemStatus = $"Cargando {validPaths.Count} archivo(s)...";
-
-                    var existingPaths = vm.AudioFiles
-                        .Select(f => f.FilePath.Normalize(NormalizationForm.FormC))
-                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                    await Task.Run(() =>
-                    {
-                        foreach (var path in validPaths)
-                        {
-                            if (existingPaths.Contains(path)) continue;
-
-                            try
-                            {
-                                var fileInfo = new FileInfo(path);
-
-                                // Usar ATL para leer duración y metadatos
-                                var track = new ATL.Track(path);
-                                TimeSpan duration = TimeSpan.FromSeconds(track.Duration);
-                                string durationFormatted = duration.ToString(
-                                    duration.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
-
-                                var audioModel = new Models.AudioFileModel
-                                {
-                                    FilePath = path,
-                                    FileName = fileInfo.Name,
-                                    Codec = fileInfo.Extension.ToUpper().Replace(".", ""),
-                                    Duration = durationFormatted,
-                                    StatusMessage = "Pending",
-                                    Peak = "—",
-                                    Loudness = "—",
-                                    NormalizedPeak = "—",
-                                    NormalizedLoudness = "—"
-                                };
-
-                                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                                {
-                                    vm.AudioFiles.Add(audioModel);
-                                });
-                            }
-                            catch (Exception ex)
-                            {
-                                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                                {
-                                    vm.SystemStatus = $"Error de lectura en {Path.GetFileName(path)}: {ex.Message}";
-                                });
-                            }
-                        }
-                    });
-
-                    vm.SystemStatus = $"¡Cola de reproducción actualizada con éxito!";
-                }
+                vm.SystemStatus = "No se encontraron archivos WAV / FLAC.";
+                return;
             }
+
+            vm.SystemStatus = $"Cargando {validPaths.Count} archivo(s)...";
+
+            int added = vm.AddFilesToQueue(validPaths);
+            vm.SystemStatus = added > 0
+                ? $"Se añadieron {added} archivo(s) a la cola."
+                : "Todos los archivos ya están en la cola.";
         }
 
         private void OnTargetLufsKeyDown(object? sender, KeyEventArgs e)
