@@ -20,7 +20,7 @@
     x:DataType="vm:MainWindowViewModel"
     Background="{StaticResource BrushBgBase}"
     Foreground="{StaticResource BrushTextPrimary}"
-    Icon="/Assets/avalonia-logo.ico"
+    Icon="/Assets/elysium.ico"
     mc:Ignorable="d">
 
     <Design.DataContext>

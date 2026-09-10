@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-
+using TFile = TagLib.File;
 
 namespace ElysiumAudio.Services
 {
@@ -47,6 +47,503 @@ namespace ElysiumAudio.Services
             uint result = GetShortPathName(longPath, shortPath, (uint)shortPath.Capacity);
 
             return result > 0 ? shortPath.ToString() : longPath;
+        }
+
+        // =========================================================================
+        // WINDOWS PROPERTY SYSTEM (IPropertyStore) — Escritor nativo de metadatos
+        // Usa la misma API que el Explorador de Windows para leer/escribir tags.
+        // Funciona en WAV, FLAC, MP3, etc. sin corromper el audio.
+        // =========================================================================
+
+        // IPropertyStore (propsys.h)
+        [ComImport, Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IPropertyStore
+        {
+            int GetCount(out uint cProps);
+            int GetAt(uint iProp, out PropertyKey pkey);
+            int GetValue(ref PropertyKey key, out PropVariant pv);
+            int SetValue(ref PropertyKey key, ref PropVariant pv);
+            int Commit();
+        }
+
+        // PropertyKey (FMTID + PID)
+        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        private struct PropertyKey
+        {
+            public Guid fmtid;
+            public uint pid;
+
+            public PropertyKey(string fmtid, uint pid)
+            {
+                this.fmtid = new Guid(fmtid);
+                this.pid = pid;
+            }
+        }
+
+        // PropVariant (VARIANT simplificado para strings)
+        [StructLayout(LayoutKind.Sequential)]
+        private struct PropVariant
+        {
+            public ushort vt;      // VarType (VT_LPWSTR = 31)
+            public ushort wReserved1;
+            public ushort wReserved2;
+            public ushort wReserved3;
+            public IntPtr pwszVal; // puntero a string Unicode
+
+            public static PropVariant FromString(string value)
+            {
+                var pv = new PropVariant();
+                if (value != null)
+                {
+                    pv.vt = 31; // VT_LPWSTR
+                    pv.pwszVal = Marshal.StringToCoTaskMemUni(value);
+                }
+                else
+                {
+                    pv.vt = 0; // VT_EMPTY
+                    pv.pwszVal = IntPtr.Zero;
+                }
+                return pv;
+            }
+
+            public void Clear()
+            {
+                if (pwszVal != IntPtr.Zero)
+                {
+                    Marshal.FreeCoTaskMem(pwszVal);
+                    pwszVal = IntPtr.Zero;
+                }
+                vt = 0;
+            }
+        }
+
+        // Property Keys estándar (de propkey.h)
+        private static readonly PropertyKey PKEY_Title = new("{F29F85E0-4FF9-1068-AB91-08002B27B3D9}", 2);        // System.Title
+        private static readonly PropertyKey PKEY_Music_AlbumTitle = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 4); // System.Music.AlbumTitle
+        private static readonly PropertyKey PKEY_Music_Artist = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 13);   // System.Music.Artist
+        private static readonly PropertyKey PKEY_Music_AlbumArtist = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 14); // System.Music.AlbumArtist
+        private static readonly PropertyKey PKEY_Music_Genre = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 11);    // System.Music.Genre
+        private static readonly PropertyKey PKEY_Music_TrackNumber = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 7);  // System.Music.TrackNumber
+        private static readonly PropertyKey PKEY_Music_Year = new("{56A3372E-CE9C-11D2-9F0E-006097C686F6}", 5);       // System.Music.Year
+        private static readonly PropertyKey PKEY_Comment = new("{F29F85E0-4FF9-1068-AB91-08002B27B3D9}", 6);          // System.Comment
+        private static readonly PropertyKey PKEY_Authors = new("{F29F85E0-4FF9-1068-AB91-08002B27B3D9}", 4);         // System.Author (para Composer)
+        private static readonly PropertyKey PKEY_ApplicationName = new("{F29F85E0-4FF9-1068-AB91-08002B27B3D9}", 18);  // System.ApplicationName (para Conductor/Publisher)
+
+        // SHGetPropertyStoreFromParsingName (shell32.dll) - método más compatible
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void SHGetPropertyStoreFromParsingName(
+            [MarshalAs(UnmanagedType.LPWStr)] string pszPath,
+            IntPtr pbc, // IBindCtx*, opcional
+            int flags,  // GETPROPERTYSTOREFLAGS
+            ref Guid riid,
+            [MarshalAs(UnmanagedType.Interface)] out IPropertyStore ppv);
+
+        // IShellItem (shell32.dll) - para uso futuro si se necesita
+        [ComImport, Guid("43826d1e-e718-42ee-bc55-a1e261c37bfe"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IShellItem
+        {
+            void BindToHandler(IntPtr pbc, ref Guid bhid, ref Guid riid, out IntPtr ppv);
+            void GetParent(out IShellItem ppsi);
+            void GetDisplayName(int sigdnName, out IntPtr ppszName);
+            void GetAttributes(uint sfgaoMask, out uint psfgaoAttribs);
+            void Compare(IShellItem psi, uint hint, out int piOrder);
+        }
+
+        // SHCreateItemFromParsingName (shell32.dll)
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+        private static extern void SHCreateItemFromParsingName(
+            [MarshalAs(UnmanagedType.LPWStr)] string pszPath,
+            IntPtr pbc,
+            ref Guid riid,
+            [MarshalAs(UnmanagedType.Interface)] out IShellItem ppv);
+
+        // IShellItem.GetPropertyStore usa BHID_PropertyStore = {886d8eeb-8cf2-4446-8d02-cdba1dbdcf99}
+        private static readonly Guid BHID_PropertyStore = new("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
+        private static readonly Guid IID_IPropertyStore = new("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
+
+        private const int GPS_DEFAULT = 0;
+        private const int GPS_HANDLERPROPERTIESONLY = 0x1;
+        private const int GPS_READWRITE = 0x2;
+        private const int GPS_TEMPORARY = 0x4;
+        private const int GPS_FASTPROPERTIESONLY = 0x8;
+        private const int GPS_OPENSLOWITEM = 0x10;
+        private const int GPS_DELAYCREATION = 0x20;
+        private const int GPS_BESTEFFORT = 0x40;
+        private const int GPS_NO_OPLOCK = 0x80;
+        private const int GPS_PREFERQUERYPROPERTIES = 0x100;
+        private const int GPS_EXTRINSICPROPERTIES = 0x200;
+
+// Escribe metadatos: WAV -> ATL (ID3v2.3 + LIST/INFO nativo), FLAC -> ATL (Vorbis nativo)
+        // ATL es la librería probada: mantiene el chunk data intacto y no corrompe el RIFF.
+        private void WriteMetadataViaPropertyStore(string originalFilePath, Track source)
+        {
+            bool isWav = Path.GetExtension(originalFilePath).Equals(".wav", StringComparison.OrdinalIgnoreCase);
+            string safePath = GetSafePathForNativeLibraries(originalFilePath);
+
+            if (isWav)
+            {
+                // WAV: forzar ID3v2.3 (estándar conpatible)
+                try
+                {
+                    Settings.ID3v2_tagSubVersion = 3;
+                    var target = new Track(safePath);
+                    CopyFieldsToTag(target, source);
+                    target.Save(ATL.AudioData.MetaDataIOFactory.TagType.ID3V2);
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] ATL ID3v2.3 guardado: {originalFilePath}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] ATL ID3v2 falló: {ex.Message}");
+                }
+
+                // WAV: LIST/INFO nativo para Windows Explorer (best-effort, no debe romper el archivo)
+                try
+                {
+                    var native = new Track(safePath);
+                    CopyFieldsToTag(native, source);
+                    native.Save(ATL.AudioData.MetaDataIOFactory.TagType.NATIVE);
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] ATL LIST/INFO guardado: {originalFilePath}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] ATL LIST/INFO falló: {ex.Message}");
+                }
+
+                // Windows Explorer solo muestra los tags LIST/INFO de un WAV si el chunk data
+                // aparece ANTES que el chunk LIST. ATL los ordena al revés y Explorer queda vacío.
+                try
+                {
+                    ReorderWavForWindowsExplorer(originalFilePath, safePath);
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] WAV reordenado para Explorer: {originalFilePath}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] Reorden WAV falló: {ex.Message}");
+                }
+            }
+            else
+            {
+                // FLAC: ATL escribe Vorbis nativo + Picture blocks
+                var target = new Track(safePath);
+                CopyFieldsToTag(target, source);
+
+                target.EmbeddedPictures.Clear();
+                foreach (var pic in source.EmbeddedPictures)
+                {
+                    pic.PicType = PictureInfo.PIC_TYPE.Front;
+                    target.EmbeddedPictures.Add(pic);
+                }
+                target.Save();
+                System.Diagnostics.Debug.WriteLine($"[AudioEngine] ATL Vorbis guardado: {originalFilePath}");
+            }
+        }
+
+        // Copia los campos comunes del Track origen a un Track destino
+        private static void CopyFieldsToTag(Track target, Track source)
+        {
+            target.Title = source.Title;
+            target.Artist = source.Artist;
+            target.AlbumArtist = source.AlbumArtist;
+            target.Album = source.Album;
+            target.Year = source.Year;
+            target.Genre = source.Genre;
+            target.Comment = source.Comment;
+            target.TrackNumber = source.TrackNumber;
+            target.DiscNumber = source.DiscNumber;
+            target.Composer = source.Composer;
+            target.ISRC = source.ISRC;
+            target.Copyright = source.Copyright;
+            target.Lyrics = source.Lyrics;
+        }
+
+        // Reordena los chunks de un WAV para que el chunk data quede ANTES de los chunks
+        // de metadatos (LIST/INFO e id3). Windows Explorer exige este orden para mostrar
+        // los tags en Propiedades -> Detalles; ATL inserta los tags antes de data.
+        // Reconstruye el archivo en un temp y lo reemplaza si el reorden es necesario.
+        private static void ReorderWavForWindowsExplorer(string originalFilePath, string safePath)
+        {
+            string tmpPath = safePath + ".reorder." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                using (var fs = new FileStream(safePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var outFs = new FileStream(tmpPath, FileMode.Create, FileAccess.Write))
+                {
+                    byte[] riff = new byte[12];
+                    if (fs.Read(riff, 0, 12) != 12) return;
+                    if (Encoding.ASCII.GetString(riff, 0, 4) != "RIFF" ||
+                        Encoding.ASCII.GetString(riff, 8, 4) != "WAVE") return;
+
+                    var tagsBeforeData = new List<(string id, long offset, int size)>();
+                    var dataChunk = (id: "", offset: 0L, size: 0);
+                    var fmtChunk = (id: "", offset: 0L, size: 0);
+                    bool hasFmt = false, hasData = false;
+                    long pos = 12;
+
+                    while (pos + 8 <= fs.Length)
+                    {
+                        fs.Position = pos;
+                        byte[] h = new byte[8];
+                        int r = fs.Read(h, 0, 8);
+                        if (r != 8) break;
+                        int sz = BitConverter.ToInt32(h, 4);
+                        if (sz < 0 || pos + 8 + sz > fs.Length + 4) break;
+                        string id = Encoding.ASCII.GetString(h, 0, 4);
+                        if (id == "fmt ") { fmtChunk = (id, pos, sz); hasFmt = true; }
+                        else if (id == "data") { dataChunk = (id, pos, sz); hasData = true; }
+                        else if (!hasData && (id == "LIST" || id == "id3 " || id == "ID3 " || id == "ID3"))
+                        {
+                            tagsBeforeData.Add((id, pos, sz));
+                        }
+                        pos += 8 + sz + (sz & 1);
+                    }
+
+                    if (!hasFmt || !hasData) return;
+
+                    // Solo reordenar si hay tags (LIST/id3) ANTES del chunk data, que es lo que
+                    // ATL genera y lo que Windows Explorer no sabe leer en ese orden.
+                    if (tagsBeforeData.Count == 0) return;
+
+                    // Reconstruir: RIFF + fmt + data + resto (incluye los tags movidos al final)
+                    byte[] riffHeader = new byte[12];
+                    riffHeader[0] = (byte)'R'; riffHeader[1] = (byte)'I'; riffHeader[2] = (byte)'F'; riffHeader[3] = (byte)'F';
+                    Array.Copy(BitConverter.GetBytes(0), 0, riffHeader, 4, 4); // tamaño en bytes se corrige al final
+                    riffHeader[8] = (byte)'W'; riffHeader[9] = (byte)'A'; riffHeader[10] = (byte)'V'; riffHeader[11] = (byte)'E';
+                    outFs.Write(riffHeader, 0, 12);
+
+                    // fmt
+                    fs.Position = fmtChunk.offset;
+                    CopyChunk(fs, outFs, fmtChunk.size);
+
+                    // data
+                    fs.Position = dataChunk.offset;
+                    CopyChunk(fs, outFs, dataChunk.size);
+
+                    // resto de chunks en orden original (incluye LIST/INFO e id3 que ATL puso antes de data)
+                    pos = 12;
+                    while (pos + 8 <= fs.Length)
+                    {
+                        fs.Position = pos;
+                        byte[] h = new byte[8];
+                        int r = fs.Read(h, 0, 8);
+                        if (r != 8) break;
+                        int sz = BitConverter.ToInt32(h, 4);
+                        if (sz < 0) break;
+                        string id = Encoding.ASCII.GetString(h, 0, 4);
+                        if (id == "fmt " || id == "data") { pos += 8 + sz + (sz & 1); continue; }
+                        fs.Position = pos;
+                        CopyChunk(fs, outFs, sz);
+                        pos += 8 + sz + (sz & 1);
+                    }
+
+                    long total = outFs.Length;
+                    byte[] sizeBytes = BitConverter.GetBytes((int)(total - 8));
+                    outFs.Position = 4;
+                    outFs.Write(sizeBytes, 0, 4);
+                    outFs.Flush();
+                }
+
+                // Reemplazar el original por el reordenado, SIEMPRE volviendo al nombre largo
+                // original (no a la ruta 8.3, que dejaría el archivo con nombre corto literal).
+                if (File.Exists(originalFilePath))
+                {
+                    File.Delete(originalFilePath);
+                }
+                File.Move(tmpPath, originalFilePath);
+            }
+            finally
+            {
+                if (File.Exists(tmpPath))
+                {
+                    try { File.Delete(tmpPath); } catch { }
+                }
+            }
+        }
+
+        private static void CopyChunk(FileStream src, FileStream dst, int size)
+        {
+            byte[] h = new byte[8];
+            int r = src.Read(h, 0, 8);
+            if (r != 8) return;
+            dst.Write(h, 0, 8);
+            int remaining = size;
+            byte[] buf = new byte[65536];
+            while (remaining > 0)
+            {
+                int n = src.Read(buf, 0, Math.Min(buf.Length, remaining));
+                if (n <= 0) break;
+                dst.Write(buf, 0, n);
+                remaining -= n;
+            }
+            if ((size & 1) == 1) dst.WriteByte(0); // padding para alinear a word
+        }
+
+        // ATL escribe los subchunks LIST/INFO de un WAV en UTF-8, pero Windows Explorer (y ATL
+        // mismo al releer) los interpretan como ANSI (página de códigos 1252). Esto convierte el
+        // texto de cada subchunk INFO a 1252, recorriendo todos los chunks y reconstruyendo el
+        // archivo solo si algún valor cambió (los tamaños pueden variar al cambiar de encoding).
+        private static void FixWavInfoToAnsi(string originalFilePath, string safePath)
+        {
+            string tmpPath = safePath + ".fixinfo." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                using (var fs = new FileStream(safePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var outFs = new FileStream(tmpPath, FileMode.Create, FileAccess.Write))
+                {
+                    byte[] riff = new byte[12];
+                    if (fs.Read(riff, 0, 12) != 12) return;
+                    if (Encoding.ASCII.GetString(riff, 0, 4) != "RIFF" ||
+                        Encoding.ASCII.GetString(riff, 8, 4) != "WAVE") return;
+
+                    // Header RIFF: tamaño se corrige al final
+                    byte[] riffHeader = new byte[12];
+                    riffHeader[0] = (byte)'R'; riffHeader[1] = (byte)'I'; riffHeader[2] = (byte)'F'; riffHeader[3] = (byte)'F';
+                    Array.Copy(BitConverter.GetBytes(0), 0, riffHeader, 4, 4);
+                    riffHeader[8] = (byte)'W'; riffHeader[9] = (byte)'A'; riffHeader[10] = (byte)'V'; riffHeader[11] = (byte)'E';
+                    outFs.Write(riffHeader, 0, 12);
+
+                    bool anyChanged = false;
+                    long pos = 12;
+                    while (pos + 8 <= fs.Length)
+                    {
+                        fs.Position = pos;
+                        byte[] h = new byte[8];
+                        int r = fs.Read(h, 0, 8);
+                        if (r != 8) break;
+                        int sz = BitConverter.ToInt32(h, 4);
+                        if (sz < 0 || pos + 8 + sz > fs.Length + 4) break;
+                        string id = Encoding.ASCII.GetString(h, 0, 4);
+
+                        if (id == "LIST" && sz >= 4)
+                        {
+                            // LIST: el payload arranca con un id de 4 bytes (p.ej. "INFO")
+                            byte[] payload = new byte[sz];
+                            fs.Position = pos + 8;
+                            int read = 0;
+                            while (read < payload.Length)
+                            {
+                                int n = fs.Read(payload, read, payload.Length - read);
+                                if (n <= 0) break;
+                                read += n;
+                            }
+                            if (read != payload.Length) break;
+
+                            string listType = Encoding.ASCII.GetString(payload, 0, 4);
+                            if (listType == "INFO")
+                            {
+                                byte[] newPayload = ReencodeInfoSubchunksToAnsi(payload, ref anyChanged);
+                                if (newPayload != null)
+                                {
+                                    Array.Copy(Encoding.ASCII.GetBytes("LIST"), 0, h, 0, 4);
+                                    Array.Copy(BitConverter.GetBytes(newPayload.Length), 0, h, 4, 4);
+                                    outFs.Write(h, 0, 8);
+                                    outFs.Write(newPayload, 0, newPayload.Length);
+                                    if ((newPayload.Length & 1) == 1) outFs.WriteByte(0);
+                                }
+                                else
+                                {
+                                    Array.Copy(Encoding.ASCII.GetBytes("LIST"), 0, h, 0, 4);
+                                    Array.Copy(BitConverter.GetBytes(payload.Length), 0, h, 4, 4);
+                                    outFs.Write(h, 0, 8);
+                                    outFs.Write(payload, 0, payload.Length);
+                                    if ((payload.Length & 1) == 1) outFs.WriteByte(0);
+                                }
+                            }
+                            else
+                            {
+                                fs.Position = pos;
+                                CopyChunk(fs, outFs, sz);
+                            }
+                        }
+                        else
+                        {
+                            fs.Position = pos;
+                            CopyChunk(fs, outFs, sz);
+                        }
+                        pos += 8 + sz + (sz & 1);
+                    }
+
+                    long total = outFs.Length;
+                    byte[] sizeBytes = BitConverter.GetBytes((int)(total - 8));
+                    outFs.Position = 4;
+                    outFs.Write(sizeBytes, 0, 4);
+                    outFs.Flush();
+
+                    if (anyChanged)
+                    {
+                        // Voltaje al nombre largo original
+                        if (File.Exists(originalFilePath)) File.Delete(originalFilePath);
+                        File.Move(tmpPath, originalFilePath);
+                        tmpPath = null; // ya movido
+                    }
+                }
+            }
+            finally
+            {
+                if (tmpPath != null && File.Exists(tmpPath))
+                {
+                    try { File.Delete(tmpPath); } catch { }
+                }
+            }
+        }
+
+        // Convierte los subchunks INFO de UTF-8 a ANSI/1252. Devuelve un nuevo payload si algo
+        // cambió, o null si no hubo cambios (byte a byte idénticos). Mantiene el orden.
+        private static byte[] ReencodeInfoSubchunksToAnsi(byte[] payload, ref bool anyChanged)
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            var strictUtf8 = new UTF8Encoding(false, true);
+            var ansi = Encoding.GetEncoding(1252);
+
+            var ms = new MemoryStream();
+            ms.Write(payload, 0, 4); // "INFO"
+            long pos = 4;
+            bool localChanged = false;
+            while (pos + 8 <= payload.Length)
+            {
+                int subSz = BitConverter.ToInt32(payload, (int)pos + 4);
+                if (subSz < 0 || pos + 8 + subSz > payload.Length) break;
+                byte[] value = new byte[subSz];
+                Array.Copy(payload, (int)pos + 8, value, 0, subSz);
+
+                // Intentar leer como UTF-8 estricto; si no es UTF-8 válido, se asume que ya es
+                // ANSI/Latin-1 y se deja intacto.
+                string text = null;
+                try { text = strictUtf8.GetString(value); }
+                catch (DecoderFallbackException) { }
+
+                if (text != null && text.Length > 0)
+                {
+                    // Solo si todos los caracteres son representables en 1252 (accentos, ñ, ©…)
+                    bool representable = text.All(c => c <= 0xFF);
+                    if (representable)
+                    {
+                        try
+                        {
+                            byte[] reencoded = ansi.GetBytes(text);
+                            if (!reencoded.SequenceEqual(value))
+                            {
+                                byte[] idBytes = new byte[4];
+                                Array.Copy(payload, (int)pos, idBytes, 0, 4);
+                                ms.Write(idBytes, 0, 4);
+                                ms.Write(BitConverter.GetBytes(reencoded.Length), 0, 4);
+                                ms.Write(reencoded, 0, reencoded.Length);
+                                if ((reencoded.Length & 1) == 1) ms.WriteByte(0);
+                                localChanged = true;
+                                anyChanged = true;
+                                pos += 8 + subSz + (subSz & 1);
+                                continue;
+                            }
+                        }
+                        catch (EncoderFallbackException) { }
+                    }
+                }
+
+                // Sin cambios: copiar el subchunk original completo
+                ms.Write(payload, (int)pos + 0, 8 + subSz);
+                if ((subSz & 1) == 1) ms.WriteByte(0);
+                pos += 8 + subSz + (subSz & 1);
+            }
+            return localChanged ? ms.ToArray() : null;
         }
 
 
@@ -88,7 +585,7 @@ namespace ElysiumAudio.Services
                     a1_sh = -1.663655113256020;
                     a2_sh = 0.712595428073225;
 
-                    // Etapa 2: High-Pass (Filtro RLB para simular la insensibilidad a bajas frecuencias)
+                    // Etapa 2: High-Pass (RLB Filter)
                     // Coeficientes bilineales propios de 44.1 kHz (f0=38 Hz, Q=0.5), según la norma.
                     b0_hp = 1.0;
                     b1_hp = -2.0;
@@ -173,147 +670,264 @@ namespace ElysiumAudio.Services
         }
 
 
-
         // PASADA 1: Análisis indexado ITU-R BS.1770-4 (Gating Doble + 75% Overlap Exacto)
         // Diseñado para coincidir 1:1 con los valores de medición de Youlean Loudness Meter
         public AudioInfo AnalyzeAudioFile(string filePath)
         {
             try
             {
-                var info = new AudioInfo();
-                if (!System.IO.File.Exists(filePath)) return info;
+                if (!System.IO.File.Exists(filePath)) return new AudioInfo();
 
-                using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                string cleanPath = ExtractFlacStream(filePath);
+                bool isTemp = cleanPath != filePath;
+                try
                 {
-                    using (var reader = new SoundFileReader(fileStream))
+                    return AnalyzeFromPath(cleanPath);
+                }
+                finally
+                {
+                    if (isTemp && File.Exists(cleanPath))
                     {
-                        var waveFormat = reader.WaveFormat;
-                        info.DurationFormatted = reader.TotalTime.ToString(reader.TotalTime.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
+                        try { File.Delete(cleanPath); } catch { }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AudioEngine] Error analizando '{Path.GetFileName(filePath)}': {ex.Message}");
+                throw;
+            }
+        }
 
-                        var sampleProvider = reader.ToSampleProvider();
-                        var filter = new KWeightingFilter(waveFormat.SampleRate, waveFormat.Channels);
+        // Detecta si el archivo tiene ID3v2 al inicio y crea una copia temporal sin él.
+        // Solo se busca el marcador fLaC si la cabecera del archivo es ID3v2 ("ID3"); el
+        // tamaño del tag se lee de la propia cabecera para saltar exactamente al stream FLAC.
+        // Los WAV (RIFF) y los FLAC ya limpios (fLaC al inicio) se devuelven sin tocar,
+        // evitando falsos positivos del marcador en datos PCM u otros binarios.
+        private static string ExtractFlacStream(string filePath)
+        {
+            byte[] head = new byte[10];
+            int headLen;
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                headLen = fs.Read(head, 0, head.Length);
+            }
 
-                        int channels = waveFormat.Channels;
-                        int sampleRate = waveFormat.SampleRate;
+            // fLaC al inicio (FLAC puro) o RIFF (WAV): no hay nada que limpiar
+            if (headLen >= 4)
+            {
+                if (head[0] == 0x66 && head[1] == 0x4C && head[2] == 0x61 && head[3] == 0x43)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] Archivo ya empieza con fLaC. Sin limpieza necesaria.");
+                    return filePath;
+                }
+                if (head[0] == 0x52 && head[1] == 0x49 && head[2] == 0x46 && head[3] == 0x46)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] Archivo RIFF (WAV). Sin limpieza necesaria.");
+                    return filePath;
+                }
+            }
 
-                        // Definiciones estrictas de la norma ITU: Ventana de 400ms, Avance de 100ms (75% traslape)
-                        int blockLengthSamples = (int)(0.4 * sampleRate);
-                        int hopSizeSamples = (int)(0.1 * sampleRate);
+            // Solo se busca el stream FLAC si la cabecera es un tag ID3v2 ("ID3")
+            if (headLen < 10 || head[0] != 0x49 || head[1] != 0x44 || head[2] != 0x33) // "ID3"
+            {
+                System.Diagnostics.Debug.WriteLine($"[AudioEngine] Sin cabecera ID3v2 en '{Path.GetFileName(filePath)}'. Usando archivo original.");
+                return filePath;
+            }
 
-                        // Listas de muestras filtradas por canal para gestionar la ventana deslizante
-                        var filteredChannels = new List<float>[channels];
-                        for (int c = 0; c < channels; c++)
+            // Tamaño del tag ID3v2 = 4 bytes syncsafe (bit más alto de cada byte ignorado)
+            int id3Size = ((head[6] & 0x7F) << 21) | ((head[7] & 0x7F) << 14) | ((head[8] & 0x7F) << 7) | (head[9] & 0x7F);
+            long flacPos = 10L + id3Size;
+
+            // Verificar que justo después del tag ID3v2 viene el marcador fLaC
+            byte[] marker = new byte[4];
+            int markerLen;
+            using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                fs.Seek(flacPos, SeekOrigin.Begin);
+                markerLen = fs.Read(marker, 0, 4);
+            }
+            if (markerLen != 4 || marker[0] != 0x66 || marker[1] != 0x4C || marker[2] != 0x61 || marker[3] != 0x43)
+            {
+                System.Diagnostics.Debug.WriteLine($"[AudioEngine] ID3v2 sin fLaC tras el tag en '{Path.GetFileName(filePath)}'. Usando archivo original.");
+                return filePath;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[AudioEngine] ID3v2 de {id3Size} bytes, fLaC en offset {flacPos} (0x{flacPos:X}) de '{Path.GetFileName(filePath)}'. Extrayendo stream limpio.");
+
+            // Crear archivo temporal con solo el stream FLAC
+            string tempPath = Path.Combine(Path.GetTempPath(), "ElysiumAudio",
+                "clean_" + Guid.NewGuid().ToString("N") + Path.GetExtension(filePath));
+
+            Directory.CreateDirectory(Path.GetDirectoryName(tempPath)!);
+            using (var input = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var output = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
+            {
+                input.Seek(flacPos, SeekOrigin.Begin);
+                input.CopyTo(output);
+            }
+
+            // Recortar ID3v1 final si existe (128 bytes empezando con "TAG" = 0x54 0x41 0x47)
+            // libsndfile intenta decodificarlo como frame FLAC y pierde la sync.
+            const int Id3v1Size = 128;
+            using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                long len = fs.Length;
+                if (len > Id3v1Size)
+                {
+                    fs.Seek(-Id3v1Size, SeekOrigin.End);
+                    byte[] tail = new byte[Id3v1Size];
+                    fs.ReadExactly(tail, 0, Id3v1Size);
+                    if (tail[0] == 0x54 && tail[1] == 0x41 && tail[2] == 0x47) // "TAG"
+                    {
+                        fs.SetLength(len - Id3v1Size);
+                        System.Diagnostics.Debug.WriteLine($"[AudioEngine] ID3v1 detectado al final, recortados {Id3v1Size} bytes.");
+                    }
+                }
+            }
+
+            // Verificar
+            byte[] check = new byte[4];
+            using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                fs.ReadExactly(check, 0, 4);
+            }
+            string hex = BitConverter.ToString(check).Replace("-", " ");
+            System.Diagnostics.Debug.WriteLine($"[AudioEngine] Archivo limpio empieza con: {hex}");
+
+            return tempPath;
+        }
+
+        // Core del análisis ITU-R BS.1770-4 extraído para reutilización con retry
+        private AudioInfo AnalyzeFromPath(string filePath)
+        {
+            var info = new AudioInfo();
+
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                using (var reader = new SoundFileReader(fileStream))
+                {
+                    var waveFormat = reader.WaveFormat;
+                    info.DurationFormatted = reader.TotalTime.ToString(reader.TotalTime.Hours > 0 ? @"hh\:mm\:ss" : @"mm\:ss");
+
+                    var sampleProvider = reader.ToSampleProvider();
+                    var filter = new KWeightingFilter(waveFormat.SampleRate, waveFormat.Channels);
+
+                    int channels = waveFormat.Channels;
+                    int sampleRate = waveFormat.SampleRate;
+
+                    // Definiciones estrictas de la norma ITU: Ventana de 400ms, Avance de 100ms (75% traslape)
+                    int blockLengthSamples = (int)(0.4 * sampleRate);
+                    int hopSizeSamples = (int)(0.1 * sampleRate);
+
+                    // Listas de muestras filtradas por canal para gestionar la ventana deslizante
+                    var filteredChannels = new List<float>[channels];
+                    for (int c = 0; c < channels; c++)
+                    {
+                        filteredChannels[c] = new List<float>(blockLengthSamples * 2);
+                    }
+
+                    var blockEnergies = new List<double>();
+                    float maxSample = 0f;
+
+                    // Búfer de lectura óptimo de NAudio basado en bloques de sample rate
+                    float[] readBuffer = new float[sampleRate * channels];
+                    int samplesRead;
+
+                    while ((samplesRead = sampleProvider.Read(readBuffer.AsSpan())) > 0)
+                    {
+                        for (int i = 0; i < samplesRead; i += channels)
                         {
-                            filteredChannels[c] = new List<float>(blockLengthSamples * 2);
-                        }
-
-                        var blockEnergies = new List<double>();
-                        float maxSample = 0f;
-
-                        // Búfer de lectura óptimo de NAudio basado en bloques de sample rate
-                        float[] readBuffer = new float[sampleRate * channels];
-                        int samplesRead;
-
-                        while ((samplesRead = sampleProvider.Read(readBuffer.AsSpan())) > 0)
-                        {
-                            for (int i = 0; i < samplesRead; i += channels)
+                            // 1. Separar por canales, buscar picos y aplicar K-Weighting (Filtro en cascada)
+                            for (int c = 0; c < channels; c++)
                             {
-                                // 1. Separar por canales, buscar picos y aplicar K-Weighting (Filtro en cascada)
+                                if (i + c >= samplesRead) break;
+
+                                float rawSample = readBuffer[i + c];
+                                float absSample = Math.Abs(rawSample);
+                                if (absSample > maxSample) maxSample = absSample;
+
+                                float filteredSample = filter.ProcessSample(rawSample, c);
+                                filteredChannels[c].Add(filteredSample);
+                            }
+
+                            // 2. Evaluación de la Ventana Deslizante (Se mide sobre el historial de un canal)
+                            if (filteredChannels[0].Count >= blockLengthSamples)
+                            {
+                                double blockEnergySum = 0.0;
+
+                                // Calcular el RMS medio por canal de forma independiente
                                 for (int c = 0; c < channels; c++)
                                 {
-                                    if (i + c >= samplesRead) break;
+                                    double channelEnergy = 0.0;
+                                    // Tomamos las muestras desde el inicio (0) hasta completar los 400ms de audio
+                                    for (int s = 0; s < blockLengthSamples; s++)
+                                    {
+                                        float sample = filteredChannels[c][s];
+                                        channelEnergy += (sample * sample);
+                                    }
+                                    channelEnergy /= blockLengthSamples;
 
-                                    float rawSample = readBuffer[i + c];
-                                    float absSample = Math.Abs(rawSample);
-                                    if (absSample > maxSample) maxSample = absSample;
-
-                                    float filteredSample = filter.ProcessSample(rawSample, c);
-                                    filteredChannels[c].Add(filteredSample);
+                                    // Ponderación estéreo oficial (Izquierdo = 1.0, Derecho = 1.0)
+                                    double channelWeight = 1.0;
+                                    blockEnergySum += (channelWeight * channelEnergy);
                                 }
 
-                                // 2. Evaluación de la Ventana Deslizante (Se mide sobre el historial de un canal)
-                                if (filteredChannels[0].Count >= blockLengthSamples)
+                                // COMPUERTA 1: Gate Absoluto a -70 LUFS (Offset oficial de calibración: -0.691)
+                                double blockLoudness = blockEnergySum > 0.0 ? (-0.691 + 10.0 * Math.Log10(blockEnergySum)) : -70.0;
+
+                                if (blockLoudness > -70.0)
                                 {
-                                    double blockEnergySum = 0.0;
+                                    blockEnergies.Add(blockEnergySum);
+                                }
 
-                                    // Calcular el RMS medio por canal de forma independiente
-                                    for (int c = 0; c < channels; c++)
-                                    {
-                                        double channelEnergy = 0.0;
-                                        // Tomamos las muestras desde el inicio (0) hasta completar los 400ms de audio
-                                        for (int s = 0; s < blockLengthSamples; s++)
-                                        {
-                                            float sample = filteredChannels[c][s];
-                                            channelEnergy += (sample * sample);
-                                        }
-                                        channelEnergy /= blockLengthSamples;
-
-                                        // Ponderación estéreo oficial (Izquierdo = 1.0, Derecho = 1.0)
-                                        double channelWeight = 1.0;
-                                        blockEnergySum += (channelWeight * channelEnergy);
-                                    }
-
-                                    // COMPUERTA 1: Gate Absoluto a -70 LUFS (Offset oficial de calibración: -0.691)
-                                    double blockLoudness = blockEnergySum > 0.0 ? (-0.691 + 10.0 * Math.Log10(blockEnergySum)) : -70.0;
-
-                                    if (blockLoudness > -70.0)
-                                    {
-                                        blockEnergies.Add(blockEnergySum);
-                                    }
-
-                                    // Desplazamiento de la ventana: Removemos únicamente el tamaño del salto (100ms)
-                                    // Esto provoca que las muestras remanentes (los otros 300ms) se mantengan para el siguiente ciclo
-                                    for (int c = 0; c < channels; c++)
-                                    {
-                                        filteredChannels[c].RemoveRange(0, hopSizeSamples);
-                                    }
+                                // Desplazamiento de la ventana: Removemos únicamente el tamaño del salto (100ms)
+                                // Esto provoca que las muestras remanentes (los otros 300ms) se mantengan para el siguiente ciclo
+                                for (int c = 0; c < channels; c++)
+                                {
+                                    filteredChannels[c].RemoveRange(0, hopSizeSamples);
                                 }
                             }
                         }
+                    }
 
-                        info.MaxPeakLinear = maxSample;
-                        info.PeakDbFormatted = maxSample > 0f ? $"{(20f * Math.Log10(maxSample)):F2} dBFS" : "-oo dBFS";
+                    info.MaxPeakLinear = maxSample;
+                    info.PeakDbFormatted = maxSample > 0f ? $"{(20f * Math.Log10(maxSample)):F2} dBFS" : "-oo dBFS";
 
-                        // COMPUERTA 2: Gate Relativo (-10 dB por debajo de la energía media integrada)
-                        if (blockEnergies.Count > 0)
+                    // COMPUERTA 2: Gate Relativo (-10 dB por debajo de la energía media integrada)
+                    if (blockEnergies.Count > 0)
+                    {
+                        double averageEnergyUnGated = 0.0;
+                        foreach (var energy in blockEnergies)
                         {
-                            double averageEnergyUnGated = 0.0;
-                            foreach (var energy in blockEnergies)
+                            averageEnergyUnGated += energy;
+                        }
+                        averageEnergyUnGated /= blockEnergies.Count;
+
+                        // Restar 10 dB en escala logarítmica es equivalente a multiplicar por 0.1 en escala lineal
+                        double relativeThresholdEnergy = averageEnergyUnGated * 0.1;
+
+                        double finalEnergySum = 0.0;
+                        int gatedBlockCount = 0;
+
+                        foreach (var energy in blockEnergies)
+                        {
+                            if (energy >= relativeThresholdEnergy)
                             {
-                                averageEnergyUnGated += energy;
+                                finalEnergySum += energy;
+                                gatedBlockCount++;
                             }
-                            averageEnergyUnGated /= blockEnergies.Count;
+                        }
 
-                            // Restar 10 dB en escala logarítmica es equivalente a multiplicar por 0.1 en escala lineal
-                            double relativeThresholdEnergy = averageEnergyUnGated * 0.1;
+                        if (gatedBlockCount > 0)
+                        {
+                            double integratedEnergy = finalEnergySum / gatedBlockCount;
+                            float finalLufs = (float)(-0.691 + 10.0 * Math.Log10(integratedEnergy));
 
-                            double finalEnergySum = 0.0;
-                            int gatedBlockCount = 0;
+                            if (finalLufs < -70f) finalLufs = -70f;
 
-                            foreach (var energy in blockEnergies)
-                            {
-                                if (energy >= relativeThresholdEnergy)
-                                {
-                                    finalEnergySum += energy;
-                                    gatedBlockCount++;
-                                }
-                            }
-
-                            if (gatedBlockCount > 0)
-                            {
-                                double integratedEnergy = finalEnergySum / gatedBlockCount;
-                                float finalLufs = (float)(-0.691 + 10.0 * Math.Log10(integratedEnergy));
-
-                                if (finalLufs < -70f) finalLufs = -70f;
-
-                                info.IntegratedLoudness = finalLufs;
-                                info.LoudnessFormatted = $"{finalLufs:F1} LUFS";
-                            }
-                            else
-                            {
-                                info.IntegratedLoudness = -70f;
-                                info.LoudnessFormatted = "-70.0 LUFS";
-                            }
+                            info.IntegratedLoudness = finalLufs;
+                            info.LoudnessFormatted = $"{finalLufs:F1} LUFS";
                         }
                         else
                         {
@@ -321,17 +935,15 @@ namespace ElysiumAudio.Services
                             info.LoudnessFormatted = "-70.0 LUFS";
                         }
                     }
+                    else
+                    {
+                        info.IntegratedLoudness = -70f;
+                        info.LoudnessFormatted = "-70.0 LUFS";
+                    }
                 }
-                return info;
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error analítico del motor: {ex.Message}");
-                throw;
-            }
+            return info;
         }
-
-
 
 
         // PASADA 2: Renderizado físico del limitador Soft-Limiter
@@ -352,7 +964,18 @@ namespace ElysiumAudio.Services
             try
             {
                 Directory.CreateDirectory(tempDir);
-                File.Copy(inputPath, tempInput, true);
+
+                // Usar stream FLAC limpio (sin ID3v2/ID3v1) para que libsndfile no pierda sync
+                string cleanInputPath = ExtractFlacStream(inputPath);
+                bool inputIsTemp = cleanInputPath != inputPath;
+                if (inputIsTemp)
+                {
+                    File.Copy(cleanInputPath, tempInput, true);
+                }
+                else
+                {
+                    File.Copy(inputPath, tempInput, true);
+                }
 
                 using (var reader = new SoundFileReader(tempInput))
                 {
@@ -459,6 +1082,12 @@ namespace ElysiumAudio.Services
                     }
                 }
 
+                // Limpiar el temp del stream extraído si lo creamos
+                if (inputIsTemp && File.Exists(cleanInputPath))
+                {
+                    try { File.Delete(cleanInputPath); } catch { }
+                }
+
                 // Copiar el resultado final a la ruta destino (admite tildes/eñes)
                 string outputDir = Path.GetDirectoryName(outputPath) ?? "";
                 if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
@@ -481,64 +1110,53 @@ namespace ElysiumAudio.Services
             return gainNeeded;
         }
 
-        // PASO 3: Clonación profunda automatizada mediante rutas cortas seguras de ATL
+        // PASO 3: Clonación de metadatos + carátula
+        // Metadatos -> Windows Property System (IPropertyStore) nativo (WAV, FLAC, MP3, etc.)
+        // Carátula -> ATL (única forma fiable de embeber Picture blocks en FLAC/WAV)
         public void CloneMetadataAndCover(string inputPath, string outputPath)
         {
             if (!File.Exists(inputPath) || !File.Exists(outputPath)) return;
 
             try
             {
-                // Traducimos las rutas largas a cadenas de formato corto seguro 8.3
+                // 1. Leer metadatos origen con ATL (soporta todos los formatos)
                 string safeInputPath = GetSafePathForNativeLibraries(inputPath);
-                string safeOutputPath = GetSafePathForNativeLibraries(outputPath);
-
-                // Abrir archivo fuente de manera segura
                 Track source = new Track(safeInputPath);
 
-                // Abrir archivo destino de manera segura
-                Track target = new Track(safeOutputPath);
+                // 2. Escribir metadatos básicos via Windows Property System (IPropertyStore)
+                // Lo que lee el Explorador de Windows — usa ruta ORIGINAL (no 8.3)
+                WriteMetadataViaPropertyStore(outputPath, source);
 
-                // Copiar campos estándar
-                target.Title = source.Title;
-                target.Artist = source.Artist;
-                target.Album = source.Album;
-                target.Year = source.Year;
-                target.Genre = source.Genre;
-                target.Comment = source.Comment;
-                target.TrackNumber = source.TrackNumber;
-                target.DiscNumber = source.DiscNumber;
-                target.Composer = source.Composer;
-                target.Conductor = source.Conductor;
-                target.OriginalArtist = source.OriginalArtist;
-                target.OriginalAlbum = source.OriginalAlbum;
-                target.Publisher = source.Publisher;
-                target.Copyright = source.Copyright;
-                target.Lyrics = source.Lyrics;
-
-                // Copiar carátulas forzando el tipo Front
+                // 3. Carátula -> ATL (Picture blocks en FLAC/WAV)
+                // Windows Property System no maneja bien imágenes embebidas
+                string safeOutputPath = GetSafePathForNativeLibraries(outputPath);
+                var target = new Track(safeOutputPath);
                 target.EmbeddedPictures.Clear();
                 foreach (var pic in source.EmbeddedPictures)
                 {
-                    pic.PicType = PictureInfo.PIC_TYPE.Front; // Sincronización de tu enum correcto
+                    pic.PicType = PictureInfo.PIC_TYPE.Front;
                     target.EmbeddedPictures.Add(pic);
                 }
+                target.Save(); // Solo guarda la carátula (y mantiene los metadatos ya escritos)
 
-                // Copiar cualquier campo personalizado extendido (ISRC, etc.)
-                target.AdditionalFields.Clear();
-                foreach (var kv in source.AdditionalFields)
+                // 4. ATL escribe los subchunks LIST/INFO del WAV en UTF-8, pero Windows Explorer
+                //    (y el propio ATL al releer) los interpretan como ANSI/Latin-1. Re-codificarlos
+                //    a la página de códigos 1252 para que los acentos se muestren correctamente.
+                try
                 {
-                    target.AdditionalFields[kv.Key] = kv.Value;
+                    FixWavInfoToAnsi(outputPath, safeOutputPath);
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] LIST/INFO re-codificado a ANSI: {outputPath}");
                 }
-
-                // Guardar cambios recalculando cabeceras de forma nativa
-                target.Save();
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[AudioEngine] Re-codificado LIST/INFO falló: {ex.Message}");
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error crítico en el módulo de metadatos ATL: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error crítico en el módulo de metadatos: {ex.Message}");
                 throw;
             }
         }
     }
-
 }
