@@ -1,0 +1,41 @@
+<Window
+    x:Class="ElysiumAudio.Views.ConfirmExitWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Cerrar Elysium Audio"
+    Width="450"
+    Height="210"
+    MinWidth="400"
+    MinHeight="190"
+    CanResize="False"
+    WindowStartupLocation="CenterOwner"
+    Background="{StaticResource BrushBgPanel}"
+    Foreground="{StaticResource BrushTextPrimary}"
+    Topmost="True">
+
+    <Border
+        CornerRadius="12"
+        BorderBrush="{StaticResource BrushBorderDefault}"
+        BorderThickness="1"
+        Background="{StaticResource BrushBgPanel}">
+        <StackPanel Margin="26,22,26,22" Spacing="12">
+            <TextBlock
+                Text="Cerrar Elysium Audio"
+                FontSize="{StaticResource FontSizeDisplay}"
+                FontWeight="SemiBold"
+                Foreground="{StaticResource BrushTextPrimary}" />
+
+            <TextBlock
+                TextWrapping="Wrap"
+                FontSize="{StaticResource FontSizeBase}"
+                LineHeight="20"
+                Foreground="{StaticResource BrushTextSecondary}"
+                Text="Hay un procesamiento en curso. Si sales ahora se cancelará de forma limpia: los archivos a medio renderizar quedarán descartados sin daños ni restos en disco. ¿Deseas cancelar el proceso y salir?" />
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
+                <Button Content="Seguir procesando" Classes="ghost" Click="OnContinueClick" />
+                <Button Content="Cancelar y salir" Classes="main" Click="OnExitClick" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

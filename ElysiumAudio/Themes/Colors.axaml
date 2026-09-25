@@ -12,9 +12,13 @@
     <!-- Superficies -->
     <Color x:Key="BgBase">#0B0E14</Color>
     <Color x:Key="BgPanel">#131722</Color>
-    <Color x:Key="BgPanelAlt">#0F131C</Color>
+    <Color x:Key="BgPanelAlt">#0E1118</Color>
     <Color x:Key="BgInput">#0D1117</Color>
     <Color x:Key="BgElevated">#1A1F2E</Color>
+    <Color x:Key="BgButton">#151D2B</Color>
+    <Color x:Key="BgControl">#5A92FA</Color>
+	
+	
 
     <!-- Bordes -->
     <Color x:Key="BorderSubtle">#1E2433</Color>
@@ -26,21 +30,26 @@
     <Color x:Key="TextSecondary">#98A2B8</Color>
     <Color x:Key="TextMuted">#5C6A82</Color>
     <Color x:Key="TextOnAccent">#FFFFFF</Color>
+    <Color x:Key="TextAccentSecondary">#97AED2</Color>
 
     <!-- Acentos primarios -->
-    <Color x:Key="AccentPrimary">#4F7CFF</Color>
+    <Color x:Key="AccentPrimary">#1BA6FA</Color>
     <Color x:Key="AccentPrimaryHover">#6B93FF</Color>
     <Color x:Key="AccentPrimaryPress">#3B63D6</Color>
-    <Color x:Key="AccentPrimaryDim">#2E4370</Color>
+    <Color x:Key="AccentPrimaryDim">#253A56</Color> 
 
     <!-- Acentos secundarios -->
     <Color x:Key="AccentViolet">#A78BFA</Color>
     <Color x:Key="AccentTeal">#2DD4BF</Color>
     <Color x:Key="AccentGreen">#34D399</Color>
+    <Color x:Key="AccentGreenHover">#3CE0A5</Color>
+    <Color x:Key="AccentGreenPress">#2CC58F</Color>
     <Color x:Key="AccentAmber">#F59E0B</Color>
     <Color x:Key="AccentCyan">#38BDF8</Color>
     <Color x:Key="AccentRed">#F06464</Color>
-
+	<Color x:Key="AccentRosa">#BA7AE2</Color>
+	<Color x:Key="AccentSkyblue">#5A92FA</Color>
+	
     <!-- Estado -->
     <Color x:Key="Success">#34D399</Color>
     <Color x:Key="Warning">#FBBF24</Color>
@@ -53,6 +62,8 @@
     <SolidColorBrush x:Key="BrushBgPanelAlt" Color="{StaticResource BgPanelAlt}" />
     <SolidColorBrush x:Key="BrushBgInput" Color="{StaticResource BgInput}" />
     <SolidColorBrush x:Key="BrushBgElevated" Color="{StaticResource BgElevated}" />
+    <SolidColorBrush x:Key="BrushBgButton" Color="{StaticResource BgButton}" />
+    <SolidColorBrush x:Key="BrushBgControl" Color="{StaticResource BgControl}" />
 
     <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource BorderSubtle}" />
     <SolidColorBrush x:Key="BrushBorderDefault" Color="{StaticResource BorderDefault}" />
@@ -62,6 +73,7 @@
     <SolidColorBrush x:Key="BrushTextSecondary" Color="{StaticResource TextSecondary}" />
     <SolidColorBrush x:Key="BrushTextMuted" Color="{StaticResource TextMuted}" />
     <SolidColorBrush x:Key="BrushTextOnAccent" Color="{StaticResource TextOnAccent}" />
+    <SolidColorBrush x:Key="BrushAccentSecondary" Color="{StaticResource TextAccentSecondary}" />
 
     <SolidColorBrush x:Key="BrushAccent" Color="{StaticResource AccentPrimary}" />
     <SolidColorBrush x:Key="BrushAccentHover" Color="{StaticResource AccentPrimaryHover}" />
@@ -71,12 +83,83 @@
     <SolidColorBrush x:Key="BrushAccentViolet" Color="{StaticResource AccentViolet}" />
     <SolidColorBrush x:Key="BrushAccentTeal" Color="{StaticResource AccentTeal}" />
     <SolidColorBrush x:Key="BrushAccentGreen" Color="{StaticResource AccentGreen}" />
+    <SolidColorBrush x:Key="BrushAccentGreenHover" Color="{StaticResource AccentGreenHover}" />
+    <SolidColorBrush x:Key="BrushAccentGreenPress" Color="{StaticResource AccentGreenPress}" />
     <SolidColorBrush x:Key="BrushAccentAmber" Color="{StaticResource AccentAmber}" />
     <SolidColorBrush x:Key="BrushAccentCyan" Color="{StaticResource AccentCyan}" />
+    <SolidColorBrush x:Key="BrushAccentRosa" Color="{StaticResource AccentRosa}" />
+    <SolidColorBrush x:Key="BrushAccentSkyblue" Color="{StaticResource AccentSkyblue}" />
 
     <SolidColorBrush x:Key="BrushSuccess" Color="{StaticResource Success}" />
     <SolidColorBrush x:Key="BrushWarning" Color="{StaticResource Warning}" />
     <SolidColorBrush x:Key="BrushError" Color="{StaticResource Error}" />
     <SolidColorBrush x:Key="BrushInfo" Color="{StaticResource Info}" />
 
-</ResourceDictionary>
+	<LinearGradientBrush x:Key="bg_degrade" StartPoint="0,0" EndPoint="100%,0%">
+		<GradientStop Color="#1A2233" Offset="0.0"/>
+		<GradientStop Color="#293752" Offset="0.5"/>
+		<GradientStop Color="#1A2233" Offset="1.0"/>
+	</LinearGradientBrush>
+
+	<LinearGradientBrush x:Key="Border_bg_degrade" StartPoint="0,0" EndPoint="0%,100%">
+		<GradientStop Color="#131922" Offset="0.0"/>
+		<GradientStop Color="#0E121A" Offset="1.0"/>
+	</LinearGradientBrush>
+	<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
+		<GradientStop Color="#141721" Offset="0.0"/>
+		<GradientStop Color="#0D1018" Offset="1.0"/>
+	</LinearGradientBrush>
+	<LinearGradientBrush x:Key="btn_bg_degrade" StartPoint="0,0" EndPoint="100%,0%">
+		<GradientStop Color="#4987FA" Offset="0.0"/>
+		<GradientStop Color="#4987FA" Offset="1.0"/>
+	</LinearGradientBrush>
+
+	<!-- =========================================================================
+		 DESIGN TOKENS
+		 ========================================================================= -->
+	<!--  Radii  -->
+	<CornerRadius x:Key="RadiusXS">4</CornerRadius>
+	<CornerRadius x:Key="RadiusSM">6</CornerRadius>
+	<CornerRadius x:Key="RadiusMD">8</CornerRadius>
+	<CornerRadius x:Key="RadiusLG">12</CornerRadius>
+	<CornerRadius x:Key="RadiusXL">16</CornerRadius>
+	<CornerRadius x:Key="RadiusPill">999</CornerRadius>
+
+	<!--  Spacing  -->
+	<x:Double x:Key="SpaceXS">4</x:Double>
+	<x:Double x:Key="SpaceSM">8</x:Double>
+	<x:Double x:Key="SpaceMD">12</x:Double>
+	<x:Double x:Key="SpaceLG">16</x:Double>
+	<x:Double x:Key="SpaceXL">24</x:Double>
+
+	<!--  Tamaños de control  -->
+	<x:Double x:Key="ControlHeightSM">32</x:Double>
+	<x:Double x:Key="ControlHeightMD">40</x:Double>
+	<x:Double x:Key="ControlHeightLG">48</x:Double>
+
+	<!--  Tipografía  -->
+	<x:Double x:Key="FontSizeTiny">9</x:Double>
+	<x:Double x:Key="FontSizeMicro">9.5</x:Double>
+	<x:Double x:Key="FontSizeXS">10</x:Double>
+	<x:Double x:Key="FontSizeSmall">10.5</x:Double>
+	<x:Double x:Key="FontSizeSM">11</x:Double>
+	<x:Double x:Key="FontSizeMedium">11.5</x:Double>
+	<x:Double x:Key="FontSizeMD">12</x:Double>
+	<x:Double x:Key="FontSizeLarge">12.5</x:Double>
+	<x:Double x:Key="FontSizeLG">13</x:Double>
+	<x:Double x:Key="FontSizeBase">14</x:Double>
+	<x:Double x:Key="FontSizeXL">15</x:Double>
+	<x:Double x:Key="FontSizeDisplay">18</x:Double>
+	<x:Double x:Key="FontSizeMeter">30</x:Double>
+	<x:Double x:Key="FontSizeHero">32</x:Double>
+	<FontFamily x:Key="FontMono">Consolas, Menlo, Courier New, monospace</FontFamily>
+
+	<!--  Superficies y bordes reutilizables (reemplazan hex hardcodeados)  -->
+	<Color x:Key="BgOverlay">#0D1015</Color>
+	<SolidColorBrush x:Key="BrushBgOverlay" Color="{StaticResource BgOverlay}" />
+	<Color x:Key="BorderAccent">#243C58</Color>
+	<SolidColorBrush x:Key="BrushBorderAccent" Color="{StaticResource BorderAccent}" />
+	<Color x:Key="BgButtonHover">#313E53</Color>
+	<SolidColorBrush x:Key="BrushBgButtonHover" Color="{StaticResource BgButtonHover}" />
+
+	</ResourceDictionary>

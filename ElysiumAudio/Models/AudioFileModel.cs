@@ -38,6 +38,22 @@ namespace ElysiumAudio.Models
         [ObservableProperty]
         private string _normalizedPeak = "0.0 dBFS";
 
+        // Valores numéricos de la última medición (para resumen del lote y ficha del archivo).
+        [ObservableProperty]
+        private bool _hasMeasurement;
+
+        [ObservableProperty]
+        private float _integratedLoudness = -70f;
+
+        [ObservableProperty]
+        private float _maxTruePeakLinear;
+
+        [ObservableProperty]
+        private int _sampleRate;
+
+        [ObservableProperty]
+        private int _channels;
+
         //public string StatusIcon => Status switch
         //{
         //    AudioFileStatus.Pending => "⏳",

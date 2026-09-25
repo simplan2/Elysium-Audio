@@ -2,7 +2,7 @@
     x:Class="ElysiumAudio.Views.MainWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Avalonia.Controls"
+    xmlns:controls="using:ElysiumAudio.Controls"
     xmlns:conv="using:ElysiumAudio.Converters"
     xmlns:customControls="using:ElysiumAudio.Views.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -30,79 +30,13 @@
     <Window.Resources>
         <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         <conv:DynamicNumberFormatConverter x:Key="DynamicNumberFormatConverter" />
+        <conv:RowAlternationConverter x:Key="RowAlternationConverter" />
     </Window.Resources>
 
-    <Grid Margin="20" RowDefinitions="Auto, *, Auto">
-
-        <!--
-            ==========================================================
-            HEADER
-            ==========================================================
-        -->
-        <Grid
-            Grid.Row="0"
-            Margin="0,0,0,14"
-            VerticalAlignment="Center"
-            ColumnDefinitions="*, 368"
-            ColumnSpacing="16">
-
-            <!--  Botones de Acción  -->
-            <StackPanel
-                Grid.Column="0"
-                VerticalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="10">
-				
-                <Button Classes="accent" Command="{Binding AddFileCommand}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock VerticalAlignment="Center" FontSize="14">＋</TextBlock>
-                        <TextBlock VerticalAlignment="Center">Add Files</TextBlock>
-                    </StackPanel>
-                </Button>
-				
-				<Button Classes="ghost" Command="{Binding AddDirectoryCommand}">
-					<StackPanel Orientation="Horizontal" Spacing="8">
-						<Path
-                            Width="16"
-                            Height="16"
-                            VerticalAlignment="Center"
-                            Data="M3,3 L8,3 L10,5 L15,5 L15,13 L3,13 Z"
-                            Stroke="{StaticResource BrushTextSecondary}"
-                            StrokeThickness="1.6" />
-						<TextBlock VerticalAlignment="Center">Add Dir</TextBlock>
-					</StackPanel>
-				</Button>
-				
-                <Button Classes="ghost" Command="{Binding ClearListCommand}">
-                    <TextBlock VerticalAlignment="Center">Clear List</TextBlock>
-                </Button>
-
-            </StackPanel>
-
-            <!--  Enlace a Configuraciones avanzadas  -->
-            <Grid
-                Grid.Column="1"
-                Margin="0,0,10,0"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                ColumnDefinitions="*, Auto">
-
-                <StackPanel
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="10">
-                    <TextBlock
-                        FontSize="15"
-                        FontWeight="Bold"
-                        Foreground="{StaticResource BrushTextPrimary}"
-                        Text="Settings" />
-
-                </StackPanel>
-
-            </Grid>
-        </Grid>
-
+    <Grid
+        Margin="18,4,18,18"
+        RowDefinitions="Auto, *, Auto"
+        RowSpacing="16">
         <!--
             ==========================================================
             CUERPO PRINCIPAL
@@ -118,14 +52,115 @@
             <!--  ***************** ZONA IZQUIERDO: COLA DE ARCHIVOS *****************  -->
             <Grid
                 Grid.Column="0"
-                RowDefinitions="*, 80"
+                RowDefinitions="Auto, *, 80"
                 RowSpacing="16">
 
+
+                <!--  Barra de acciones de la cola  -->
+                <Border
+                    Grid.Row="0"
+                    Padding="14,10"
+                    Background="{StaticResource BrushBgPanel}"
+                    BorderBrush="{StaticResource BrushBorderDefault}"
+                    BorderThickness="1"
+                    CornerRadius="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+
+                        <!--  Botones para agregar archivos  -->
+                        <StackPanel
+                            Grid.Column="0"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button Classes="ghost" Command="{Binding AddFileCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path
+                                        Width="14"
+                                        Height="14"
+                                        VerticalAlignment="Center"
+                                        Data="M7,2 L7,12 M2,7 L12,7"
+                                        Stroke="{StaticResource BrushTextSecondary}"
+                                        StrokeLineCap="Round"
+                                        StrokeThickness="1.6" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource FontSizeSmall}"
+                                        Foreground="{StaticResource BrushTextMuted}"
+                                        Text="ADD FILES" />
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="ghost" Command="{Binding AddDirectoryCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Path
+                                        Width="16"
+                                        Height="16"
+                                        VerticalAlignment="Center"
+                                        Data="M3,3 L8,3 L10,5 L15,5 L15,13 L3,13 Z"
+                                        Stroke="{StaticResource BrushTextSecondary}"
+                                        StrokeThickness="1.6" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource FontSizeSmall}"
+                                        Foreground="{StaticResource BrushTextMuted}"
+                                        Text="ADD FOLDER" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Button Classes="ghost" Command="{Binding ResetQueueCommand}">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="RESET" />
+                            </Button>
+                            <Button Classes="ghost" Command="{Binding ClearListCommand}">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="CLEAR" />
+                            </Button>
+
+                        </StackPanel>
+
+                        <!--  Cantidad Total  -->
+                        <Border
+                            Grid.Column="2"
+                            Padding="12,6"
+                            VerticalAlignment="Center"
+                            Background="{StaticResource BrushBgInput}"
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            BorderThickness="1"
+                            CornerRadius="999">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    FontWeight="SemiBold"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="TRACKS" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    FontWeight="Bold"
+                                    Foreground="{StaticResource TextAccentSecondary}"
+                                    Text="{Binding SummaryTotalText}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
 
                 <!--  Zona de arrastre con el DataGrid  -->
                 <Border
                     Name="DropZoneBorder"
-                    Grid.Row="0"
+                    Grid.Row="1"
                     Background="{StaticResource BrushBgPanel}"
                     BorderBrush="Transparent"
                     BorderThickness="0"
@@ -141,20 +176,21 @@
                             BorderThickness="0"
                             CanUserReorderColumns="True"
                             CanUserResizeColumns="True"
-                            ColumnHeaderHeight="52"
+                            ColumnHeaderHeight="48"
                             CornerRadius="12"
-                            GridLinesVisibility="Horizontal"
+                            GridLinesVisibility="None"
                             IsReadOnly="True"
                             ItemsSource="{Binding AudioFiles}"
-                            RowHeight="60">
+                            RowHeight="50"
+                            SelectedItem="{Binding SelectedFile, Mode=TwoWay}">
 
                             <DataGrid.Styles>
                                 <!--  Texto general  -->
                                 <Style Selector="TextBlock">
-                                    <Setter Property="Foreground" Value="#E0E0E0" />
+                                    <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
                                     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
                                     <Setter Property="VerticalAlignment" Value="Center" />
-                                    <Setter Property="FontSize" Value="13" />
+                                    <Setter Property="FontSize" Value="{StaticResource FontSizeMD}" />
                                 </Style>
 
                                 <!--  Encabezados  -->
@@ -162,7 +198,7 @@
                                     <Setter Property="Template">
                                         <ControlTemplate>
                                             <Border
-                                                Background="#11131A"
+                                                Background="#10121C"
                                                 BorderBrush="Transparent"
                                                 BorderThickness="0">
                                                 <ContentPresenter
@@ -177,51 +213,99 @@
                                     </Setter>
                                 </Style>
 
+                                <!--  Encabezados centrados a 2 líneas  -->
                                 <Style Selector="DataGridColumnHeader TextBlock">
                                     <Setter Property="TextAlignment" Value="Center" />
                                     <Setter Property="TextWrapping" Value="Wrap" />
                                     <Setter Property="MaxLines" Value="2" />
                                 </Style>
 
-                                <!--  Fila normal  -->
+                                <!--  Fila: fondo alternado = dos tonos de superficie (zebra)  -->
                                 <Style Selector="DataGridRow">
-                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Background" Value="{Binding Index, RelativeSource={RelativeSource Self}, Converter={StaticResource RowAlternationConverter}}" />
                                     <Setter Property="BorderBrush" Value="Transparent" />
                                 </Style>
 
-                                <!--  Fila seleccionada  -->
-                                <Style Selector="DataGridRow:selected">
-                                    <Setter Property="Background" Value="#1E2022" />
-                                    <!--  azul tenue  -->
-                                    <Setter Property="BorderBrush" Value="#00AFFF" />
-                                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                <!--
+                                    Estados de fila: el azul del tema se pinta sobre
+                                    Rectangle#BackgroundRectangle de la plantilla, así que se
+                                    sobrescribe ese rectángulo (capa de realce) en lugar del
+                                    Background del control. El hover es traslúcido para que la
+                                    alternancia de filas siga percibiéndose debajo.
+                                -->
+                                <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgElevated}" />
+                                    <Setter Property="Opacity" Value="0.55" />
+                                </Style>
+                                <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgElevated}" />
+                                    <Setter Property="Opacity" Value="1" />
+                                </Style>
+                                <Style Selector="DataGridRow:selected:pointerover /template/ Rectangle#BackgroundRectangle">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgElevated}" />
+                                    <Setter Property="Opacity" Value="1" />
+                                </Style>
+                                <Style Selector="DataGridRow:selected:focus /template/ Rectangle#BackgroundRectangle">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgElevated}" />
+                                    <Setter Property="Opacity" Value="1" />
+                                </Style>
+                                <Style Selector="DataGridRow:selected:pointerover:focus /template/ Rectangle#BackgroundRectangle">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgElevated}" />
+                                    <Setter Property="Opacity" Value="1" />
                                 </Style>
 
-                                <!--  Fila con foco  -->
-                                <Style Selector="DataGridRow:focus">
-                                    <Setter Property="Background" Value="Transparent" />
-                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="BorderThickness" Value="0,0,0,0" />
-                                </Style>
-
-                                <!--  Celdas  -->
+                                <!--
+                                    Celdas (solo lectura: sin foco ni selección propia).
+                                    El borde blanco al hacer clic es el Grid#FocusVisual de la
+                                    plantilla; se oculta en :focus y el cursor se oculta también.
+                                -->
                                 <Style Selector="DataGridCell">
                                     <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="BorderThickness" Value="0,0,0,0" />
+                                    <Setter Property="BorderThickness" Value="0" />
                                     <Setter Property="Background" Value="Transparent" />
                                     <Setter Property="FocusAdorner" Value="{x:Null}" />
                                     <Setter Property="Focusable" Value="False" />
-
                                 </Style>
-
-                                <!--  Celda con foco  -->
+                                <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </Style>
+                                <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+                                    <Setter Property="IsVisible" Value="False" />
+                                </Style>
                                 <Style Selector="DataGridCell:focus">
                                     <Setter Property="BorderBrush" Value="Transparent" />
                                     <Setter Property="BorderThickness" Value="0" />
                                     <Setter Property="Background" Value="Transparent" />
                                     <Setter Property="FocusAdorner" Value="{x:Null}" />
+                                </Style>
+                                <Style Selector="DataGridCell:selected">
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                </Style>
+                                <Style Selector="DataGridCell:selected:focus">
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                </Style>
+                                <Style Selector="DataGridCell:current:selected">
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                </Style>
+                                <Style Selector="DataGridCell:pointerover">
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                </Style>
 
-                                    <Setter Property="Focusable" Value="False" />
+                                <!--  Separador sutil bajo los encabezados (en vez de rejilla)  -->
+                                <Style Selector="DataGrid /template/ Rectangle#PART_ColumnHeadersAndRowsSeparator">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBorderSubtle}" />
+                                </Style>
+
+                                <!--  Esquina inferior derecha de los scrollbars  -->
+                                <Style Selector="DataGrid /template/ Rectangle#PART_BottomRightCorner">
+                                    <Setter Property="Fill" Value="{StaticResource BrushBgPanel}" />
                                 </Style>
                             </DataGrid.Styles>
 
@@ -230,7 +314,7 @@
                                 <DataGridTemplateColumn
                                     Width="0.5*"
                                     MinWidth="60"
-                                    Header="#">
+                                    Header="State">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <customControls:AudioStatusIndicator
@@ -265,18 +349,20 @@
                                 <DataGridTextColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding NormalizedLoudness}"
-                                    Header="Norm.&#x0a;LUFS" />
+                                    Binding="{Binding Peak}"
+                                    Header="Peak dBTP" />
+
                                 <DataGridTextColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding Peak}"
-                                    Header="Peak" />
+                                    Binding="{Binding NormalizedLoudness}"
+                                    Header="Norm LUFS" />
+
                                 <DataGridTextColumn
                                     Width="*"
                                     MinWidth="98"
                                     Binding="{Binding NormalizedPeak}"
-                                    Header="Norm.&#x0a;Peak" />
+                                    Header="Norm Peak" />
                             </DataGrid.Columns>
                         </DataGrid>
 
@@ -288,45 +374,68 @@
                             CornerRadius="12"
                             IsHitTestVisible="False" />
 
-                        <!--  Mensaje de arrastre de archivos  -->
-                        <TextBlock
+                        <!--  Estado vacío: hint de arrastre  -->
+                        <StackPanel
                             Margin="20"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            FontSize="16"
-                            FontWeight="Medium"
-                            Foreground="{StaticResource BrushTextMuted}"
                             IsVisible="{Binding AudioFiles.Count, Converter={StaticResource CountToVisibilityConverter}}"
-                            Text="Drop WAV / FLAC files or folders here" />
+                            Spacing="12">
+                            <Path
+                                Width="34"
+                                Height="34"
+                                HorizontalAlignment="Center"
+                                Data="M4,24 L10,24 L14,15 L19,35 L24,6 L29,30 L34,18 L37,24 L44,24"
+                                Stretch="Uniform"
+                                Stroke="{StaticResource BrushTextMuted}"
+                                StrokeLineCap="Round"
+                                StrokeThickness="1.5" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="{StaticResource FontSizeBase}"
+                                FontWeight="Medium"
+                                Foreground="{StaticResource BrushTextSecondary}"
+                                Text="Drop WAV / FLAC files or folders here" />
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                FontSize="{StaticResource FontSizeSM}"
+                                Foreground="{StaticResource BrushTextMuted}"
+                                Text="Or use Add Files / Add Folder to build the queue" />
+                        </StackPanel>
 
                     </Grid>
                 </Border>
 
                 <Border
-                    Grid.Row="1"
+                    Grid.Row="2"
                     Padding="16,10"
                     Background="{StaticResource BrushBgPanel}"
                     BorderBrush="{StaticResource BrushBorderDefault}"
                     BorderThickness="1"
-                    CornerRadius="12">
+                    CornerRadius="12"
+                    IsEnabled="{Binding IsNormalizeMode}">
                     <Grid ColumnDefinitions="1.2*,16,2.0*,16,1*">
 
                         <!--  Formato de salida  -->
                         <Button
                             x:Name="FormatButton"
+                            Height="50"
                             HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
                             Background="{StaticResource BrushBgPanelAlt}"
-                            Classes="ghost"
-                            Command="{Binding TogglePopupCommand}">
+                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                            Classes="ghostNoZoom"
+                            Command="{Binding TogglePopupCommand}"
+                            CornerRadius="8">
                             <Button.Flyout>
                                 <Flyout
+                                    Closed="OnFlyoutClosed"
                                     IsOpen="{Binding IsFlyoutOpen}"
                                     Placement="Bottom"
-                                    ShowMode="Standard"
-									Closed="OnFlyoutClosed">
+                                    ShowMode="Standard">
 
-                                    <ListBox MinWidth="200"
-                                        Background="{StaticResource BrushBgPanelAlt}"
+                                    <ListBox
+                                        MinWidth="200"
                                         Classes="dark-popup"
                                         ItemsSource="{Binding OutputFormatOptions}"
                                         SelectedItem="{Binding SelectedFormat}"
@@ -334,7 +443,9 @@
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
                                                 <TextBlock
-                                                    Margin="20,0" VerticalAlignment="Center" FontSize="12"
+                                                    Margin="20,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeMD}"
                                                     Text="{Binding}" />
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
@@ -342,74 +453,74 @@
                                 </Flyout>
                             </Button.Flyout>
 
-                            <StackPanel Spacing="4">
-                                <TextBlock
-                                    FontSize="10.5"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="OUTPUT FORMAT" />
-                                <TextBlock
-                                    FontSize="11.5"
-                                    Foreground="{StaticResource BrushTextSecondary}"
-                                    Text="{Binding SelectedFormat}" />
-                            </StackPanel>
+                            <Grid ColumnDefinitions="*,20">
+                                <StackPanel Spacing="4">
+                                    <TextBlock
+                                        FontSize="{StaticResource FontSizeSmall}"
+                                        Foreground="{StaticResource BrushTextMuted}"
+                                        Text="OUTPUT FORMAT" />
+                                    <TextBlock
+                                        FontSize="{StaticResource FontSizeMedium}"
+                                        Foreground="{StaticResource BrushTextSecondary}"
+                                        Text="{Binding SelectedFormat}" />
+                                </StackPanel>
+
+                                <Path
+                                    Grid.Column="1"
+                                    Width="10"
+                                    Height="6"
+                                    Margin="8,0"
+                                    HorizontalAlignment="Left"
+                                    Data="M 0 0 L 8 0 L 4 5 Z"
+                                    Fill="{StaticResource TextMuted}"
+                                    Stretch="Uniform" />
+                            </Grid>
                         </Button>
 
                         <!--  Directorio de salida  -->
-                        <Border
+                        <Button
                             Grid.Column="2"
                             Height="50"
-                            VerticalAlignment="Center"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
                             Background="{StaticResource BrushBgPanelAlt}"
                             BorderBrush="{StaticResource BrushBorderSubtle}"
-                            BorderThickness="0"
+                            Classes="ghostNoZoom"
+                            Command="{Binding SelectOutputDirectoryCommand}"
                             CornerRadius="8">
-
-                            <Button
-                                HorizontalAlignment="Stretch"
-                                Background="{StaticResource BrushBgPanelAlt}"
-                                BorderBrush="{StaticResource BrushBorderSubtle}"
-                                Classes="ghost"
-                                Command="{Binding SelectOutputDirectoryCommand}">
-                                <StackPanel Spacing="4">
-                                    <TextBlock
-                                        FontSize="10.5"
-                                        Foreground="{StaticResource BrushTextMuted}"
-                                        Text="OUTPUT DIRECTORY" />
-                                    <TextBlock
-                                        FontSize="11.5"
-                                        Foreground="{StaticResource BrushTextSecondary}"
-                                        Text="{Binding OutputDirectory}"
-                                        TextWrapping="NoWrap" />
-                                </StackPanel>
-                            </Button>
-                        </Border>
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="OUTPUT DIRECTORY" />
+                                <TextBlock
+                                    FontSize="{StaticResource FontSizeMedium}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{Binding OutputDirectory}"
+                                    TextWrapping="NoWrap" />
+                            </StackPanel>
+                        </Button>
 
                         <!--  Explorar Directorio  -->
-                        <Border
+                        <Button
                             Grid.Column="4"
                             Height="50"
-                            VerticalAlignment="Center"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
                             Background="{StaticResource BrushBgPanelAlt}"
                             BorderBrush="{StaticResource BrushBorderSubtle}"
-                            BorderThickness="0"
+                            Classes="ghostNoZoom"
+                            Command="{Binding ExploreOutputDirectoryCommand}"
                             CornerRadius="8">
-                            <Button
-                                Height="50"
-                                HorizontalAlignment="Stretch"
-                                Background="{StaticResource BrushBgPanelAlt}"
-                                BorderBrush="{StaticResource BrushBorderSubtle}"
-                                Classes="ghost"
-                                Command="{Binding ExploreOutputDirectoryCommand}">
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    FontSize="10.5"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="EXPLORE DIRECTORY"
-                                    TextTrimming="CharacterEllipsis"
-                                    TextWrapping="NoWrap" />
-                            </Button>
-                        </Border>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontSize="{StaticResource FontSizeSmall}"
+                                Foreground="{StaticResource BrushTextMuted}"
+                                Text="EXPLORE DIRECTORY"
+                                TextTrimming="CharacterEllipsis"
+                                TextWrapping="NoWrap" />
+                        </Button>
                     </Grid>
                 </Border>
             </Grid>
@@ -422,389 +533,954 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Focusable="True">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <Grid Margin="20,24" RowDefinitions="Auto, Auto, Auto, 20, Auto, *, 48">
 
-                        <!--  1. DSP / Loudness Calibration  -->
+                <!--  Contenerdor de controles y Botón Batch  -->
+                <Grid RowDefinitions="Auto,*, Auto">
+
+                    <!--  Selector de función principal (Normalizar / Analizar)  -->
+                    <Border
+                        Height="40"
+                        Margin="14,12,14,8"
+                        Padding="4"
+                        VerticalAlignment="Center"
+                        Background="{StaticResource BrushBgInput}"
+                        BorderBrush="{StaticResource BrushBorderSubtle}"
+                        BorderThickness="1"
+                        CornerRadius="24">
                         <Grid
-                            Grid.Row="0"
-                            VerticalAlignment="Center"
-                            RowDefinitions="Auto, Auto">
-                            <TextBlock
-                                Grid.Row="0"
-                                Margin="4,0"
-                                FontSize="15"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource BrushTextPrimary}">
-                                <Run
-                                    FontWeight="Bold"
-                                    Foreground="{StaticResource BrushAccent}"
-                                    Text="DSP" />
-                                <Run Text=" · Loudness Calibration" />
-                            </TextBlock>
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="4"
+                            IsEnabled="{Binding !IsProcessing}">
+                            <!--  Botón Analizar  -->
+                            <Button
+                                Grid.Column="0"
+                                Classes="segment"
+                                Classes.active="{Binding IsAnalyzeMode}"
+                                Command="{Binding SetAnalyzeModeCommand}">
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Path
+                                        Width="15"
+                                        Height="15"
+                                        VerticalAlignment="Center"
+                                        Data="M3,13 L3,8 M7,13 L7,4 M11,13 L11,9 M2,13 L12,13"
+                                        Fill="Transparent"
+                                        Stroke="{StaticResource BrushAccentSecondary}"
+                                        StrokeLineCap="Round"
+                                        StrokeThickness="1.7" />
+                                    <TextBlock VerticalAlignment="Center" Text="Analyze" />
+                                </StackPanel>
+                            </Button>
+                            <!--  Botón Normalizar  -->
+                            <Button
+                                Grid.Column="1"
+                                Classes="segment"
+                                Classes.active="{Binding IsNormalizeMode}"
+                                Command="{Binding SetNormalizeModeCommand}">
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <Path
+                                        Width="15"
+                                        Height="15"
+                                        VerticalAlignment="Center"
+                                        Data="M2,7 L2,9 M5,4 L5,12 M8,2 L8,14 M11,5 L11,11 M14,7 L14,9"
+                                        Fill="Transparent"
+                                        Stroke="{StaticResource BrushAccentSecondary}"
+                                        StrokeLineCap="Round"
+                                        StrokeThickness="1.7" />
+                                    <TextBlock VerticalAlignment="Center" Text="Normalize" />
+                                </StackPanel>
+                            </Button>
+
                         </Grid>
+                    </Border>
 
-                        <!--  1. Presets de normalización por plataforma  -->
-                        <ComboBox
-                            Grid.Row="1"
-                            Margin="0,18,0,18"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Center"
-                            ItemsSource="{Binding Presets}"
-                            SelectedItem="{Binding SelectedPreset}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Foreground="{StaticResource BrushTextPrimary}" Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                    <!--  Controles Normalize/Analysis  -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Grid Margin="16,12,16,0">
 
-                        <!--  2. Controles  -->
-                        <Grid Grid.Row="2" RowDefinitions="64,64,64,64">
+                            <!--  1. Panel de Normalilzar (modo normalizar)  -->
+                            <Grid
+                                IsVisible="{Binding IsNormalizeMode}"
+                                RowDefinitions="Auto, Auto, Auto"
+                                RowSpacing="12">
 
-                            <!--  1. Target Loudness  -->
-                            <Grid Grid.Row="0">
-                                <Grid
+                                <!--  1.0 Encabezado de la función activa  -->
+                                <TextBlock
                                     Grid.Row="0"
-                                    VerticalAlignment="Stretch"
-                                    RowDefinitions="22,*">
-
-                                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="13"
-                                            FontWeight="Medium"
-                                            Foreground="{StaticResource BrushTextSecondary}"
-                                            Text="Target Loudness" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="6">
-                                            <TextBox
-                                                Width="46"
-                                                Height="20"
-                                                MinWidth="46"
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Classes="param"
-                                                FontSize="13"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushAccent}"
-                                                KeyDown="OnTargetLufsKeyDown"
-                                                LostFocus="OnTargetLufsLostFocus"
-                                                Text="{Binding TargetLufs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                TextAlignment="Center" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="11"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                Text="LUFS" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-
-                                <Grid Grid.Row="1" RowDefinitions="14,*">
-                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MinTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                        <Slider
-                                            Grid.Column="1"
-                                            Classes="active-accent"
-                                            Maximum="-6.0"
-                                            Minimum="-24.0"
-                                            TickFrequency="0.1"
-                                            Value="{Binding TargetLufs}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MaxTargetLufs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-
-                            <!--  2. True Peak Ceiling  -->
-                            <Grid Grid.Row="1">
-                                <Grid
-                                    Grid.Row="0"
-                                    VerticalAlignment="Stretch"
-                                    RowDefinitions="22,*">
-
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="13"
-                                            FontWeight="Medium"
-                                            Foreground="{StaticResource BrushTextSecondary}"
-                                            Text="True Peak Ceiling" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="6">
-                                            <TextBox
-                                                Width="46"
-                                                Height="24"
-                                                MinWidth="46"
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Classes="param"
-                                                FontSize="13"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushInfo}"
-                                                KeyDown="OnTruePeakKeyDown"
-                                                LostFocus="OnTruePeakLostFocus"
-                                                Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                TextAlignment="Center" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="11"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                Text="dBTP" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-
-                                <Grid Grid.Row="1" RowDefinitions="14,*">
-                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MinPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                        <Slider
-                                            Grid.Column="1"
-                                            Classes="active-teal"
-                                            Maximum="-0.1"
-                                            Minimum="-3.0"
-                                            TickFrequency="0.1"
-                                            Value="{Binding TruePeakCeiling}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MaxPeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-
-                            <!--  3. Release Time  -->
-                            <Grid Grid.Row="2">
-                                <Grid
-                                    Grid.Row="0"
-                                    VerticalAlignment="Stretch"
-                                    RowDefinitions="22,*">
-
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="13"
-                                            FontWeight="Medium"
-                                            Foreground="{StaticResource BrushTextSecondary}"
-                                            Text="Release Time" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="6">
-                                            <TextBox
-                                                Name="ReleaseTimeMsInput"
-                                                Width="46"
-                                                Height="24"
-                                                MinWidth="46"
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Classes="param"
-                                                FontSize="13"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushWarning}"
-                                                KeyDown="OnReleaseTimeMsKeyDown"
-                                                LostFocus="OnReleaseTimeMsLostFocus"
-                                                Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                TextAlignment="Center" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="11"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                Text="ms" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-
-                                <Grid Grid.Row="1" RowDefinitions="14,*">
-                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                        <Slider
-                                            Grid.Column="1"
-                                            Classes="active-amber"
-                                            IsSnapToTickEnabled="True"
-                                            Maximum="200"
-                                            Minimum="20"
-                                            TickFrequency="0.1"
-                                            Value="{Binding ReleaseTimeMs}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-
-                            <!--  4. Look-ahead Time  -->
-                            <Grid Grid.Row="3">
-                                <Grid
-                                    Grid.Row="0"
-                                    VerticalAlignment="Stretch"
-                                    RowDefinitions="22,*">
-
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="13"
-                                            FontWeight="Medium"
-                                            Foreground="{StaticResource BrushTextSecondary}"
-                                            Text="Look-ahead Time" />
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            Orientation="Horizontal"
-                                            Spacing="6">
-                                            <TextBox
-                                                Name="LookAheadInput"
-                                                Width="46"
-                                                Height="24"
-                                                MinWidth="46"
-                                                Background="Transparent"
-                                                BorderBrush="Transparent"
-                                                Classes="param"
-                                                FontSize="13"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushSuccess}"
-                                                KeyDown="OnLookAheadKeyDown"
-                                                LostFocus="OnLookAheadLostFocus"
-                                                Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                TextAlignment="Center" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="11"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                Text="ms" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Grid>
-
-                                <Grid Grid.Row="1" RowDefinitions="14,*">
-                                    <Grid Grid.Row="1" ColumnDefinitions="26, *, 26">
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                        <Slider
-                                            Grid.Column="1"
-                                            Classes="active-green"
-                                            IsSnapToTickEnabled="True"
-                                            Maximum="10"
-                                            Minimum="1"
-                                            TickFrequency="0.1"
-                                            Value="{Binding LookAheadTimeMs}" />
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            FontSize="10.5"
-                                            Foreground="{StaticResource BrushTextMuted}"
-                                            Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-
-                            <Grid Grid.Row="1" />
-                        </Grid>
-
-                        <!--  Separador  -->
-                        <Rectangle
-                            Grid.Row="3"
-                            Height="1"
-                            VerticalAlignment="Center"
-                            Fill="{StaticResource BrushBorderSubtle}" />
-
-                        <!--  3. Execution & Safety  -->
-                        <StackPanel
-                            Grid.Row="4"
-                            Margin="0,8,0,0"
-                            Spacing="14">
-
-                            <TextBlock
-                                FontSize="15"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource BrushTextPrimary}">
-                                <Run
+                                    Margin="4,0"
+                                    FontSize="{StaticResource FontSizeXL}"
                                     FontWeight="Bold"
-                                    Foreground="{StaticResource BrushAccentTeal}"
-                                    Text="Execution" />
-                                <Run Text=" · Safety" />
-                            </TextBlock>
+                                    Foreground="{StaticResource BrushTextPrimary}"
+                                    IsVisible="{Binding IsNormalizeMode}">
+                                    <Run
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource BrushAccentSkyblue}"
+                                        Text="DSP" />
+                                    <Run Text=" · Loudness Calibration" />
+                                </TextBlock>
 
-                            <!--  Preservar Metadatos  -->
-                            <CheckBox
-                                Content="Preserve Metadata (ID3v2.3)"
-                                Foreground="{StaticResource BrushTextSecondary}"
-                                IsChecked="True" />
+                                <!--  1.1 Controles de normalización (focusable para forzar a actualizar los valores)  -->
+                                <Border
+                                    Grid.Row="1"
+                                    Padding="18,18"
+                                    Background="{StaticResource Border_bg_degrade2}"
+                                    BorderBrush="{StaticResource BrushBorderDefault}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Focusable="True">
 
+                                    <StackPanel Spacing="10">
 
+                                        <!--  Sección: Target Loudness  -->
+                                        <Border
+                                            Padding="0,8,0,8"
+                                            Background="{StaticResource bg_degrade}"
+                                            BorderBrush="{StaticResource BrushBorderDefault}"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="172" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
 
+                                                <!--  TITULO  -->
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    FontSize="12"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushTextSecondary}"
+                                                    LetterSpacing="2.5"
+                                                    Text="TARGET LUFS" />
 
-                        </StackPanel>
+                                                <!--  KNOB  -->
+                                                <Grid Grid.Row="1" VerticalAlignment="Center">
 
-                        <!--  4. Botón principal de ejecución  -->
-                        <Button
-                            Grid.Row="6"
-                            Height="44"
-                            HorizontalAlignment="Stretch"
-                            Classes="success"
-                            Command="{Binding StartNormalizationCommand}">
+                                                    <controls:LufsKnob
+                                                        x:Name="TargetLufsKnob"
+                                                        Width="140"
+                                                        Height="140"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Maximum="-6"
+                                                        Minimum="-24"
+                                                        TickCount="19"
+                                                        Value="{Binding TargetLufs, Mode=TwoWay}" />
+
+                                                    <!--  VALOR CENTRAL  -->
+                                                    <Grid
+                                                        Width="74"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Background="Transparent"
+                                                        IsHitTestVisible="False"
+                                                        RowDefinitions="Auto, Auto"
+                                                        RowSpacing="0">
+
+                                                        <TextBox
+                                                            Width="68"
+                                                            MinWidth="68"
+                                                            MinHeight="24"
+                                                            Margin="0"
+                                                            Padding="0"
+                                                            Background="Transparent"
+                                                            BorderBrush="Transparent"
+                                                            Classes="param"
+                                                            FontSize="16"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushAccentSkyblue}"
+                                                            IsHitTestVisible="False"
+                                                            KeyDown="OnTargetLufsKeyDown"
+                                                            LostFocus="OnTargetLufsLostFocus"
+                                                            Text="{Binding TargetLufs, Mode=OneWay, StringFormat={}{0:F1}}"
+                                                            TextAlignment="Center" />
+
+                                                        <TextBlock
+                                                            Grid.Row="1"
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="8.5"
+                                                            Foreground="#8B91A3"
+                                                            IsHitTestVisible="False"
+                                                            LetterSpacing="1"
+                                                            Text="LUFS" />
+                                                    </Grid>
+                                                </Grid>
+
+                                                <!--  PRESETS  -->
+                                                <Button
+                                                    Grid.Row="2"
+                                                    HorizontalAlignment="Center"
+                                                    HorizontalContentAlignment="Center"
+                                                    Background="{StaticResource BrushBgPanelAlt}"
+                                                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                    Classes="ghostNoZoom"
+                                                    Command="{Binding TogglePresetsPopupCommand}"
+                                                    CornerRadius="12">
+
+                                                    <Button.Flyout>
+                                                        <Flyout
+                                                            Closed="OnPresetsFlyoutClosed"
+                                                            IsOpen="{Binding IsPresetsFlyoutOpen}"
+                                                            ShowMode="Standard">
+
+                                                            <ListBox
+                                                                MinWidth="332"
+                                                                Classes="dark-popup"
+                                                                ItemsSource="{Binding Presets}"
+                                                                SelectedItem="{Binding SelectedPreset}"
+                                                                SelectionMode="Single">
+                                                                <ListBox.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <TextBlock
+                                                                            Margin="20,0"
+                                                                            VerticalAlignment="Center"
+                                                                            FontSize="{StaticResource FontSizeMD}"
+                                                                            Text="{Binding Name}" />
+                                                                    </DataTemplate>
+                                                                </ListBox.ItemTemplate>
+                                                            </ListBox>
+                                                        </Flyout>
+                                                    </Button.Flyout>
+
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            Foreground="{StaticResource BrushTextSecondary}"
+                                                            Text="{Binding SelectedPreset.Name}" />
+
+                                                        <Path
+                                                            Grid.Column="1"
+                                                            Width="10"
+                                                            Height="6"
+                                                            Margin="12,0,0,0"
+                                                            HorizontalAlignment="Right"
+                                                            Data="M 0 0 L 8 0 L 4 5 Z"
+                                                            Fill="{StaticResource TextMuted}"
+                                                            Stretch="Uniform" />
+                                                    </Grid>
+
+                                                </Button>
+
+                                            </Grid>
+                                        </Border>
+
+                                        <!--  Sección: parámetros del limitador  -->
+                                        <Grid Margin="0,8,0,2" ColumnDefinitions="Auto,10,*">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                LetterSpacing="1.5"
+                                                Text="LIMITER" />
+                                            <Border
+                                                Grid.Column="2"
+                                                Height="1"
+                                                VerticalAlignment="Center"
+                                                Background="{StaticResource BrushBorderSubtle}" />
+                                        </Grid>
+
+                                        <StackPanel Spacing="6">
+
+                                            <!--  Fila: True Peak Ceiling  -->
+                                            <Grid
+                                                Margin="0,0,0,0"
+                                                ColumnDefinitions="6,*,Auto,30"
+                                                ColumnSpacing="8">
+                                                <Ellipse
+                                                    Width="5"
+                                                    Height="5"
+                                                    VerticalAlignment="Center"
+                                                    Fill="{StaticResource BrushAccentSkyblue}" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeSmall}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushTextSecondary}"
+                                                    Text="True Peak Ceiling" />
+                                                <TextBox
+                                                    Grid.Column="2"
+                                                    Width="50"
+                                                    MinHeight="26"
+                                                    Padding="0"
+                                                    VerticalContentAlignment="Center"
+                                                    Background="Transparent"
+                                                    BorderBrush="Transparent"
+                                                    Classes="param"
+                                                    FontFamily="{StaticResource FontMono}"
+                                                    FontSize="{StaticResource FontSizeBase}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushAccentSkyblue}"
+                                                    KeyDown="OnTruePeakKeyDown"
+                                                    LostFocus="OnTruePeakLostFocus"
+                                                    Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                    TextAlignment="Center" />
+                                                <TextBlock
+                                                    Grid.Column="3"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeXS}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="dBTP" />
+                                            </Grid>
+
+                                            <Grid ColumnDefinitions="24,*,24">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                <Slider
+                                                    x:Name="TruePeakCeilingSlider"
+                                                    Grid.Column="1"
+                                                    Height="14"
+                                                    VerticalAlignment="Center"
+                                                    Classes="active-second"
+                                                    Maximum="{Binding #TruePeakCeilingSlider.DataContext.MaxTruePeakCeiling}"
+                                                    Minimum="{Binding #TruePeakCeilingSlider.DataContext.MinTruePeakCeiling}"
+                                                    Value="{Binding TruePeakCeiling, Mode=TwoWay}" />
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                            </Grid>
+
+                                            <!--  Fila: Release Time  -->
+                                            <Grid
+                                                Margin="0,4,0,0"
+                                                ColumnDefinitions="6,*,Auto,30"
+                                                ColumnSpacing="8">
+                                                <Ellipse
+                                                    Width="5"
+                                                    Height="5"
+                                                    VerticalAlignment="Center"
+                                                    Fill="{StaticResource BrushAccentRosa}" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeSmall}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushTextSecondary}"
+                                                    Text="Release Time" />
+                                                <TextBox
+                                                    Grid.Column="2"
+                                                    Width="50"
+                                                    MinHeight="26"
+                                                    Padding="0"
+                                                    VerticalContentAlignment="Center"
+                                                    Background="Transparent"
+                                                    BorderBrush="Transparent"
+                                                    Classes="param"
+                                                    FontFamily="{StaticResource FontMono}"
+                                                    FontSize="{StaticResource FontSizeBase}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushAccentRosa}"
+                                                    KeyDown="OnReleaseTimeMsKeyDown"
+                                                    LostFocus="OnReleaseTimeMsLostFocus"
+                                                    Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                    TextAlignment="Center" />
+                                                <TextBlock
+                                                    Grid.Column="3"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeXS}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="ms" />
+                                            </Grid>
+
+                                            <Grid ColumnDefinitions="24,*,24">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                <Slider
+                                                    Grid.Column="1"
+                                                    Height="14"
+                                                    VerticalAlignment="Center"
+                                                    Classes="active-amber"
+                                                    Maximum="{Binding MaxReleaseTimeMs}"
+                                                    Minimum="{Binding MinReleaseTimeMs}"
+                                                    TickFrequency="0.1"
+                                                    Value="{Binding ReleaseTimeMs, Mode=TwoWay}" />
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                            </Grid>
+
+                                            <!--  Fila: Look-ahead Time  -->
+                                            <Grid
+                                                Margin="0,4,0,0"
+                                                ColumnDefinitions="6,*,Auto,30"
+                                                ColumnSpacing="8">
+                                                <Ellipse
+                                                    Width="5"
+                                                    Height="5"
+                                                    VerticalAlignment="Center"
+                                                    Fill="{StaticResource BrushSuccess}" />
+                                                <TextBlock
+                                                    Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeSmall}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushTextSecondary}"
+                                                    Text="Look-ahead Time" />
+                                                <TextBox
+                                                    Grid.Column="2"
+                                                    Width="50"
+                                                    MinHeight="26"
+                                                    Padding="0"
+                                                    VerticalContentAlignment="Center"
+                                                    Background="Transparent"
+                                                    BorderBrush="Transparent"
+                                                    Classes="param"
+                                                    FontFamily="{StaticResource FontMono}"
+                                                    FontSize="{StaticResource FontSizeBase}"
+                                                    FontWeight="SemiBold"
+                                                    Foreground="{StaticResource BrushSuccess}"
+                                                    KeyDown="OnLookAheadKeyDown"
+                                                    LostFocus="OnLookAheadLostFocus"
+                                                    Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                    TextAlignment="Center" />
+                                                <TextBlock
+                                                    Grid.Column="3"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeXS}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="ms" />
+                                            </Grid>
+
+                                            <Grid ColumnDefinitions="24,*,24">
+                                                <TextBlock
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                <Slider
+                                                    Grid.Column="1"
+                                                    Height="14"
+                                                    VerticalAlignment="Center"
+                                                    Classes="active-green"
+                                                    Maximum="{Binding MaxLookAheadTimeMs}"
+                                                    Minimum="{Binding MinLookAheadTimeMs}"
+                                                    Value="{Binding LookAheadTimeMs, Mode=TwoWay}" />
+                                                <TextBlock
+                                                    Grid.Column="2"
+                                                    HorizontalAlignment="Right"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                    Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  1.2 Execution & Safety  -->
+                                <Border
+                                    Grid.Row="2"
+                                    Padding="14"
+                                    Background="{StaticResource BrushBgPanelAlt}"
+                                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                    <StackPanel IsVisible="{Binding IsNormalizeMode}" Spacing="12">
+
+                                        <Grid VerticalAlignment="Center" ColumnDefinitions="Auto,9,*">
+                                            <Ellipse
+                                                Width="7"
+                                                Height="7"
+                                                Fill="{StaticResource BrushAccentSkyblue}" />
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="EXECUTION &amp; SAFETY" />
+                                        </Grid>
+
+                                        <!--  Preservar Metadatos (solo aplica al normalizar)  -->
+                                        <CheckBox
+                                            Content="Preserve Basic Metadata"
+                                            Foreground="{StaticResource BrushTextSecondary}"
+                                            IsChecked="True"
+                                            IsEnabled="{Binding IsNormalizeMode}" />
+
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <!--  2. Panel de Análisis (modo Analizar)  -->
                             <StackPanel
-                                HorizontalAlignment="Center"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="16"
-                                    Foreground="White"
-                                    Text="▶" />
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="White"
-                                    Text="Run Batch Normalization" />
-                            </StackPanel>
-                        </Button>
+                                Grid.Row="1"
+                                IsVisible="{Binding IsAnalyzeMode}"
+                                Spacing="12">
 
-                    </Grid>
-                </ScrollViewer>
+                                <!--  Encabezado: título + chip de lote  -->
+                                <Grid
+                                    Margin="4,0"
+                                    VerticalAlignment="Center"
+                                    ColumnDefinitions="*,Auto">
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource FontSizeXL}"
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource BrushTextPrimary}">
+                                        <Run
+                                            FontWeight="Bold"
+                                            Foreground="{StaticResource BrushAccentSkyblue}"
+                                            Text="Analysis" />
+                                        <Run Text=" · Loudness Report" />
+                                    </TextBlock>
+
+                                    <Border
+                                        Grid.Column="1"
+                                        Padding="10,3"
+                                        VerticalAlignment="Center"
+                                        Background="{StaticResource BrushBgInput}"
+                                        BorderBrush="{StaticResource BrushBorderSubtle}"
+                                        BorderThickness="1"
+                                        CornerRadius="999"
+                                        IsVisible="{Binding HasFiles}">
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="TRACKS" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="Bold"
+                                                Foreground="{StaticResource BrushAccentSkyblue}"
+                                                Text="{Binding SummaryTotalText}" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!--  Resumen del lote  -->
+                                <Border
+                                    Padding="14"
+                                    Background="{StaticResource BrushBgPanelAlt}"
+                                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                    <StackPanel Spacing="12">
+                                        <!--  Cabecera del card  -->
+                                        <Grid VerticalAlignment="Center" ColumnDefinitions="Auto,6,*">
+                                            <Ellipse
+                                                Width="7"
+                                                Height="7"
+                                                Fill="{StaticResource BrushAccentSkyblue}" />
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="BATCH SUMMARY" />
+                                        </Grid>
+
+                                        <!--  Métricas principales  -->
+                                        <Grid ColumnDefinitions="2*,10,2*,10,2*">
+                                            <Border
+                                                Grid.Column="0"
+                                                Padding="8,10"
+                                                Background="{StaticResource BrushBgInput}"
+                                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                BorderThickness="1"
+                                                CornerRadius="8">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeMicro}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextMuted}"
+                                                        Text="AVERAGE" />
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeLG}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushAccentSkyblue}"
+                                                        Text="{Binding SummaryAverageText}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border
+                                                Grid.Column="2"
+                                                Padding="8,10"
+                                                Background="{StaticResource BrushBgInput}"
+                                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                BorderThickness="1"
+                                                CornerRadius="8">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeMicro}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextMuted}"
+                                                        Text="AVG GAIN" />
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeLG}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextPrimary}"
+                                                        Text="{Binding SummaryAvgGainText}" />
+                                                </StackPanel>
+                                            </Border>
+                                            <Border
+                                                Grid.Column="4"
+                                                Padding="8,10"
+                                                Background="{StaticResource BrushBgInput}"
+                                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                BorderThickness="1"
+                                                CornerRadius="8">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeMicro}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextMuted}"
+                                                        Text="MAX PEAK" />
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeLG}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextPrimary}"
+                                                        Text="{Binding SummaryPeakText}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+
+                                        <!--  Métricas secundarias  -->
+                                        <Grid ColumnDefinitions="*,20,*">
+                                            <StackPanel Spacing="10">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="Measured" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextPrimary}"
+                                                        Text="{Binding SummaryMeasuredText}" />
+                                                </Grid>
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="Range" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextPrimary}"
+                                                        Text="{Binding SummaryRangeText}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="On target" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        FontSize="{StaticResource FontSizeSM}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushAccentGreen}"
+                                                        Text="{Binding SummaryOnTargetText}" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!--  Estado vacío  -->
+                                        <StackPanel IsVisible="{Binding !HasAnyMeasurement}" Spacing="10">
+                                            <Rectangle Height="1" Fill="{StaticResource BrushBorderSubtle}" />
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeSM}"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="Ejecuta el análisis para ver los resultados del lote."
+                                                TextAlignment="Center"
+                                                TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!--  Ficha del archivo seleccionado  -->
+                                <Border
+                                    Padding="14"
+                                    Background="{StaticResource BrushBgPanelAlt}"
+                                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                                    BorderThickness="1"
+                                    CornerRadius="10">
+                                    <StackPanel Spacing="10">
+                                        <!--  Cabecera del card  -->
+                                        <Grid VerticalAlignment="Center" ColumnDefinitions="Auto,6,*">
+                                            <Ellipse
+                                                Width="7"
+                                                Height="7"
+                                                Fill="{StaticResource BrushAccentSkyblue}" />
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                FontSize="{StaticResource FontSizeSmall}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextMuted}"
+                                                Text="SELECTED FILE" />
+                                        </Grid>
+
+                                        <StackPanel IsVisible="{Binding HasSelectedFile}" Spacing="10">
+                                            <!--  Nombre del archivo  -->
+                                            <TextBlock
+                                                FontSize="{StaticResource FontSizeLG}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{StaticResource BrushTextPrimary}"
+                                                Text="{Binding SelectedFile.FileName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap"
+                                                ToolTip.Tip="{Binding SelectedFile.FileName}" />
+
+                                            <!--  Metadatos  -->
+                                            <Grid
+                                                ColumnDefinitions="*,12,*"
+                                                IsVisible="{Binding HasSelectedFile}"
+                                                RowDefinitions="Auto,Auto"
+                                                RowSpacing="7">
+                                                <Grid RowDefinitions="Auto,Auto" RowSpacing="7">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            Foreground="{StaticResource BrushTextSecondary}"
+                                                            Text="Format" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextPrimary}"
+                                                            Text="{Binding SelectedFile.Codec}" />
+                                                    </Grid>
+                                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                                        <TextBlock
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            Foreground="{StaticResource BrushTextSecondary}"
+                                                            Text="Sample rate" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextPrimary}"
+                                                            Text="{Binding SelectedFileSampleRateText}" />
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid
+                                                    Grid.Column="2"
+                                                    RowDefinitions="Auto,Auto"
+                                                    RowSpacing="7">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            Foreground="{StaticResource BrushTextSecondary}"
+                                                            Text="Duration" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextPrimary}"
+                                                            Text="{Binding SelectedFile.Duration}" />
+                                                    </Grid>
+                                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                                        <TextBlock
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            Foreground="{StaticResource BrushTextSecondary}"
+                                                            Text="Channels" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            FontSize="{StaticResource FontSizeMedium}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextPrimary}"
+                                                            Text="{Binding SelectedFileChannelsText}" />
+                                                    </Grid>
+                                                </Grid>
+                                            </Grid>
+
+                                            <!--  Medidor  -->
+                                            <Border
+                                                Padding="12,12"
+                                                Background="{StaticResource bg_degrade}"
+                                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                                BorderThickness="1"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding HasAnyMeasurement}">
+
+                                                <Grid ColumnDefinitions="*,1,*">
+
+                                                    <!--  Loudness  -->
+                                                    <StackPanel
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="1">
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeMicro}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="LOUDNESS" />
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeMeter}"
+                                                            FontWeight="Bold"
+                                                            Foreground="{StaticResource BrushAccentSkyblue}"
+                                                            Text="{Binding SelectedFileLoudnessValue}" />
+                                                        <TextBlock
+                                                            HorizontalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeSM}"
+                                                            FontWeight="Medium"
+                                                            Foreground="{StaticResource BrushAccentSecondary}"
+                                                            Text="{Binding SelectedFileLoudnessUnit}" />
+                                                    </StackPanel>
+
+                                                    <!--  Separador  -->
+                                                    <Rectangle
+                                                        Grid.Column="1"
+                                                        Width="1"
+                                                        Margin="0,6"
+                                                        Fill="{StaticResource BrushBorderSubtle}" />
+
+                                                    <!--  Detalle  -->
+                                                    <StackPanel
+                                                        Grid.Column="2"
+                                                        Margin="14,0,2,0"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="7">
+                                                        <StackPanel Spacing="1">
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeMicro}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="TARGET" />
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeLarge}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushAccentTeal}"
+                                                                Text="{Binding SummaryTargetText}" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="1">
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeMicro}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="TRUE PEAK" />
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeLarge}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushAccent}"
+                                                                Text="{Binding SelectedFilePeakText}" />
+                                                        </StackPanel>
+                                                        <StackPanel Spacing="1">
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeMicro}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="GAIN TO TARGET" />
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeLarge}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{Binding SelectedFileGainBrush}"
+                                                                Text="{Binding SelectedFileGainNeeded}" />
+                                                        </StackPanel>
+
+                                                        <!--  Estado  -->
+                                                        <Border
+                                                            Margin="0,2,0,0"
+                                                            Padding="10,3"
+                                                            HorizontalAlignment="Left"
+                                                            Background="{Binding SelectedFileGainBgBrush}"
+                                                            CornerRadius="999">
+                                                            <TextBlock
+                                                                FontSize="{StaticResource FontSizeSmall}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{Binding SelectedFileGainBrush}"
+                                                                Text="{Binding SelectedFileGainStatus}" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+
+                                        <!--  Aviso  -->
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            FontSize="{StaticResource FontSizeSM}"
+                                            Foreground="{StaticResource BrushTextMuted}"
+                                            IsVisible="{Binding !HasSelectedFile}"
+                                            Text="Selecciona un archivo de la lista para ver su ficha."
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+
+                    <!--  Botón principal de ejecución  -->
+                    <Button
+                        Grid.Row="2"
+                        Height="44"
+                        Margin="18"
+                        HorizontalAlignment="Stretch"
+                        Classes="main"
+                        Command="{Binding StartNormalizationCommand}">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <Path
+                                Width="15"
+                                Height="15"
+                                VerticalAlignment="Center"
+                                Data="M8,5 L19,12 L8,19 Z"
+                                Fill="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding !IsProcessing}"
+                                Stretch="Uniform" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding IsNormalizeMode, FallbackValue=False}"
+                                Text="Run Batch Normalization" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding IsAnalyzeMode}"
+                                Text="Run Batch Analysis" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="{StaticResource FontSizeLG}"
+                                Foreground="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding IsProcessing}"
+                                Text="Processing…" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
             </Border>
         </Grid>
 
@@ -815,19 +1491,142 @@
         -->
         <Border
             Grid.Row="2"
-            Margin="0,14,0,0"
             Padding="12,7"
             Background="{StaticResource BrushBgPanel}"
             BorderBrush="{StaticResource BrushBorderDefault}"
             BorderThickness="1"
+            Classes.ok="{Binding IsStatusSuccess}"
             CornerRadius="8">
-            <TextBlock
-                VerticalAlignment="Center"
-                FontFamily="Consolas,Monospace"
-                FontSize="11.5"
-                Foreground="{StaticResource BrushSuccess}"
-                Text="{Binding SystemStatus}" />
+            <Grid ColumnDefinitions="16,*">
+                <Ellipse
+                    Width="6"
+                    Height="6"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Fill="{StaticResource BrushAccentSkyblue}" />
+
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource FontMono}"
+                    FontSize="{StaticResource FontSizeMedium}"
+                    Foreground="{StaticResource BrushTextSecondary}"
+                    Text="{Binding SystemStatus}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+            </Grid>
         </Border>
+
+        <!--
+            ==========================================================
+            MODAL DE CANCELACIÓN
+            Fondo semitransparente sobre toda la ventana + panel central
+            con el progreso del lote en curso y el botón de cancelar.
+            Se muestra mientras IsProcessing esté activo.
+            ==========================================================
+        -->
+        <Grid
+            Grid.Row="0"
+            Grid.RowSpan="3"
+            Margin="-18,-4,-18,-18"
+            IsVisible="{Binding IsProcessing}">
+
+            <!--  Scrim: semitransparente, bloquea clics a la app  -->
+            <Border Background="{StaticResource BrushBgOverlay}" Opacity="0.62" />
+
+            <!--  Panel central  -->
+            <Border
+                Width="440"
+                Padding="28,24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{StaticResource BrushBgPanel}"
+                BorderBrush="{StaticResource BrushBorderStrong}"
+                BorderThickness="1"
+                BoxShadow="0 12 32 0 #66000000"
+                CornerRadius="12">
+                <StackPanel Spacing="14">
+
+                    <!--  Título  -->
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Path
+                            Width="18"
+                            Height="18"
+                            VerticalAlignment="Center"
+                            Data="M4,11 L4,7 M8,11 L8,3 M12,11 L12,5 M16,11 L16,9 M2,11 L18,11"
+                            Fill="Transparent"
+                            Stroke="{StaticResource BrushAccentCyan}"
+                            StrokeLineCap="Round"
+                            StrokeThickness="1.8" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="{StaticResource FontSizeDisplay}"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource BrushTextPrimary}"
+                            Text="Procesamiento en curso" />
+                    </StackPanel>
+
+                    <TextBlock
+                        FontSize="{StaticResource FontSizeBase}"
+                        Foreground="{StaticResource BrushTextSecondary}"
+                        Text="Los archivos se están procesando. Si cancelas, los que quedaron a medias se descartan sin daños ni restos." />
+
+                    <!--  Barra de progreso global  -->
+                    <ProgressBar
+                        Height="6"
+                        Minimum="0"
+                        Maximum="100"
+                        Background="{StaticResource BrushBorderDefault}"
+                        Foreground="{StaticResource BrushAccent}"
+                        Value="{Binding QueueProgress}" />
+
+                    <!--  Contador y archivo actual  -->
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                        <TextBlock
+                            FontFamily="{StaticResource FontMono}"
+                            FontSize="{StaticResource FontSizeBase}"
+                            Foreground="{StaticResource BrushTextPrimary}"
+                            Text="{Binding QueueProgressText}" />
+                        <TextBlock
+                            Grid.Column="1"
+                            FontFamily="{StaticResource FontMono}"
+                            FontSize="{StaticResource FontSizeBase}"
+                            Foreground="{StaticResource BrushTextSecondary}"
+                            Text="{Binding CurrentProcessing.FileName}"
+                            TextTrimming="CharacterEllipsis" />
+                    </Grid>
+
+                    <!--  Detalle de la etapa actual (StatusMessage del archivo en curso)  -->
+                    <TextBlock
+                        FontSize="{StaticResource FontSizeSM}"
+                        Foreground="{StaticResource BrushTextMuted}"
+                        Text="{Binding CurrentProcessing.StatusMessage}" />
+
+                    <!--  Botón de cancelar  -->
+                    <Button
+                        HorizontalAlignment="Stretch"
+                        Classes="main"
+                        Command="{Binding CancelProcessingCommand}"
+                        IsEnabled="{Binding !IsCancelling}">
+                        <StackPanel
+                            HorizontalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8">
+                            <TextBlock
+                                FontSize="{StaticResource FontSizeBase}"
+                                Foreground="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding !IsCancelling}"
+                                Text="Cancelar y descartar en curso" />
+                            <TextBlock
+                                FontSize="{StaticResource FontSizeBase}"
+                                Foreground="{StaticResource BrushTextOnAccent}"
+                                IsVisible="{Binding IsCancelling}"
+                                Text="Cancelando…" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
 
     </Grid>
 </Window>

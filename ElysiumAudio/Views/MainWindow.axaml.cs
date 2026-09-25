@@ -22,6 +22,12 @@ namespace ElysiumAudio.Views
         private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
         private static readonly Regex NumericRegex = new Regex(@"^-?\d+(\.\d+)?$", RegexOptions.Compiled);
 
+        // Control del cierre durante un procesamiento: el primer intento se cancela,
+        // se confirma con el usuario y, si sale, se cancela el lote de forma limpia
+        // antes de permitir el cierre real de la ventana.
+        private bool _allowClose;
+        private bool _handlingClose;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -235,6 +241,7 @@ namespace ElysiumAudio.Views
             }
         }
 
+        // cierra el flyout de Ouput format
         private void OnFlyoutClosed(object sender, EventArgs e)
         {
             // Sincronizar con ViewModel si es necesario
@@ -244,12 +251,94 @@ namespace ElysiumAudio.Views
             }
         }
 
+        // Cierra el flyout de Presets
         private void OnPresetsFlyoutClosed(object sender, EventArgs e)
         {
             // Sincronizar con ViewModel si es necesario
             if (ViewModel != null)
             {
                 ViewModel.IsPresetsFlyoutOpen = false;
+            }
+        }
+
+        // Intercepta el cierre de la ventana (click en la X, Alt+F4, etc.).
+        // Si hay un lote en curso, el cierre se aplaza hasta que el usuario decida:
+        //   - "Seguir procesando": la ventana permanece abierta.
+        //   - "Cancelar y salir": se cancela el lote cooperativamente (los archivos a
+        //     medio renderizar se descartan sin daños) y, al terminar, se cierra.
+        protected override void OnClosing(WindowClosingEventArgs e)
+        {
+            if (_allowClose)
+            {
+                base.OnClosing(e);
+                return;
+            }
+
+            e.Cancel = true;
+            if (_handlingClose) return;
+            _handlingClose = true;
+            _ = HandleCloseAsync();
+        }
+
+        private async Task HandleCloseAsync()
+        {
+            try
+            {
+                var vm = ViewModel;
+                if (vm is { IsProcessing: true })
+                {
+                    var dialog = new ConfirmExitWindow();
+                    bool? exit;
+                    try
+                    {
+                        exit = await dialog.ShowDialog<bool>(this);
+                    }
+                    catch
+                    {
+                        exit = null; // sin decisión clara → seguimos procesando
+                    }
+
+                    if (exit != true)
+                    {
+                        return; // el usuario prefiere seguir trabajando
+                    }
+
+                    // Cancelación cooperativa: las tareas activas sueltan sus temporales
+                    // y no copian nada parcial al destino.
+                    vm.RequestCancellation();
+                    var batch = vm.CurrentBatchTask;
+                    if (batch != null)
+                    {
+                        try
+                        {
+                            await batch;
+                        }
+                        catch
+                        {
+                            // El lote ya terminó o falló mientras tanto; nada que esperar.
+                        }
+                    }
+                }
+
+                _allowClose = true;
+                Close();
+            }
+            finally
+            {
+                _handlingClose = false;
+            }
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+            // Forzar re-evaluación del Value después de que Min/Max estén listos
+            var slider = this.FindControl<Slider>("TruePeakCeilingSlider");
+            if (slider != null && DataContext is MainWindowViewModel vm)
+            {
+                slider.Minimum = vm.MinTruePeakCeiling;
+                slider.Maximum = vm.MaxTruePeakCeiling;
+                slider.Value = vm.TruePeakCeiling;
             }
         }
     }

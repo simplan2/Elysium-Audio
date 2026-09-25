@@ -7,6 +7,7 @@ using ElysiumAudio.Services;
 using ElysiumAudio.ViewModels;
 using ElysiumAudio.Views;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Linq;
 
 namespace ElysiumAudio
@@ -20,6 +21,10 @@ namespace ElysiumAudio
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // Limpieza al arrancar: directorios temporales huérfanos de ejecuciones
+            // interrumpidas a la fuerza (Task Manager, apagado del sistema, etc.).
+            AudioEngineService.CleanupStaleTempDirectories(TimeSpan.FromHours(12));
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Creamos e inyectamos el servicio de configuración

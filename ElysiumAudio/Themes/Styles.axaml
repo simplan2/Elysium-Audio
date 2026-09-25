@@ -1,13 +1,13 @@
-<Styles
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- =====================================================================
-         ESTILOS GLOBALES DE ELYSIUM AUDIO
-         Sobrescriben partes del tema Fluent con el look dark profesional.
-         ===================================================================== -->
+    <!--
+        =====================================================================
+        ESTILOS GLOBALES DE ELYSIUM AUDIO
+        Sobrescriben partes del tema Fluent con el look dark profesional.
+        =====================================================================
+    -->
 
-    <!-- ============================= BUTTON ============================= -->
+    <!--  ============================= BUTTON =============================  -->
     <Style Selector="Button">
         <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
@@ -33,41 +33,130 @@
         <Setter Property="Background" Value="{StaticResource BrushBorderDefault}" />
     </Style>
 
-    <!-- Variantes de botones: primario, éxito, fantasma -->
-    <Style Selector="Button.accent">
-        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+    <Style Selector="Button:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+    <!--  Variantes de botones: primario, éxito, fantasma  -->
+    <Style Selector="Button.main">
+        <Setter Property="Background" Value="{StaticResource btn_bg_degrade}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBgInput}" />
         <Setter Property="Foreground" Value="{StaticResource BrushTextOnAccent}" />
     </Style>
-    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <!--<Style Selector="Button.main /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
+    </Style>-->
+    <Style Selector="Button.main:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushAccentHover}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentHover}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
     </Style>
-    <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.main:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushAccentPress}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentPress}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
     </Style>
 
     <Style Selector="Button.success">
-        <Setter Property="Background" Value="#059669" />
-        <Setter Property="BorderBrush" Value="#059669" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextOnAccent}" />
+    </Style>
+    <Style Selector="Button.success /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}" />
     </Style>
     <Style Selector="Button.success:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="#10B981" />
-        <Setter Property="BorderBrush" Value="#10B981" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentGreenHover}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentGreenHover}" />
+    </Style>
+    <Style Selector="Button.success:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentGreenPress}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentGreenPress}" />
     </Style>
 
     <Style Selector="Button.ghost">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
     </Style>
+
+    <Style Selector="Button.ghostNoZoom">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="Transitions" Value="{x:Null}" />
+    </Style>
+
+    <Style Selector="Button.ghostNoZoom:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+
+
     <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
     </Style>
 
-    <!-- ============================= TEXTBOX ============================= -->
+    <!--  Selector segmentado de propósito (Normalize / Analyze)  -->
+    <Style Selector="Button.segment">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextMuted}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="22" />
+        <Setter Property="Padding" Value="14,9" />
+    </Style>
+    <Style Selector="Button.segment:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.segment.active">
+        <Setter Property="Background" Value="{StaticResource bg_degrade}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+    </Style>
+    <Style Selector="Button.segment.active /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource bg_degrade}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
+    </Style>
+    <Style Selector="Button.segment.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource bg_degrade}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
+    </Style>
+
+    <!--  Botones stepper estilo plugin VST  -->
+    <Style Selector="Button.step">
+        <Setter Property="Width" Value="30" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="{StaticResource BrushBgButton}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeXL}" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+    </Style>
+    <Style Selector="Button.step:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+    <Style Selector="Button.step:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+    </Style>
+    <Style Selector="Button.step.big">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="CornerRadius" Value="20" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeDisplay}" />
+    </Style>
+
+    <!--  ============================= TEXTBOX =============================  -->
     <Style Selector="TextBox">
         <Setter Property="Background" Value="{StaticResource BrushBgInput}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
@@ -81,7 +170,10 @@
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
     </Style>
-    <!-- TextBox "invisible" dentro de los paneles de parámetros -->
+    <Style Selector="TextBox:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+    <!--  TextBox "invisible" dentro de los paneles de parámetros  -->
     <Style Selector="TextBox.param">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -91,23 +183,68 @@
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
-    <!-- ============================= SLIDER ============================= -->
-    <!-- Color del tramo activo (parte rellenada hasta el thumb) -->
+    <!--  ============================= SLIDER =============================  -->
+
+    <!--  Hover  -->
+    <!--<Style Selector="Slider.modern-slider:pointerover /template/ Thumb#PART_Thumb">
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+    </Style>-->
+
+
+    <!--  Presionado  -->
+    <!--<Style Selector="Slider.modern-slider:pressed /template/ Thumb#PART_Thumb">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+    </Style>-->
+
+    <!--  Color del tramo activo (parte rellenada hasta el thumb)  -->
     <Style Selector="Slider.active-accent /template/ RepeatButton#PART_DecreaseButton">
-        <Setter Property="Background" Value="{StaticResource BrushAccent}" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentSkyblue}" />
     </Style>
+    <Style Selector="Slider.active-accent /template/ Thumb">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Background" Value="{StaticResource BrushBgControl}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBgControl}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
+    <Style Selector="Slider.active-second /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="{StaticResource BrushAccentSkyblue}" />
+    </Style>
+    <Style Selector="Slider.active-second /template/ Thumb">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentSkyblue}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentSkyblue}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+
     <Style Selector="Slider.active-amber /template/ RepeatButton#PART_DecreaseButton">
-        <Setter Property="Background" Value="{StaticResource BrushWarning}" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentRosa}" />
     </Style>
-    <Style Selector="Slider.active-teal /template/ RepeatButton#PART_DecreaseButton">
-        <Setter Property="Background" Value="{StaticResource BrushAccentTeal}" />
+    <Style Selector="Slider.active-amber /template/ Thumb">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Background" Value="{StaticResource BrushAccentRosa}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentRosa}" />
+        <Setter Property="BorderThickness" Value="1" />
     </Style>
+
     <Style Selector="Slider.active-green /template/ RepeatButton#PART_DecreaseButton">
         <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
     </Style>
+    <Style Selector="Slider.active-green /template/ Thumb">
+        <Setter Property="Width" Value="8" />
+        <Setter Property="Height" Value="8" />
+        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
 
-    <!-- ============================= COMBOBOX ============================= -->
-    <!-- Selector de presets: fondo oscuro consistente con la paleta -->
+    <!--  ============================= COMBOBOX =============================  -->
+    <!--  Selector de presets: fondo oscuro consistente con la paleta  -->
     <Style Selector="ComboBox">
         <Setter Property="Background" Value="{StaticResource BrushBgInput}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
@@ -127,7 +264,7 @@
     <Style Selector="ComboBoxItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLG}" />
         <Setter Property="Padding" Value="10,6" />
     </Style>
     <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -137,23 +274,98 @@
         <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
     </Style>
     <Style Selector="ComboBoxItem:selected /template/ TextBlock">
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
     </Style>
 
-    <!-- ============================= CHECKBOX ============================= -->
+    <!--  ============================= CHECKBOX =============================  -->
     <Style Selector="CheckBox">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid Margin="2" ColumnDefinitions="Auto,Auto">
+                    <!--  El cuadro del check  -->
+                    <Border
+                        x:Name="PART_Box"
+                        Width="16"
+                        Height="16"
+                        Background="Transparent"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="1.4"
+                        CornerRadius="{StaticResource RadiusSM}"
+                        DockPanel.Dock="Left">
+						<Viewbox
+                            Width="11"
+                            Height="11"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                            <!--  La marca de verificación  -->
+                            <Path
+                                x:Name="PART_CheckMark"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Data="M 2,8 L 6,12 L 14,3"
+                                IsVisible="False"
+                                Stroke="White"
+                                StrokeLineCap="Round"
+                                StrokeThickness="2" />
+                        </Viewbox>
+
+                    </Border>
+
+                    <!--  EL CONTENIDO (texto)  -->
+					<ContentPresenter
+						Margin="7,0,0,0"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Content="{TemplateBinding Content}"
+                        Foreground="{TemplateBinding Foreground}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="CheckBox:pointerover /template/ Border#PART_Box">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Border#PART_Box">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked:pointerover /template/ Border#PART_Box">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentHover}" />
+    </Style>
+
+    <Style Selector="CheckBox:checked /template/ Path#PART_CheckMark">
+        <Setter Property="IsVisible" Value="True" />
+    </Style>
+
+    <Style Selector="CheckBox:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+    <!--  Barra de estado: verde "success" solo cuando el lote se completó sin errores  -->
+    <Style Selector="Border.ok > Ellipse">
+        <Setter Property="Fill" Value="{StaticResource BrushSuccess}" />
+    </Style>
+    <Style Selector="Border.ok TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource BrushSuccess}" />
+    </Style>
+
+    <!--  ============================= TOGGLESWITCH =============================  -->
+    <Style Selector="ToggleSwitch">
         <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
     </Style>
 
-    <!-- ============================= DATAGRID ============================= -->
+    <!--  ============================= DATAGRID =============================  -->
     <Style Selector="DataGrid">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="RowBackground" Value="Transparent" />
-        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource BrushBorderSubtle}" />
-        <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLG}" />
     </Style>
 
     <Style Selector="DataGridColumnHeader">
@@ -162,7 +374,7 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
         <Setter Property="Padding" Value="12,10" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMD}" />
     </Style>
 
     <Style Selector="DataGridCell">
@@ -171,44 +383,56 @@
         <Setter Property="VerticalAlignment" Value="Center" />
     </Style>
 
-    <Style Selector="DataGridRow:pointerover /template/ Border#BackgroundBorder">
-        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+    <!--  ============================= ListBox Popup =============================  -->
+    <Style Selector="ListBox.dark-popup">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
     </Style>
 
-	<!-- ============================= ListBox Popup ============================= -->
-	<Style Selector="ListBox.dark-popup">
-		<Setter Property="Background" Value="Transparent" />
-		<Setter Property="BorderThickness" Value="0" />
-		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
-		<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
-	</Style>
+    <Style Selector="ListBox.dark-popup ListBoxItem">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter
+                        Margin="{TemplateBinding Padding}"
+                        VerticalAlignment="Center"
+                        Content="{TemplateBinding Content}"
+                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
 
-	<Style Selector="ListBox.dark-popup ListBoxItem">
-		<Setter Property="Background" Value="Transparent" />
-		<Setter Property="Padding" Value="0" />
-		<Setter Property="Margin" Value="0" />
-		<Setter Property="Height" Value="38" />
-		<Setter Property="BorderThickness" Value="0" />
-	</Style>
+    <Style Selector="ListBox.dark-popup ListBoxItem:pointerover">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
 
-	<Style Selector="ListBox.dark-popup ListBoxItem:pointerover">
-		<Setter Property="Background" Value="#235B76" />
-		<Setter Property="CornerRadius" Value="0" />
-	</Style>
+    <Style Selector="ListBox.dark-popup ListBoxItem:selected">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
 
-	<Style Selector="ListBox.dark-popup ListBoxItem:selected">
-		<Setter Property="Background" Value="#235B76" />
-		<Setter Property="CornerRadius" Value="0" />
-	</Style>
+    <Style Selector="ListBox.dark-popup ListBoxItem:selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
 
-	<Style Selector="ListBox.dark-popup ListBoxItem:selected:pointerover">
-		<Setter Property="Background" Value="#3A7AAA" />
-		<Setter Property="CornerRadius" Value="0" />
-	</Style>
-
-	<Style Selector="FlyoutPresenter">
-		<Setter Property="Background" Value="{StaticResource BrushBgPanelAlt}"/>
-		<Setter Property="Padding" Value="0,5"/>
-		<Setter Property="BorderThickness" Value="0"/>
-	</Style>
+    <Style Selector="FlyoutPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgOverlay}" />
+        <Setter Property="Padding" Value="0,6" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
+    </Style>
 </Styles>
+
+
