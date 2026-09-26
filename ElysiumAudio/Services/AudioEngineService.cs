@@ -1344,7 +1344,7 @@ namespace ElysiumAudio.Services
                         {
                             const float tolerance = 0.3f;
                             const float maxExtraGainDb = 1.5f;
-                            post = AnalyzeFromFloats(output, sampleRate, channels, ct: ct);
+                            post = AnalyzeFromFloats(output, sampleRate, channels, measureTruePeak: false, ct: ct);
                             float shortfall = targetLufs - post.IntegratedLoudness;
                             if (shortfall > tolerance && shortfall >= 0.1f)
                             {
@@ -1355,7 +1355,7 @@ namespace ElysiumAudio.Services
                                 float reTp = ApplyPasadA3InMemory(output, sampleRate, channels, ceilingLinear,
                                     reEngaged, reInTp, reOutTp, ct);
                                 if (reTp > bestOutputTp) bestOutputTp = reTp;
-                                post = AnalyzeFromFloats(output, sampleRate, channels, ct: ct);
+                                post = AnalyzeFromFloats(output, sampleRate, channels, measureTruePeak: false, ct: ct);
                             }
                         }
                         if (post == null) post = AnalyzeFromFloats(output, sampleRate, channels, measureTruePeak: false, ct: ct);

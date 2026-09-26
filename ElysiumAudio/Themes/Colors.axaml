@@ -10,8 +10,8 @@
          ===================================================================== -->
 
     <!-- Superficies -->
-    <Color x:Key="BgBase">#0B0E14</Color>
-    <Color x:Key="BgPanel">#131722</Color>
+    <Color x:Key="BgBase">#0C0F13</Color>
+    <Color x:Key="BgPanel">#131620</Color>
     <Color x:Key="BgPanelAlt">#0E1118</Color>
     <Color x:Key="BgInput">#0D1117</Color>
     <Color x:Key="BgElevated">#1A1F2E</Color>
@@ -42,8 +42,6 @@
     <Color x:Key="AccentViolet">#A78BFA</Color>
     <Color x:Key="AccentTeal">#2DD4BF</Color>
     <Color x:Key="AccentGreen">#34D399</Color>
-    <Color x:Key="AccentGreenHover">#3CE0A5</Color>
-    <Color x:Key="AccentGreenPress">#2CC58F</Color>
     <Color x:Key="AccentAmber">#F59E0B</Color>
     <Color x:Key="AccentCyan">#38BDF8</Color>
     <Color x:Key="AccentRed">#F06464</Color>
@@ -83,8 +81,6 @@
     <SolidColorBrush x:Key="BrushAccentViolet" Color="{StaticResource AccentViolet}" />
     <SolidColorBrush x:Key="BrushAccentTeal" Color="{StaticResource AccentTeal}" />
     <SolidColorBrush x:Key="BrushAccentGreen" Color="{StaticResource AccentGreen}" />
-    <SolidColorBrush x:Key="BrushAccentGreenHover" Color="{StaticResource AccentGreenHover}" />
-    <SolidColorBrush x:Key="BrushAccentGreenPress" Color="{StaticResource AccentGreenPress}" />
     <SolidColorBrush x:Key="BrushAccentAmber" Color="{StaticResource AccentAmber}" />
     <SolidColorBrush x:Key="BrushAccentCyan" Color="{StaticResource AccentCyan}" />
     <SolidColorBrush x:Key="BrushAccentRosa" Color="{StaticResource AccentRosa}" />
@@ -106,7 +102,7 @@
 		<GradientStop Color="#0E121A" Offset="1.0"/>
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
-		<GradientStop Color="#141721" Offset="0.0"/>
+		<GradientStop Color="#131620" Offset="0.0"/>
 		<GradientStop Color="#0D1018" Offset="1.0"/>
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="btn_bg_degrade" StartPoint="0,0" EndPoint="100%,0%">

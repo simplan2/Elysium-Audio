@@ -37,7 +37,7 @@
         <Setter Property="Opacity" Value="0.45" />
     </Style>
 
-    <!--  Variantes de botones: primario, éxito, fantasma  -->
+    <!--  Variantes de botones: primario y fantasma  -->
     <Style Selector="Button.main">
         <Setter Property="Background" Value="{StaticResource btn_bg_degrade}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBgInput}" />
@@ -54,24 +54,6 @@
     <Style Selector="Button.main:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushAccentPress}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
-    </Style>
-
-    <Style Selector="Button.success">
-        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}" />
-        <Setter Property="Foreground" Value="{StaticResource BrushTextOnAccent}" />
-    </Style>
-    <Style Selector="Button.success /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource BrushSuccess}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushSuccess}" />
-    </Style>
-    <Style Selector="Button.success:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource BrushAccentGreenHover}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentGreenHover}" />
-    </Style>
-    <Style Selector="Button.success:pressed /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource BrushAccentGreenPress}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushAccentGreenPress}" />
     </Style>
 
     <Style Selector="Button.ghost">

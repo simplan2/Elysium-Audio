@@ -26,5 +26,9 @@ namespace ElysiumAudio.Models
 
         [ObservableProperty]
         private OutputFormat outputFormat = OutputFormat.SameAsSource;
+
+        // Función o propósito activo al cerrar la app (Normalize / Analyze).
+        [ObservableProperty]
+        private AppMode appMode = AppMode.Normalize;
     }
 }

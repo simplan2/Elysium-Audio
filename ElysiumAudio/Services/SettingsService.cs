@@ -99,6 +99,9 @@ namespace ElysiumAudio.Services
                 Helpers.DefaultValues.MIN_RELEASE_TIME_MS, Helpers.DefaultValues.MAX_RELEASE_TIME_MS);
             settings.LookAheadTimeMs = Math.Clamp(settings.LookAheadTimeMs,
                 Helpers.DefaultValues.MIN_LOOK_AHEAD_TIME_MS, Helpers.DefaultValues.MAX_LOOK_AHEAD_TIME_MS);
+            settings.AppMode = Enum.IsDefined(typeof(AppMode), settings.AppMode)
+                ? settings.AppMode
+                : AppMode.Normalize;
             return settings;
         }
 

@@ -113,21 +113,22 @@
                             VerticalAlignment="Center"
                             Orientation="Horizontal"
                             Spacing="8">
+
+							<Button Classes="ghost" Command="{Binding ClearListCommand}">
+								<TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="CLEAR" />
+							</Button>
+							
                             <Button Classes="ghost" Command="{Binding ResetQueueCommand}">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     FontSize="{StaticResource FontSizeSmall}"
                                     Foreground="{StaticResource BrushTextMuted}"
                                     Text="RESET" />
-                            </Button>
-                            <Button Classes="ghost" Command="{Binding ClearListCommand}">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeSmall}"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="CLEAR" />
-                            </Button>
-
+                            </Button> 
                         </StackPanel>
 
                         <!--  Cantidad Total  -->
@@ -341,28 +342,74 @@
                                     MinWidth="108"
                                     Binding="{Binding Duration}"
                                     Header="Duration" />
-                                <DataGridTextColumn
+                                <DataGridTemplateColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding Loudness}"
-                                    Header="LUFS" />
-                                <DataGridTextColumn
+                                    Header="LUFS">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="models:AudioFileModel">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMD}"
+                                                Foreground="{Binding InputLoudnessBrush}"
+                                                Text="{Binding Loudness}"
+                                                TextAlignment="Center"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding Peak}"
-                                    Header="Peak dBTP" />
+                                    Header="Peak dBTP">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="models:AudioFileModel">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMD}"
+                                                Foreground="{Binding InputPeakBrush}"
+                                                Text="{Binding Peak}"
+                                                TextAlignment="Center"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
+                                <DataGridTemplateColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding NormalizedLoudness}"
-                                    Header="Norm LUFS" />
+                                    Header="Norm LUFS">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="models:AudioFileModel">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMD}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{Binding NormLoudnessBrush}"
+                                                Text="{Binding NormalizedLoudness}"
+                                                TextAlignment="Center"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
+                                <DataGridTemplateColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding NormalizedPeak}"
-                                    Header="Norm Peak" />
+                                    Header="Norm Peak">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="models:AudioFileModel">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="{StaticResource FontSizeMD}"
+                                                FontWeight="SemiBold"
+                                                Foreground="{Binding NormPeakBrush}"
+                                                Text="{Binding NormalizedPeak}"
+                                                TextAlignment="Center"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
 
@@ -412,8 +459,7 @@
                     Background="{StaticResource BrushBgPanel}"
                     BorderBrush="{StaticResource BrushBorderDefault}"
                     BorderThickness="1"
-                    CornerRadius="12"
-                    IsEnabled="{Binding IsNormalizeMode}">
+                    CornerRadius="12">
                     <Grid ColumnDefinitions="1.2*,16,2.0*,16,1*">
 
                         <!--  Formato de salida  -->
@@ -1536,7 +1582,7 @@
 
             <!--  Panel central  -->
             <Border
-                Width="440"
+                Width="480"
                 Padding="28,24"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -1545,65 +1591,74 @@
                 BorderThickness="1"
                 BoxShadow="0 12 32 0 #66000000"
                 CornerRadius="12">
-                <StackPanel Spacing="14">
+                <StackPanel Spacing="16">
 
-                    <!--  Título  -->
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <!--  Encabezado: icono + título  -->
+                    <StackPanel Orientation="Horizontal" Spacing="12">
                         <Path
-                            Width="18"
-                            Height="18"
+                            Width="22"
+                            Height="22"
                             VerticalAlignment="Center"
-                            Data="M4,11 L4,7 M8,11 L8,3 M12,11 L12,5 M16,11 L16,9 M2,11 L18,11"
-                            Fill="Transparent"
-                            Stroke="{StaticResource BrushAccentCyan}"
-                            StrokeLineCap="Round"
-                            StrokeThickness="1.8" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="{StaticResource FontSizeDisplay}"
-                            FontWeight="Bold"
-                            Foreground="{StaticResource BrushTextPrimary}"
-                            Text="Procesamiento en curso" />
+                            Data="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"
+                            Fill="{StaticResource BrushAccentCyan}"
+                            Stretch="Uniform" />
+						
+                        <!--  Título Normalizar  -->
+						<TextBlock IsVisible="{Binding IsNormalizeMode}"
+								 FontSize="{StaticResource FontSizeDisplay}"
+								 FontWeight="Bold"
+								 Foreground="{StaticResource BrushTextPrimary}"
+								 Text="Normalizando archivos de audio" />
+						
+                        <!--  Título Analizar  -->
+						<TextBlock
+								 IsVisible="{Binding IsAnalyzeMode}"
+                                FontSize="{StaticResource FontSizeDisplay}"
+                                FontWeight="Bold"
+                                Foreground="{StaticResource BrushTextPrimary}"
+                                Text="Analizando audio" />
                     </StackPanel>
 
-                    <TextBlock
-                        FontSize="{StaticResource FontSizeBase}"
-                        Foreground="{StaticResource BrushTextSecondary}"
-                        Text="Los archivos se están procesando. Si cancelas, los que quedaron a medias se descartan sin daños ni restos." />
+                    <!--  Descripción  -->
+                    <TextBlock                       
+                        Foreground="{StaticResource BrushTextSecondary}" FontSize="12"
+                        Text="Por favor espere..."
+                        TextWrapping="Wrap" />
 
-                    <!--  Barra de progreso global  -->
-                    <ProgressBar
-                        Height="6"
-                        Minimum="0"
-                        Maximum="100"
-                        Background="{StaticResource BrushBorderDefault}"
-                        Foreground="{StaticResource BrushAccent}"
-                        Value="{Binding QueueProgress}" />
+                    <!--  Barra indeterminada + contadores reales del lote  -->
+                    <StackPanel Spacing="8">
+                        <ProgressBar
+                            Height="6"
+                            Background="{StaticResource BrushBorderDefault}"
+                            Foreground="{StaticResource BrushAccent}"
+                            IsIndeterminate="True" />
 
-                    <!--  Contador y archivo actual  -->
-                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                        <TextBlock
-                            FontFamily="{StaticResource FontMono}"
-                            FontSize="{StaticResource FontSizeBase}"
-                            Foreground="{StaticResource BrushTextPrimary}"
-                            Text="{Binding QueueProgressText}" />
-                        <TextBlock
-                            Grid.Column="1"
-                            FontFamily="{StaticResource FontMono}"
-                            FontSize="{StaticResource FontSizeBase}"
-                            Foreground="{StaticResource BrushTextSecondary}"
-                            Text="{Binding CurrentProcessing.FileName}"
-                            TextTrimming="CharacterEllipsis" />
-                    </Grid>
-
-                    <!--  Detalle de la etapa actual (StatusMessage del archivo en curso)  -->
-                    <TextBlock
-                        FontSize="{StaticResource FontSizeSM}"
-                        Foreground="{StaticResource BrushTextMuted}"
-                        Text="{Binding CurrentProcessing.StatusMessage}" />
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock
+                                FontFamily="{StaticResource FontMono}"
+                                FontSize="{StaticResource FontSizeSM}"
+                                Foreground="{StaticResource BrushTextPrimary}"
+                                Text="{Binding QueueCountersText}" />
+                            <StackPanel
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="5">
+                                <TextBlock
+                                    FontFamily="{StaticResource FontMono}"
+                                    FontSize="{StaticResource FontSizeSM}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="Tiempo" />
+                                <TextBlock
+                                    FontFamily="{StaticResource FontMono}"
+                                    FontSize="{StaticResource FontSizeSM}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{Binding ElapsedText}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
 
                     <!--  Botón de cancelar  -->
-                    <Button
+                    <Button Margin="0,8,0,0"
                         HorizontalAlignment="Stretch"
                         Classes="main"
                         Command="{Binding CancelProcessingCommand}"
@@ -1611,13 +1666,16 @@
                         <StackPanel
                             HorizontalAlignment="Center"
                             Orientation="Horizontal"
-                            Spacing="8">
+                            Spacing="8">                          
+
                             <TextBlock
+                                VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeBase}"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding !IsCancelling}"
-                                Text="Cancelar y descartar en curso" />
+                                Text="Cancelar" />
                             <TextBlock
+                                VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeBase}"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsCancelling}"

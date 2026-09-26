@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ElysiumAudio.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -38,8 +39,28 @@ namespace ElysiumAudio.Models
         [ObservableProperty]
         private string _normalizedPeak = "0.0 dBFS";
 
+        // Valores numéricos de los resultados normalizados: se usan para colorear
+        // las columnas del grid según cumplan o no el objetivo/techo configurado.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(NormLoudnessBrush))]
+        private double _normalizedLoudnessDb = double.NaN;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(NormPeakBrush))]
+        private double _normalizedPeakDb = double.NaN;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(NormLoudnessBrush))]
+        private float _targetLufs = float.NaN;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(NormPeakBrush))]
+        private float _ceilingDb = float.NaN;
+
         // Valores numéricos de la última medición (para resumen del lote y ficha del archivo).
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(InputLoudnessBrush))]
+        [NotifyPropertyChangedFor(nameof(InputPeakBrush))]
         private bool _hasMeasurement;
 
         [ObservableProperty]
@@ -53,6 +74,43 @@ namespace ElysiumAudio.Models
 
         [ObservableProperty]
         private int _channels;
+
+        // ── Colores de las columnas del grid ─────────────────────────────
+        // Mismas paletas del tema: skyblue para LUFS, teal para Peak, verde/ámbar/rojo
+        // según cumplimiento de objetivo/techo en los resultados normalizados.
+        private static readonly IBrush BrushMuted = Solid(0x5C, 0x6A, 0x82);   // TextMuted
+        private static readonly IBrush BrushSky = Solid(0x5A, 0x92, 0xFA);     // AccentSkyblue
+        private static readonly IBrush BrushTeal = Solid(0x2D, 0xD4, 0xBF);    // AccentTeal
+        private static readonly IBrush BrushGreen = Solid(0x34, 0xD3, 0x99);   // Success
+        private static readonly IBrush BrushAmber = Solid(0xFB, 0xBF, 0x24);   // Warning
+        private static readonly IBrush BrushRed = Solid(0xF8, 0x71, 0x71);     // Error
+
+        public IBrush InputLoudnessBrush => HasMeasurement ? BrushSky : BrushMuted;
+
+        public IBrush InputPeakBrush => HasMeasurement ? BrushTeal : BrushMuted;
+
+        public IBrush NormLoudnessBrush
+        {
+            get
+            {
+                if (double.IsNaN(NormalizedLoudnessDb)) return BrushMuted;
+                double diff = Math.Abs(NormalizedLoudnessDb - TargetLufs);
+                if (diff <= 0.5) return BrushGreen;
+                if (diff <= 1.5) return BrushAmber;
+                return BrushRed;
+            }
+        }
+
+        public IBrush NormPeakBrush
+        {
+            get
+            {
+                if (double.IsNaN(NormalizedPeakDb) || float.IsNaN(CeilingDb)) return BrushMuted;
+                return NormalizedPeakDb <= CeilingDb + 0.15 ? BrushGreen : BrushRed;
+            }
+        }
+
+        private static IBrush Solid(int r, int g, int b) => new SolidColorBrush(Color.FromRgb((byte)r, (byte)g, (byte)b));
 
         //public string StatusIcon => Status switch
         //{

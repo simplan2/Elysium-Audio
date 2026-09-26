@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ElysiumAudio.Helpers;
@@ -94,21 +95,31 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private bool _isProcessing;
 
-        // --- Progreso del lote mostrado en el modal de cancelación ---
-        // 0..100 para la barra de progreso; texto "3 / 10"; archivo y detalle de la
-        // etapa actual (se apunta al modelo en curso para que su StatusMessage se
-        // refleje en vivo). IsCancelling desactiva el botón tras cancelar.
+        // --- Estado del lote mostrado en el modal de cancelación ---
+        // Contadores reales del lote (se actualizan en el hilo de la UI), archivo en
+        // curso (su StatusMessage se ve en vivo) y tiempo transcurrido. La barra de
+        // progreso es indeterminada: transmite actividad sin engañar con porcentajes
+        // que el procesamiento por etapas no puede medir con precisión.
         [ObservableProperty]
-        private double _queueProgress;
+        private int _completedCount;
 
         [ObservableProperty]
-        private string _queueProgressText = "";
+        private int _inProgressCount;
 
         [ObservableProperty]
-        private AudioFileModel? _currentProcessing;
+        private int _errorCount;
+
+        [ObservableProperty]
+        private string _elapsedText = "00:00";
 
         [ObservableProperty]
         private bool _isCancelling;
+
+        // Cronómetro del lote (tick por segundo para ElapsedText).
+        private DateTime _batchStartTime;
+        private Avalonia.Threading.DispatcherTimer? _elapsedTimer;
+
+        public string QueueCountersText => $"Completados: {CompletedCount}  ·  En curso: {InProgressCount}  ·  Errores: {ErrorCount}";
 
         // Tarea del lote en curso y forma de cancelarlo limpiamente. Lo usa la ventana
         // cuando el usuario cierra la app durante el procesamiento: cancela, espera a que
@@ -136,7 +147,7 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private OutputFormat _outputFormat = OutputFormat.SameAsSource;
 
-        // Opciones legibles para el ComboBox (los nombres deben coincidir con OutputFormat)
+        // Colección de opciones de formato (los nombres deben coincidir con OutputFormat)
         public string[] OutputFormatOptions { get; } = { "Mantener formato original", "WAV", "FLAC" };
 
         private static string FormatToOptionText(OutputFormat format) => format switch
@@ -394,6 +405,10 @@ namespace ElysiumAudio.ViewModels
 
             OutputFormat = _settingsService.Current.OutputFormat;
 
+            // Restaurar la función activa guardada (si el usuario cerró en modo Analyze,
+            // la app vuelve a abrirse en modo Analyze).
+            AppMode = _settingsService.Current.AppMode;
+
             // Cargar los presets predefinidos para plataformas de streaming
             LoadPresets();
 
@@ -490,6 +505,13 @@ namespace ElysiumAudio.ViewModels
 
             RefreshAnalysisSummary();
 
+            // Persistir la función activa: si el usuario cierra la app con "Analizar"
+            // seleccionado, al volver a abrir se restablece ese mismo modo.
+            if (_settingsService.Current.AppMode != value)
+            {
+                _settingsService.Current.AppMode = value;
+            }
+
             SystemStatus = IsAnalyzeMode
                 ? "Modo: Análisis de loudness."
                 : "Modo: Normalización de audio.";
@@ -565,6 +587,9 @@ namespace ElysiumAudio.ViewModels
                 case nameof(Models.UserSettings.OutputFormat) when OutputFormat != settings.OutputFormat:
                     OutputFormat = settings.OutputFormat;
                     break;
+                case nameof(Models.UserSettings.AppMode) when AppMode != settings.AppMode:
+                    AppMode = settings.AppMode;
+                    break;
             }
         }
         #endregion
@@ -629,9 +654,7 @@ namespace ElysiumAudio.ViewModels
                 return;
             }
 
-            IsCancelling = false;
-            CurrentProcessing = null;
-            QueueProgress = 0;
+            ResetModalProgress();
 
             IsProcessing = true;
 
@@ -645,11 +668,12 @@ namespace ElysiumAudio.ViewModels
             if (totalFiles == 0)
             {
                 IsProcessing = false;
-                IsCancelling = false;
-                CurrentProcessing = null;
+                ResetModalProgress();
                 SystemStatus = "Todos los archivos ya están completados. No hay nada que procesar.";
                 return;
             }
+
+            StartElapsedTimer();
 
             SystemStatus = $"Iniciando normalización de {totalFiles} archivo(s)...";
 
@@ -674,14 +698,14 @@ namespace ElysiumAudio.ViewModels
             }
             finally
             {
+                StopElapsedTimer();
                 _batchCts = null;
                 _batchTask = null;
                 cts.Dispose();
             }
 
             IsProcessing = false;
-            IsCancelling = false;
-            CurrentProcessing = null;
+            ResetModalProgress();
 
             if (progress.Cancelled > 0)
             {
@@ -716,9 +740,7 @@ namespace ElysiumAudio.ViewModels
                 acquired = true;
 
                 int position = Interlocked.Increment(ref progress.Processed);
-                QueueProgress = totalFiles > 0 ? (double)position / totalFiles * 100.0 : 0.0;
-                QueueProgressText = $"{position} / {totalFiles}";
-                CurrentProcessing = file;
+                UpdateModalCounters(progress);
                 SystemStatus = $"Procesando {position}/{totalFiles}: {file.FileName}";
 
                 // PASO 1: Análisis
@@ -796,6 +818,12 @@ namespace ElysiumAudio.ViewModels
 
                 file.NormalizedLoudness = normalizeResult.LoudnessFormatted;
                 file.NormalizedPeak = normalizeResult.TruePeakDbFormatted;
+                file.NormalizedLoudnessDb = normalizeResult.IntegratedLoudness;
+                file.NormalizedPeakDb = normalizeResult.MaxTruePeakLinear > 0f
+                    ? 20.0 * Math.Log10(normalizeResult.MaxTruePeakLinear)
+                    : (double)TruePeakCeiling - 10.0;
+                file.TargetLufs = (float)TargetLufs;
+                file.CeilingDb = (float)TruePeakCeiling;
                 file.StatusMessage = "Renderizado completado (90%)";
 
                 // PASO 4: Metadatos (después del renderizado, que re-escribe outputPath
@@ -808,6 +836,7 @@ namespace ElysiumAudio.ViewModels
                 file.Status = AudioFileStatus.Completed;
                 file.StatusMessage = "Completado (100%)";
                 Interlocked.Increment(ref progress.Succeeded);
+                UpdateModalCounters(progress);
                 SystemStatus = $"[{position}/{totalFiles}] Completado: {file.FileName}";
             }
             catch (OperationCanceledException)
@@ -815,12 +844,14 @@ namespace ElysiumAudio.ViewModels
                 // El usuario cerró la app o canceló el lote: se deja el archivo en Pending
                 // para que pueda reprocesarse, sin marcar error (no es un fallo).
                 Interlocked.Increment(ref progress.Cancelled);
+                UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Pending;
                 file.StatusMessage = "Cancelado por el usuario";
             }
             catch (Exception ex)
             {
                 Interlocked.Increment(ref progress.Errors);
+                UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Error;
                 file.StatusMessage = $"Error: {ex.Message}";
                 SystemStatus = $"Error en {file.FileName}: {ex.Message}";
@@ -851,6 +882,10 @@ namespace ElysiumAudio.ViewModels
             {
                 file.NormalizedLoudness = "—";
                 file.NormalizedPeak = "—";
+                file.NormalizedLoudnessDb = double.NaN;
+                file.NormalizedPeakDb = double.NaN;
+                file.TargetLufs = float.NaN;
+                file.CeilingDb = float.NaN;
             }
 
             RefreshAnalysisSummary();
@@ -994,9 +1029,7 @@ namespace ElysiumAudio.ViewModels
                 return;
             }
 
-            IsCancelling = false;
-            CurrentProcessing = null;
-            QueueProgress = 0;
+            ResetModalProgress();
 
             IsProcessing = true;
 
@@ -1011,11 +1044,12 @@ namespace ElysiumAudio.ViewModels
             if (totalFiles == 0)
             {
                 IsProcessing = false;
-                IsCancelling = false;
-                CurrentProcessing = null;
+                ResetModalProgress();
                 SystemStatus = "Todos los archivos ya están analizados. No hay nada que procesar.";
                 return;
             }
+
+            StartElapsedTimer();
 
             SystemStatus = $"Iniciando análisis de {totalFiles} archivo(s)...";
 
@@ -1039,14 +1073,14 @@ namespace ElysiumAudio.ViewModels
             }
             finally
             {
+                StopElapsedTimer();
                 _batchCts = null;
                 _batchTask = null;
                 cts.Dispose();
             }
 
             IsProcessing = false;
-            IsCancelling = false;
-            CurrentProcessing = null;
+            ResetModalProgress();
 
             SystemStatus = progress.Cancelled > 0
                 ? progress.Succeeded > 0
@@ -1071,9 +1105,7 @@ namespace ElysiumAudio.ViewModels
                 acquired = true;
 
                 int position = Interlocked.Increment(ref progress.Processed);
-                QueueProgress = totalFiles > 0 ? (double)position / totalFiles * 100.0 : 0.0;
-                QueueProgressText = $"{position} / {totalFiles}";
-                CurrentProcessing = file;
+                UpdateModalCounters(progress);
                 SystemStatus = $"Analizando {position}/{totalFiles}: {file.FileName}";
 
                 file.Status = AudioFileStatus.Analyzing;
@@ -1092,17 +1124,20 @@ namespace ElysiumAudio.ViewModels
                 file.Status = AudioFileStatus.Completed;
                 file.StatusMessage = "Análisis completado";
                 Interlocked.Increment(ref progress.Succeeded);
+                UpdateModalCounters(progress);
                 SystemStatus = $"[{position}/{totalFiles}] Analizado: {file.FileName}";
             }
             catch (OperationCanceledException)
             {
                 Interlocked.Increment(ref progress.Cancelled);
+                UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Pending;
                 file.StatusMessage = "Cancelado por el usuario";
             }
             catch (Exception ex)
             {
                 Interlocked.Increment(ref progress.Errors);
+                UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Error;
                 file.StatusMessage = $"Error: {ex.Message}";
                 SystemStatus = $"Error analizando {file.FileName}: {ex.Message}";
@@ -1300,6 +1335,61 @@ namespace ElysiumAudio.ViewModels
         }
 
         #endregion
+
+        // ---------------------------------------------------------------------------
+        // ESTADO DEL MODAL DE CANCELACIÓN
+        // ---------------------------------------------------------------------------
+
+        // Devuelve el modal a su estado inicial al iniciar o terminar un lote.
+        private void ResetModalProgress()
+        {
+            CompletedCount = 0;
+            InProgressCount = 0;
+            ErrorCount = 0;
+            ElapsedText = "00:00";
+            IsCancelling = false;
+        }
+
+        // Recalcula los contadores visibles a partir de los contadores atómicos del lote.
+        // "En curso" son los que ya arrancaron y aún no llegaron a un desenlace final.
+        private void UpdateModalCounters(BatchProgress progress)
+        {
+            int finished = progress.Succeeded + progress.Errors + progress.Cancelled;
+            CompletedCount = finished;
+            InProgressCount = progress.Processed - finished;
+            ErrorCount = progress.Errors;
+            OnPropertyChanged(nameof(QueueCountersText));
+        }
+
+        private void StartElapsedTimer()
+        {
+            _batchStartTime = DateTime.Now;
+            ElapsedText = "00:00";
+            _elapsedTimer = new Avalonia.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _elapsedTimer.Tick += OnElapsedTick;
+            _elapsedTimer.Start();
+        }
+
+        private void StopElapsedTimer()
+        {
+            if (_elapsedTimer != null)
+            {
+                _elapsedTimer.Stop();
+                _elapsedTimer.Tick -= OnElapsedTick;
+                _elapsedTimer = null;
+            }
+        }
+
+        private void OnElapsedTick(object? sender, EventArgs e)
+        {
+            ElapsedText = FormatElapsed(_batchStartTime);
+        }
+
+        private static string FormatElapsed(DateTime start) =>
+            (DateTime.Now - start).ToString(@"hh\:mm\:ss");
 
         // Contadores atómicos del lote paralelo. Se acceden con Interlocked porque
         // varias tareas pueden avanzar a la vez con el semáforo.

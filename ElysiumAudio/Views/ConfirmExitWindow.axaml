@@ -7,34 +7,46 @@
     Height="210"
     MinWidth="400"
     MinHeight="190"
-    CanResize="False"
-    WindowStartupLocation="CenterOwner"
     Background="{StaticResource BrushBgPanel}"
+    CanResize="False"
     Foreground="{StaticResource BrushTextPrimary}"
-    Topmost="True">
+    Topmost="True"
+    WindowStartupLocation="CenterOwner">
 
     <Border
-        CornerRadius="12"
+        Background="{StaticResource BrushBgPanel}"
         BorderBrush="{StaticResource BrushBorderDefault}"
         BorderThickness="1"
-        Background="{StaticResource BrushBgPanel}">
+        CornerRadius="12">
         <StackPanel Margin="26,22,26,22" Spacing="12">
             <TextBlock
-                Text="Cerrar Elysium Audio"
                 FontSize="{StaticResource FontSizeDisplay}"
                 FontWeight="SemiBold"
-                Foreground="{StaticResource BrushTextPrimary}" />
+                Foreground="{StaticResource BrushTextPrimary}"
+                Text="Cerrar Elysium Audio" />
 
             <TextBlock
-                TextWrapping="Wrap"
                 FontSize="{StaticResource FontSizeBase}"
-                LineHeight="20"
                 Foreground="{StaticResource BrushTextSecondary}"
-                Text="Hay un procesamiento en curso. Si sales ahora se cancelará de forma limpia: los archivos a medio renderizar quedarán descartados sin daños ni restos en disco. ¿Deseas cancelar el proceso y salir?" />
+                LineHeight="20"
+                MaxLines="2"
+                Text="Hay Procesos en curso.\n¿Deseas cancelar el proceso y salir?"
+                TextTrimming="CharacterEllipsis"
+                TextWrapping="NoWrap" />
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,12,0,0">
-                <Button Content="Seguir procesando" Classes="ghost" Click="OnContinueClick" />
-                <Button Content="Cancelar y salir" Classes="main" Click="OnExitClick" />
+            <StackPanel
+                Margin="0,12,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal"
+                Spacing="10">
+                <Button
+                    Classes="ghost"
+                    Click="OnContinueClick"
+                    Content="Seguir procesando" />
+                <Button
+                    Classes="main"
+                    Click="OnExitClick"
+                    Content="Cancelar y salir" />
             </StackPanel>
         </StackPanel>
     </Border>
