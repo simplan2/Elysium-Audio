@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ElysiumAudio.Helpers;
+using ElysiumAudio.Localization;
 using ElysiumAudio.Models;
 using ElysiumAudio.Services;
 using System;
@@ -44,6 +45,8 @@ namespace ElysiumAudio.ViewModels
         private Task? _batchTask;
         #endregion
 
+        private static string L(string key) => LocalizationManager.Instance.Get(key);
+
         #region Properties
 
         // 1. Enlazado al Slider LUFS y TextBox numérico de la interfaz
@@ -73,7 +76,7 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private double _lookAheadTimeMs = DefaultValues.DEFAULT_LOOK_AHEAD_TIME_MS;
 
-        private string _systemStatus = "Engine ready. Core optimized for bit-perfect mastering.";
+        private string _systemStatus = LocalizationManager.Instance.Get("StatusEngineReady");
 
         // Semántica de la barra de estado: true solo cuando el último lote terminó sin
         // errores (verde "success"). Cualquier otro mensaje restablece el color neutro.
@@ -119,7 +122,11 @@ namespace ElysiumAudio.ViewModels
         private DateTime _batchStartTime;
         private Avalonia.Threading.DispatcherTimer? _elapsedTimer;
 
-        public string QueueCountersText => $"Completados: {CompletedCount}  ·  En curso: {InProgressCount}  ·  Errores: {ErrorCount}";
+        // Idioma activo: alimenta el selector ES/EN de la barra superior.
+        [ObservableProperty]
+        private bool _isEnglish = LocalizationManager.Instance.IsEnglish;
+
+        public string QueueCountersText => string.Format(L("QueueCounters"), CompletedCount, InProgressCount, ErrorCount);
 
         // Tarea del lote en curso y forma de cancelarlo limpiamente. Lo usa la ventana
         // cuando el usuario cierra la app durante el procesamiento: cancela, espera a que
@@ -137,24 +144,25 @@ namespace ElysiumAudio.ViewModels
         public bool IsAnalyzeMode => AppMode == AppMode.Analyze;
 
         // Título y descripción de la función activa, mostrados en la cabecera del panel derecho.
-        public string FunctionTitle => IsAnalyzeMode ? "Analyze Loudness" : "Normalize Audio";
+        public string FunctionTitle => IsAnalyzeMode ? L("FunctionTitleAnalyze") : L("FunctionTitleNormalize");
 
         public string FunctionDescription => IsAnalyzeMode
-            ? "Measures loudness and true peak only. Original files are never modified."
-            : "Applies loudness normalization and true-peak limiting to the output files.";
+            ? L("FunctionDescAnalyze")
+            : L("FunctionDescNormalize");
 
         // Formato de salida para los archivos normalizados
         [ObservableProperty]
         private OutputFormat _outputFormat = OutputFormat.SameAsSource;
 
-        // Colección de opciones de formato (los nombres deben coincidir con OutputFormat)
-        public string[] OutputFormatOptions { get; } = { "Mantener formato original", "WAV", "FLAC" };
+        // Colección de opciones de formato. Se recalcula en cada lectura para que el texto
+// siga al idioma activo (el ListBox se refresca al notificar OutputFormatOptions).
+        public string[] OutputFormatOptions => new[] { L("OutputFormatKeep"), "WAV", "FLAC" };
 
         private static string FormatToOptionText(OutputFormat format) => format switch
         {
             OutputFormat.Wav => "WAV",
             OutputFormat.Flac => "FLAC",
-            _ => "Mantener formato original"
+            _ => L("OutputFormatKeep")
         };
 
         private string _selectedFormat = "WAV";
@@ -163,6 +171,7 @@ namespace ElysiumAudio.ViewModels
             get => _selectedFormat;
             set
             {
+                if (value == null) return;
                 if (_selectedFormat != value)
                 {
                     _selectedFormat = value;
@@ -170,9 +179,9 @@ namespace ElysiumAudio.ViewModels
                     // Actualizar la propiedad OutputFormat según la selección del ComboBox
                     OutputFormat = value switch
                     {
-                        "Mantener formato original" => OutputFormat.SameAsSource,
                         "WAV" => OutputFormat.Wav,
                         "FLAC" => OutputFormat.Flac,
+                        // Cualquier otro texto es la opción traducida de "mantener formato".
                         _ => OutputFormat.SameAsSource
                     };
                 }
@@ -194,6 +203,13 @@ namespace ElysiumAudio.ViewModels
         [ObservableProperty]
         private string _outputDirectory = DefaultValues.GetDefaultOutputDirectory()
             ?? Environment.CurrentDirectory;
+
+        // --- Info del producto (modal de Ajustes) ---
+        // Viene de los metadatos del ensamblado definidos en el .csproj.
+        public string Version => Services.AppInfo.Version;
+        public string Author => Services.AppInfo.Author;
+        public string Copyright => Services.AppInfo.Copyright;
+        public string Company => Services.AppInfo.Company;
 
         public ObservableCollection<AudioFileModel> AudioFiles { get; set; } = new();
 
@@ -270,7 +286,7 @@ namespace ElysiumAudio.ViewModels
 
         public string SelectedFileChannelsText => SelectedFile == null || SelectedFile.Channels == 0
             ? "—"
-            : SelectedFile.Channels switch { 1 => "Mono", 2 => "Stereo", _ => $"{SelectedFile.Channels} ch" };
+            : SelectedFile.Channels switch { 1 => L("Mono"), 2 => L("Stereo"), _ => $"{SelectedFile.Channels} ch" };
 
         public string SelectedFileLoudnessText =>
             SelectedFile == null || !SelectedFile.HasMeasurement ? "—" : SelectedFile.Loudness;
@@ -312,8 +328,8 @@ namespace ElysiumAudio.ViewModels
             {
                 if (SelectedFile == null || !SelectedFile.HasMeasurement) return "—";
                 float gain = (float)TargetLufs - SelectedFile.IntegratedLoudness;
-                if (Math.Abs(gain) <= 0.25) return "On target";
-                return gain > 0 ? "Needs gain" : "Too loud";
+                if (Math.Abs(gain) <= 0.25) return L("StatusOnTarget");
+                return gain > 0 ? L("StatusNeedsGain") : L("StatusTooLoud");
             }
         }
 
@@ -364,6 +380,42 @@ namespace ElysiumAudio.ViewModels
             OnPropertyChanged(nameof(SelectedFileGainBgBrush));
         }
 
+        // Al cambiar de idioma se reenlaza el texto de las propiedades calculadas
+        // (los textos del XAML se refrescan solos vía LocalizeExtension).
+        private void OnLanguageChanged(object? sender, EventArgs e)
+        {
+            IsEnglish = LocalizationManager.Instance.IsEnglish;
+            RefreshLocalizedTexts();
+        }
+
+        private void RefreshLocalizedTexts()
+        {
+            SelectedFormat = FormatToOptionText(OutputFormat);
+            OnPropertyChanged(nameof(OutputFormatOptions));
+            OnPropertyChanged(nameof(QueueCountersText));
+            OnPropertyChanged(nameof(FunctionTitle));
+            OnPropertyChanged(nameof(FunctionDescription));
+            OnPropertyChanged(nameof(SelectedFileGainStatus));
+            OnPropertyChanged(nameof(SelectedFileChannelsText));
+
+            // Los presets traducidos siguen al idioma activo.
+            foreach (var preset in Presets)
+            {
+                if (!string.IsNullOrEmpty(preset.NameKey))
+                {
+                    preset.Name = L(preset.NameKey);
+                }
+            }
+
+            // El mensaje en reposo es estático: se vuelve a traducir. Los mensajes
+            // dinámicos (archivo en curso, errores…) describen un estado ya pasado y
+            // se dejan tal cual hasta que haya un estado nuevo.
+            if (LocalizationManager.IsTextOfKey(SystemStatus, "StatusEngineReady"))
+            {
+                SystemStatus = L("StatusEngineReady");
+            }
+        }
+
         partial void OnSelectedFileChanged(AudioFileModel? value)
         {
             OnPropertyChanged(nameof(HasSelectedFile));
@@ -412,6 +464,12 @@ namespace ElysiumAudio.ViewModels
             // Cargar los presets predefinidos para plataformas de streaming
             LoadPresets();
 
+            // Idioma: aplicar el guardado en los settings y refrescar el texto inicial.
+            LocalizationManager.Instance.LanguageChanged += OnLanguageChanged;
+            LocalizationManager.Instance.SetLanguage(_settingsService.Current.Language);
+            IsEnglish = LocalizationManager.Instance.IsEnglish;
+            SystemStatus = L("StatusEngineReady");
+
             // Reaccionar a cambios externos del modelo de configuración
             _settingsService.SettingsChanged += OnSettingsChanged;
         }
@@ -422,7 +480,8 @@ namespace ElysiumAudio.ViewModels
             // Al aplicarlo, los handlers lo devuelven a Custom al primer ajuste manual.
             Presets.Add(new NormalizationPreset
             {
-                Name = "Predeterminado",
+                Name = L("PresetDefault"),
+                NameKey = "PresetDefault",
                 TargetLufs = DefaultValues.DEFAULT_TARGET_LUFS,
                 TruePeakCeiling = DefaultValues.DEFAULT_TRUE_PEAK_CEILING,
                 ReleaseTimeMs = DefaultValues.DEFAULT_RELEASE_TIME_MS,
@@ -431,7 +490,8 @@ namespace ElysiumAudio.ViewModels
 
             Presets.Add(new NormalizationPreset
             {
-                Name = "Custom",
+                Name = L("PresetCustom"),
+                NameKey = "PresetCustom",
                 IsCustom = true,
                 TargetLufs = TargetLufs,
                 TruePeakCeiling = TruePeakCeiling,
@@ -468,7 +528,8 @@ namespace ElysiumAudio.ViewModels
 
             Presets.Add(new NormalizationPreset
             {
-                Name = "Podcast / Narración",
+                Name = L("PresetPodcast"),
+                NameKey = "PresetPodcast",
                 TargetLufs = -16.0,
                 TruePeakCeiling = -1.0,
                 ReleaseTimeMs = 50.0,
@@ -513,8 +574,8 @@ namespace ElysiumAudio.ViewModels
             }
 
             SystemStatus = IsAnalyzeMode
-                ? "Modo: Análisis de loudness."
-                : "Modo: Normalización de audio.";
+                ? L("ModeAnalyze")
+                : L("ModeNormalize");
         }
 
         // Devuelve cada archivo de la cola a su estado inicial para poder reprocesarlo.
@@ -590,6 +651,9 @@ namespace ElysiumAudio.ViewModels
                 case nameof(Models.UserSettings.AppMode) when AppMode != settings.AppMode:
                     AppMode = settings.AppMode;
                     break;
+                case nameof(Models.UserSettings.Language) when LocalizationManager.Instance.Language != settings.Language:
+                    LocalizationManager.Instance.SetLanguage(settings.Language);
+                    break;
             }
         }
         #endregion
@@ -614,7 +678,7 @@ namespace ElysiumAudio.ViewModels
 
             var options = new FolderPickerOpenOptions
             {
-                Title = "Selecciona una carpeta con pistas de audio",
+                Title = L("PickerFolderTitle"),
                 AllowMultiple = false
             };
 
@@ -628,12 +692,12 @@ namespace ElysiumAudio.ViewModels
 
             if (files.Count == 0)
             {
-                SystemStatus = "La carpeta seleccionada no contiene archivos WAV o FLAC.";
+                SystemStatus = L("FolderNoAudio");
                 return;
             }
 
             int added = AddFilesToQueue(files);
-            SystemStatus = $"Se añadieron {added} archivo(s) a la cola desde: {Path.GetFileName(dirPath)}";
+            SystemStatus = string.Format(L("FolderAdded"), added, Path.GetFileName(dirPath));
         }
 
         // Comando para iniciar la normalización por lotes
@@ -650,7 +714,7 @@ namespace ElysiumAudio.ViewModels
 
             if (AudioFiles.Count == 0)
             {
-                SystemStatus = "Advertencia: La cola de archivos está vacía.";
+                SystemStatus = L("QueueEmptyWarn");
                 return;
             }
 
@@ -669,13 +733,13 @@ namespace ElysiumAudio.ViewModels
             {
                 IsProcessing = false;
                 ResetModalProgress();
-                SystemStatus = "Todos los archivos ya están completados. No hay nada que procesar.";
+                SystemStatus = L("AllCompletedNormalize");
                 return;
             }
 
             StartElapsedTimer();
 
-            SystemStatus = $"Iniciando normalización de {totalFiles} archivo(s)...";
+            SystemStatus = string.Format(L("StartNormalize"), totalFiles);
 
             var progress = new BatchProgress();
             using var cts = new CancellationTokenSource();
@@ -710,18 +774,18 @@ namespace ElysiumAudio.ViewModels
             if (progress.Cancelled > 0)
             {
                 SystemStatus = progress.Succeeded > 0
-                    ? $"Procesamiento cancelado: {progress.Succeeded} completados, {progress.Cancelled} cancelados, {progress.Errors} error(es)."
-                    : "Procesamiento cancelado por el usuario.";
+                    ? string.Format(L("CancelSummary"), progress.Succeeded, progress.Cancelled, progress.Errors)
+                    : L("CancelNoResults");
                 IsStatusSuccess = false;
             }
             else if (progress.Errors == 0)
             {
-                SystemStatus = $"Normalización completada: {totalFiles} archivo(s) procesado(s) exitosamente.";
+                SystemStatus = string.Format(L("NormalizeDone"), totalFiles);
                 IsStatusSuccess = true;
             }
             else
             {
-                SystemStatus = $"Proceso finalizado: {progress.Succeeded} éxitos, {progress.Errors} error(es).";
+                SystemStatus = string.Format(L("ProcessDone"), progress.Succeeded, progress.Errors);
             }
 
             RefreshAnalysisSummary();
@@ -741,7 +805,7 @@ namespace ElysiumAudio.ViewModels
 
                 int position = Interlocked.Increment(ref progress.Processed);
                 UpdateModalCounters(progress);
-                SystemStatus = $"Procesando {position}/{totalFiles}: {file.FileName}";
+                SystemStatus = string.Format(L("ProcessingFile"), position, totalFiles, file.FileName);
 
                 // PASO 1: Análisis
                 file.Status = AudioFileStatus.Analyzing;
@@ -837,7 +901,7 @@ namespace ElysiumAudio.ViewModels
                 file.StatusMessage = "Completado (100%)";
                 Interlocked.Increment(ref progress.Succeeded);
                 UpdateModalCounters(progress);
-                SystemStatus = $"[{position}/{totalFiles}] Completado: {file.FileName}";
+                SystemStatus = string.Format(L("FileDone"), position, totalFiles, file.FileName);
             }
             catch (OperationCanceledException)
             {
@@ -854,7 +918,7 @@ namespace ElysiumAudio.ViewModels
                 UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Error;
                 file.StatusMessage = $"Error: {ex.Message}";
-                SystemStatus = $"Error en {file.FileName}: {ex.Message}";
+                SystemStatus = string.Format(L("FileError"), file.FileName, ex.Message);
             }
             finally
             {
@@ -866,7 +930,7 @@ namespace ElysiumAudio.ViewModels
         private void OnClearList()
         {
             AudioFiles.Clear();
-            SystemStatus = "Cola de archivos limpiada.";
+            SystemStatus = L("QueueCleared");
             RefreshAnalysisSummary();
         }
 
@@ -889,7 +953,7 @@ namespace ElysiumAudio.ViewModels
             }
 
             RefreshAnalysisSummary();
-            SystemStatus = "Estado de la cola restablecido. Todos los archivos esperan reprocesarse.";
+            SystemStatus = L("QueueReset");
         }
 
         // Cancela cooperativamente el lote en curso desde el modal de progreso.
@@ -900,7 +964,7 @@ namespace ElysiumAudio.ViewModels
             if (IsCancelling) return;
             IsCancelling = true;
             IsStatusSuccess = false;
-            SystemStatus = "Cancelando el procesamiento... Los archivos en curso se descartarán de forma segura.";
+            SystemStatus = L("Cancelling");
             RequestCancellation();
         }
 
@@ -915,7 +979,7 @@ namespace ElysiumAudio.ViewModels
 
                 var options = new FolderPickerOpenOptions
                 {
-                    Title = "Selecciona el directorio de salida",
+                    Title = L("PickerOutputTitle"),
                     AllowMultiple = false
                 };
 
@@ -929,7 +993,7 @@ namespace ElysiumAudio.ViewModels
                     {
                         _settingsService.Current.OutputDirectory = OutputDirectory;
                     }
-                    SystemStatus = $"Directorio de salida: {OutputDirectory}";
+                    SystemStatus = string.Format(L("OutputDirSet"), OutputDirectory);
                 }
             }
         }
@@ -950,12 +1014,12 @@ namespace ElysiumAudio.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    SystemStatus = $"Error al abrir el directorio: {ex.Message}";
+                    SystemStatus = string.Format(L("ExploreError"), ex.Message);
                 }
             }
             else
             {
-                SystemStatus = "El directorio de salida no es válido o no existe.";
+                SystemStatus = L("OutputDirInvalid");
             }
         }
 
@@ -979,6 +1043,17 @@ namespace ElysiumAudio.ViewModels
         // Selecciona la función de análisis (restablece la cola vía OnAppModeChanged).
         [RelayCommand]
         private void SetAnalyzeMode() => AppMode = AppMode.Analyze;
+
+        // Cambia el idioma de la interfaz y persiste la preferencia.
+        [RelayCommand]
+        private void SetLanguage(string? language)
+        {
+            LocalizationManager.Instance.SetLanguage(language);
+            if (_settingsService.Current.Language != LocalizationManager.Instance.Language)
+            {
+                _settingsService.Current.Language = LocalizationManager.Instance.Language;
+            }
+        }
 
         // Ajuste fino estilo plugin VST. El CommandParameter es "+0.1" / "-0.1" etc.
         // El clamping se aplica dentro de cada OnXxxChanged al reasignar la propiedad.
@@ -1025,7 +1100,7 @@ namespace ElysiumAudio.ViewModels
 
             if (AudioFiles.Count == 0)
             {
-                SystemStatus = "Advertencia: La cola de archivos está vacía.";
+                SystemStatus = L("QueueEmptyWarn");
                 return;
             }
 
@@ -1045,13 +1120,13 @@ namespace ElysiumAudio.ViewModels
             {
                 IsProcessing = false;
                 ResetModalProgress();
-                SystemStatus = "Todos los archivos ya están analizados. No hay nada que procesar.";
+                SystemStatus = L("AllAnalyzed");
                 return;
             }
 
             StartElapsedTimer();
 
-            SystemStatus = $"Iniciando análisis de {totalFiles} archivo(s)...";
+            SystemStatus = string.Format(L("StartAnalysis"), totalFiles);
 
             var progress = new BatchProgress();
             using var cts = new CancellationTokenSource();
@@ -1084,11 +1159,11 @@ namespace ElysiumAudio.ViewModels
 
             SystemStatus = progress.Cancelled > 0
                 ? progress.Succeeded > 0
-                    ? $"Análisis cancelado: {progress.Succeeded} medidos, {progress.Cancelled} cancelados, {progress.Errors} error(es)."
-                    : "Análisis cancelado por el usuario."
+                    ? string.Format(L("AnalysisCancelSummary"), progress.Succeeded, progress.Cancelled, progress.Errors)
+                    : L("AnalysisCancelNoResults")
                 : progress.Errors == 0
-                    ? $"Análisis completado: {totalFiles} archivo(s) medidos."
-                    : $"Análisis finalizado: {progress.Succeeded} éxitos, {progress.Errors} error(es).";
+                    ? string.Format(L("AnalysisDone"), totalFiles)
+                    : string.Format(L("AnalysisDoneAll"), progress.Succeeded, progress.Errors);
 
             IsStatusSuccess = progress.Errors == 0 && progress.Cancelled == 0;
 
@@ -1106,7 +1181,7 @@ namespace ElysiumAudio.ViewModels
 
                 int position = Interlocked.Increment(ref progress.Processed);
                 UpdateModalCounters(progress);
-                SystemStatus = $"Analizando {position}/{totalFiles}: {file.FileName}";
+                SystemStatus = string.Format(L("AnalyzingFile"), position, totalFiles, file.FileName);
 
                 file.Status = AudioFileStatus.Analyzing;
                 file.StatusMessage = "Analizando...";
@@ -1125,7 +1200,7 @@ namespace ElysiumAudio.ViewModels
                 file.StatusMessage = "Análisis completado";
                 Interlocked.Increment(ref progress.Succeeded);
                 UpdateModalCounters(progress);
-                SystemStatus = $"[{position}/{totalFiles}] Analizado: {file.FileName}";
+                SystemStatus = string.Format(L("FileAnalyzed"), position, totalFiles, file.FileName);
             }
             catch (OperationCanceledException)
             {
@@ -1140,7 +1215,7 @@ namespace ElysiumAudio.ViewModels
                 UpdateModalCounters(progress);
                 file.Status = AudioFileStatus.Error;
                 file.StatusMessage = $"Error: {ex.Message}";
-                SystemStatus = $"Error analizando {file.FileName}: {ex.Message}";
+                SystemStatus = string.Format(L("AnalyzeFileError"), file.FileName, ex.Message);
             }
             finally
             {
@@ -1219,11 +1294,11 @@ namespace ElysiumAudio.ViewModels
                 // Configurar los filtros de búsqueda técnica de audio
                 var options = new FilePickerOpenOptions
                 {
-                    Title = "Selecciona tus pistas de audio FLAC / WAV",
+                    Title = L("PickerAudioTitle"),
                     AllowMultiple = true,
                     FileTypeFilter = new[]
                     {
-                new FilePickerFileType("Audio de Alta Fidelidad")
+                new FilePickerFileType(L("PickerAudioType"))
                 {
                     Patterns = new[] { "*.wav", "*.flac" }
                 }
@@ -1239,7 +1314,7 @@ namespace ElysiumAudio.ViewModels
                         .ToList();
 
                     int added = AddFilesToQueue(paths);
-                    SystemStatus = $"Se añadieron {added} archivos a la cola de procesamiento.";
+                    SystemStatus = string.Format(L("FilesAdded"), added);
                 }
             }
         }

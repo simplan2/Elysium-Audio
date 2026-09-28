@@ -1,0 +1,203 @@
+<Window
+    x:Class="ElysiumAudio.Views.SettingsWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:l10n="using:ElysiumAudio.Localization"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:ElysiumAudio.ViewModels"
+    Title="Ajustes"
+    Width="520"
+    MinWidth="440"
+    d:DesignHeight="420"
+    d:DesignWidth="520"
+    x:DataType="vm:MainWindowViewModel"
+    Background="{StaticResource BrushBgBase}"
+    CanResize="False"
+    Foreground="{StaticResource BrushTextPrimary}"
+    Icon="/Assets/elysium.ico"
+    ShowInTaskbar="False"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Grid
+        Margin="18"
+        RowDefinitions="Auto,Auto,Auto,Auto"
+        RowSpacing="16">
+
+        <!--  ================= IDIOMA =================  -->
+        <Border
+            Grid.Row="0"
+            Padding="16,14"
+            Background="{StaticResource BrushBgPanel}"
+            BorderBrush="{StaticResource BrushBorderDefault}"
+            BorderThickness="1"
+            CornerRadius="12">
+            <Grid ColumnDefinitions="*, 100" ColumnSpacing="10">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="{StaticResource FontSizeLarge}"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextAccentSecondary}"
+                    Text="{l10n:Localize Language}" />
+
+                <!--
+                    El cambio se aplica en vivo: LocalizationManager notifica a los
+                    bindings, así que este modal se traduce solo al instante.
+                -->
+                <Border
+                    Grid.Column="1"
+                    Width="80"
+                    Padding="3"
+                    HorizontalAlignment="Right"
+                    Background="{StaticResource BrushBgInput}"
+                    BorderBrush="{StaticResource BrushBorderSubtle}"
+                    BorderThickness="1"
+                    CornerRadius="999">
+                    <Grid HorizontalAlignment="Stretch" ColumnDefinitions="*,*">
+                        <Button
+                            Height="24"
+                            Padding="2"
+                            Classes="segment"
+                            Classes.active="{Binding !IsEnglish}"
+                            Command="{Binding SetLanguageCommand}"
+                            CommandParameter="es"
+                            FontSize="{StaticResource FontSizeSmall}">
+                            <TextBlock Text="ES" />
+                        </Button>
+                        <Button
+                            Grid.Column="1"
+                            Height="24"
+                            Padding="2,2"
+                            Classes="segment"
+                            Classes.active="{Binding IsEnglish}"
+                            Command="{Binding SetLanguageCommand}"
+                            CommandParameter="en"
+                            FontSize="{StaticResource FontSizeSmall}">
+                            <TextBlock Text="EN" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!--  ================= CARPETA DE SALIDA =================  -->
+        <Border
+            Grid.Row="1"
+            Padding="16,14"
+            Background="{StaticResource BrushBgPanel}"
+            BorderBrush="{StaticResource BrushBorderDefault}"
+            BorderThickness="1"
+            CornerRadius="12">
+            <StackPanel Spacing="10">
+                <TextBlock
+                    FontSize="{StaticResource FontSizeLarge}"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextAccentSecondary}"
+                    Text="{l10n:Localize OutputFolder}" />
+
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <TextBox
+                        Grid.Column="0"
+                        VerticalContentAlignment="Center"
+                        FontSize="{StaticResource FontSizeMedium}"
+                        Foreground="{StaticResource BrushTextSecondary}"
+                        IsReadOnly="True"
+                        Text="{Binding OutputDirectory, Mode=OneWay}"
+                        ToolTip.Tip="{Binding OutputDirectory}" />
+
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Stretch"
+                        Classes="ghostNoZoom"
+                        Command="{Binding SelectOutputDirectoryCommand}">
+                        <TextBlock
+                            FontSize="{StaticResource FontSizeSmall}"
+                            Foreground="{StaticResource BrushTextSecondary}"
+                            Text="{l10n:Localize ChooseFolder}" />
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!--  ================= ACERCA DE =================  -->
+        <Border
+            Grid.Row="2"
+            Padding="16,14"
+            Background="{StaticResource BrushBgPanel}"
+            BorderBrush="{StaticResource BrushBorderDefault}"
+            BorderThickness="1"
+            CornerRadius="12">
+            <StackPanel Spacing="10">
+                <TextBlock
+                    FontSize="{StaticResource FontSizeLarge}"
+                    FontWeight="SemiBold"
+                    Foreground="{StaticResource TextAccentSecondary}"
+                    Text="{l10n:Localize About}" />
+
+                <Grid ColumnDefinitions="48,*" ColumnSpacing="8">
+                    <Image Height="42" Source="/Assets/elysium-logo.png" />
+                    <StackPanel Grid.Column="1" Spacing="4">
+                       
+                            <StackPanel
+                                Grid.Row="0"
+                                Orientation="Horizontal"
+                                Spacing="5">
+                                <TextBlock
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{l10n:Localize AppVersion}" />
+
+                                <TextBlock
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{Binding Version}" />
+                            </StackPanel>
+
+                            <StackPanel
+                                Grid.Row="1"
+                                Orientation="Horizontal"
+                                Spacing="5">
+                                <TextBlock
+                                    Grid.Row="1"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{l10n:Localize AppAuthor}" />
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="{Binding Author}" />
+                            </StackPanel>
+
+
+                        
+                        <TextBlock
+                            Grid.Row="2"
+                            Grid.ColumnSpan="2"
+                            FontSize="{StaticResource FontSizeSmall}"
+                            Foreground="{StaticResource BrushTextSecondary}"
+                            Text="{Binding Copyright}" />
+                    </StackPanel>
+
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!--  ================= CERRAR =================  -->
+        <Button
+            Grid.Row="3"
+            Width="140"
+            HorizontalAlignment="Right"
+            HorizontalContentAlignment="Center"
+            Classes="main"
+            Click="OnCloseClick"
+            Content="{l10n:Localize Close}" />
+    </Grid>
+</Window>

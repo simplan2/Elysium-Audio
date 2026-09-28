@@ -10,9 +10,9 @@
          ===================================================================== -->
 
     <!-- Superficies -->
-    <Color x:Key="BgBase">#0C0F13</Color>
-    <Color x:Key="BgPanel">#131620</Color>
-    <Color x:Key="BgPanelAlt">#0E1118</Color>
+    <Color x:Key="BgBase">#0D0F14</Color>
+    <Color x:Key="BgPanel">#13151F</Color>
+    <Color x:Key="BgPanelAlt">#0E1016</Color>
     <Color x:Key="BgInput">#0D1117</Color>
     <Color x:Key="BgElevated">#1A1F2E</Color>
     <Color x:Key="BgButton">#151D2B</Color>
@@ -30,7 +30,7 @@
     <Color x:Key="TextSecondary">#98A2B8</Color>
     <Color x:Key="TextMuted">#5C6A82</Color>
     <Color x:Key="TextOnAccent">#FFFFFF</Color>
-    <Color x:Key="TextAccentSecondary">#97AED2</Color>
+    <Color x:Key="TextAccentSecondary">#6F7E99</Color>
 
     <!-- Acentos primarios -->
     <Color x:Key="AccentPrimary">#1BA6FA</Color>
@@ -46,7 +46,7 @@
     <Color x:Key="AccentCyan">#38BDF8</Color>
     <Color x:Key="AccentRed">#F06464</Color>
 	<Color x:Key="AccentRosa">#BA7AE2</Color>
-	<Color x:Key="AccentSkyblue">#5A92FA</Color>
+	<Color x:Key="AccentSkyblue">#5F95FA</Color>
 	
     <!-- Estado -->
     <Color x:Key="Success">#34D399</Color>

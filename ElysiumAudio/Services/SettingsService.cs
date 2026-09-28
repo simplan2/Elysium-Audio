@@ -102,6 +102,9 @@ namespace ElysiumAudio.Services
             settings.AppMode = Enum.IsDefined(typeof(AppMode), settings.AppMode)
                 ? settings.AppMode
                 : AppMode.Normalize;
+            settings.Language = string.Equals(settings.Language, "en", StringComparison.OrdinalIgnoreCase)
+                ? "en"
+                : "es";
             return settings;
         }
 

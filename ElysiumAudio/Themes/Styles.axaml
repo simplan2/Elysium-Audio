@@ -61,6 +61,43 @@
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
     </Style>
 
+
+    <!--
+        SplitButton de la cola ("Agregar ▾"). Comparte métrica con los botones
+        ghost contiguos (mismo padding, radio, borde y tipografía), de modo que
+        los tres se leen como una familia. La acción primaria se distingue con
+        un tinte de acento suave, no con un degradado saturado.
+    -->
+
+    <Style Selector="SplitButton.queue">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{StaticResource TextAccentSecondary}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="SplitButton.queue:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+
+    </Style>
+
+    <Style Selector="SplitButton.queue:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+    </Style>
+
     <Style Selector="Button.ghostNoZoom">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
@@ -276,7 +313,7 @@
                         BorderThickness="1.4"
                         CornerRadius="{StaticResource RadiusSM}"
                         DockPanel.Dock="Left">
-						<Viewbox
+                        <Viewbox
                             Width="11"
                             Height="11"
                             HorizontalAlignment="Center"
@@ -296,9 +333,9 @@
                     </Border>
 
                     <!--  EL CONTENIDO (texto)  -->
-					<ContentPresenter
-						Margin="7,0,0,0"
+                    <ContentPresenter
                         Grid.Column="1"
+                        Margin="7,0,0,0"
                         VerticalAlignment="Center"
                         Content="{TemplateBinding Content}"
                         Foreground="{TemplateBinding Foreground}" />

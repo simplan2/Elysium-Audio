@@ -2,6 +2,7 @@
     x:Class="ElysiumAudio.Views.ConfirmExitWindow"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l10n="using:ElysiumAudio.Localization"
     Title="Cerrar Elysium Audio"
     Width="450"
     Height="210"
@@ -23,14 +24,14 @@
                 FontSize="{StaticResource FontSizeDisplay}"
                 FontWeight="SemiBold"
                 Foreground="{StaticResource BrushTextPrimary}"
-                Text="Cerrar Elysium Audio" />
+                Text="{l10n:Localize ConfirmExitTitle}" />
 
             <TextBlock
                 FontSize="{StaticResource FontSizeBase}"
                 Foreground="{StaticResource BrushTextSecondary}"
                 LineHeight="20"
                 MaxLines="2"
-                Text="Hay Procesos en curso.\n¿Deseas cancelar el proceso y salir?"
+                Text="{l10n:Localize ConfirmExitMessage}"
                 TextTrimming="CharacterEllipsis"
                 TextWrapping="NoWrap" />
 
@@ -42,11 +43,11 @@
                 <Button
                     Classes="ghost"
                     Click="OnContinueClick"
-                    Content="Seguir procesando" />
+                    Content="{l10n:Localize ContinueProcessing}" />
                 <Button
                     Classes="main"
                     Click="OnExitClick"
-                    Content="Cancelar y salir" />
+                    Content="{l10n:Localize CancelAndExit}" />
             </StackPanel>
         </StackPanel>
     </Border>

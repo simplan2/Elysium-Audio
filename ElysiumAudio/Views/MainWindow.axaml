@@ -10,6 +10,7 @@
     xmlns:models="using:ElysiumAudio.Models"
     xmlns:netDataGrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
     xmlns:vm="using:ElysiumAudio.ViewModels"
+    xmlns:l10n="using:ElysiumAudio.Localization"
     Title="Elysium Audio"
     Width="1200"
     Height="748"
@@ -66,44 +67,53 @@
                     CornerRadius="12">
                     <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
-                        <!--  Botones para agregar archivos  -->
+                        <!--
+                            Acciones de la cola, todas a la izquierda y con la
+                            misma métrica (mismo alto, tipografía y radio) para que
+                            se lean como una familia. "Agregar" es la acción
+                            primaria: mismo tamaño, pero con un tinte de acento
+                            suave que la distingue sin gritar.
+                        -->
                         <StackPanel
                             Grid.Column="0"
                             VerticalAlignment="Center"
                             Orientation="Horizontal"
                             Spacing="8">
-                            <Button Classes="ghost" Command="{Binding AddFileCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Path
-                                        Width="14"
-                                        Height="14"
-                                        VerticalAlignment="Center"
-                                        Data="M7,2 L7,12 M2,7 L12,7"
-                                        Stroke="{StaticResource BrushTextSecondary}"
-                                        StrokeLineCap="Round"
-                                        StrokeThickness="1.6" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="{StaticResource FontSizeSmall}"
-                                        Foreground="{StaticResource BrushTextMuted}"
-                                        Text="ADD FILES" />
-                                </StackPanel>
+
+                            <!--
+                                Botón split: clic = agregar archivos (lo más
+                                frecuente), flecha = archivos / carpetas.
+                            -->
+                            <SplitButton
+                                Classes="queue"
+                                Command="{Binding AddFileCommand}"
+                                Content="{l10n:Localize Add}">
+                                <SplitButton.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem
+                                            Click="OnAddFilesMenuClick"
+                                            Header="{l10n:Localize AddFiles}" />
+                                        <MenuItem
+                                            Click="OnAddFolderMenuClick"
+                                            Header="{l10n:Localize AddFolder}" />
+                                    </MenuFlyout>
+                                </SplitButton.Flyout>
+                            </SplitButton>
+
+                            <Button Classes="ghost" Command="{Binding ClearListCommand}">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource TextAccentSecondary}"
+                                    Text="{l10n:Localize Clear}" />
                             </Button>
-                            <Button Classes="ghost" Command="{Binding AddDirectoryCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Path
-                                        Width="16"
-                                        Height="16"
-                                        VerticalAlignment="Center"
-                                        Data="M3,3 L8,3 L10,5 L15,5 L15,13 L3,13 Z"
-                                        Stroke="{StaticResource BrushTextSecondary}"
-                                        StrokeThickness="1.6" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        FontSize="{StaticResource FontSizeSmall}"
-                                        Foreground="{StaticResource BrushTextMuted}"
-                                        Text="ADD FOLDER" />
-                                </StackPanel>
+
+                            <Button Classes="ghost" Command="{Binding ResetQueueCommand}">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource TextAccentSecondary}"
+                                    Text="{l10n:Localize Reset}" />
                             </Button>
                         </StackPanel>
 
@@ -114,47 +124,54 @@
                             Orientation="Horizontal"
                             Spacing="8">
 
-							<Button Classes="ghost" Command="{Binding ClearListCommand}">
-								<TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeSmall}"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="CLEAR" />
-							</Button>
-							
-                            <Button Classes="ghost" Command="{Binding ResetQueueCommand}">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeSmall}"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="RESET" />
-                            </Button> 
-                        </StackPanel>
+                            <!--  Cantidad total  -->
+                            <Border
+                                Padding="12,6"
+                                VerticalAlignment="Center"
+                                Background="{StaticResource BrushBgInput}"
+                                BorderBrush="{StaticResource BrushBorderSubtle}"
+                                BorderThickness="1"
+                                CornerRadius="999">
+                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <TextBlock
+                                         VerticalAlignment="Center"
+                                         FontSize="{StaticResource FontSizeSmall}"
+                                         FontWeight="SemiBold"
+                                         Foreground="{StaticResource TextAccentSecondary}"
+                                         Text="{l10n:Localize Tracks}" />
+                                    <TextBlock
+                                         VerticalAlignment="Center"
+                                         FontSize="{StaticResource FontSizeSmall}"
+                                         FontWeight="Bold"
+                                         Foreground="{StaticResource BrushAccentSkyblue}"
+                                         Text="{Binding SummaryTotalText}" />
+                                </StackPanel>
+                            </Border>
 
-                        <!--  Cantidad Total  -->
-                        <Border
-                            Grid.Column="2"
-                            Padding="12,6"
-                            VerticalAlignment="Center"
-                            Background="{StaticResource BrushBgInput}"
-                            BorderBrush="{StaticResource BrushBorderSubtle}"
-                            BorderThickness="1"
-                            CornerRadius="999">
-                            <StackPanel Orientation="Horizontal" Spacing="5">
+                            <!--
+                                Menú de más opciones (idioma y ajustes viven en el
+                                modal de Ajustes). El clic va por handler porque
+                                MenuFlyout no hereda el DataContext de la ventana.
+                            -->
+                            <Button                              
+                                VerticalAlignment="Center" Height="24" Width="28" Padding="2"
+                                Classes="ghost" Background="{StaticResource BrushBgInput}"
+                                Click="OnSettingsButtonClick"
+                                ToolTip.Tip="{l10n:Localize MoreOptions}">
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem
+                                            Click="OnSettingsMenuClick"
+                                            Header="{l10n:Localize Settings}" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
                                 <TextBlock
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center"
                                     FontSize="{StaticResource FontSizeSmall}"
-                                    FontWeight="SemiBold"
-                                    Foreground="{StaticResource BrushTextMuted}"
-                                    Text="TRACKS" />
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontSize="{StaticResource FontSizeSmall}"
-                                    FontWeight="Bold"
                                     Foreground="{StaticResource TextAccentSecondary}"
-                                    Text="{Binding SummaryTotalText}" />
-                            </StackPanel>
-                        </Border>
+                                    Text="⋯" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
 
@@ -314,8 +331,10 @@
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn
                                     Width="0.5*"
-                                    MinWidth="60"
-                                    Header="State">
+                                    MinWidth="60">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridState}" />
+                                    </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <customControls:AudioStatusIndicator
@@ -330,22 +349,33 @@
                                 <DataGridTextColumn
                                     Width="2*"
                                     MinWidth="120"
-                                    Binding="{Binding FileName}"
-                                    Header="File Name" />
+                                    Binding="{Binding FileName}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridFileName}" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
                                 <DataGridTextColumn
                                     Width="*"
                                     MinWidth="98"
-                                    Binding="{Binding Codec}"
-                                    Header="Codec" />
+                                    Binding="{Binding Codec}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridCodec}" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
                                 <DataGridTextColumn
                                     Width="*"
                                     MinWidth="108"
-                                    Binding="{Binding Duration}"
-                                    Header="Duration" />
+                                    Binding="{Binding Duration}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridDuration}" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
                                 <DataGridTemplateColumn
                                     Width="*"
-                                    MinWidth="98"
-                                    Header="LUFS">
+                                    MinWidth="98">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridLufs}" />
+                                    </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <TextBlock
@@ -360,8 +390,10 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTemplateColumn
                                     Width="*"
-                                    MinWidth="98"
-                                    Header="Peak dBTP">
+                                    MinWidth="98">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridPeak}" />
+                                    </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <TextBlock
@@ -377,8 +409,10 @@
 
                                 <DataGridTemplateColumn
                                     Width="*"
-                                    MinWidth="98"
-                                    Header="Norm LUFS">
+                                    MinWidth="98">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridNormLufs}" />
+                                    </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <TextBlock
@@ -395,8 +429,10 @@
 
                                 <DataGridTemplateColumn
                                     Width="*"
-                                    MinWidth="98"
-                                    Header="Norm Peak">
+                                    MinWidth="98">
+                                    <DataGridTemplateColumn.Header>
+                                        <TextBlock Text="{l10n:Localize GridNormPeak}" />
+                                    </DataGridTemplateColumn.Header>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:AudioFileModel">
                                             <TextBlock
@@ -442,12 +478,12 @@
                                 FontSize="{StaticResource FontSizeBase}"
                                 FontWeight="Medium"
                                 Foreground="{StaticResource BrushTextSecondary}"
-                                Text="Drop WAV / FLAC files or folders here" />
+                                Text="{l10n:Localize DropHintTitle}" />
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 FontSize="{StaticResource FontSizeSM}"
                                 Foreground="{StaticResource BrushTextMuted}"
-                                Text="Or use Add Files / Add Folder to build the queue" />
+                                Text="{l10n:Localize DropHintSubtitle}" />
                         </StackPanel>
 
                     </Grid>
@@ -504,7 +540,7 @@
                                     <TextBlock
                                         FontSize="{StaticResource FontSizeSmall}"
                                         Foreground="{StaticResource BrushTextMuted}"
-                                        Text="OUTPUT FORMAT" />
+                                        Text="{l10n:Localize OutputFormat}" />
                                     <TextBlock
                                         FontSize="{StaticResource FontSizeMedium}"
                                         Foreground="{StaticResource BrushTextSecondary}"
@@ -538,7 +574,7 @@
                                 <TextBlock
                                     FontSize="{StaticResource FontSizeSmall}"
                                     Foreground="{StaticResource BrushTextMuted}"
-                                    Text="OUTPUT DIRECTORY" />
+                                    Text="{l10n:Localize OutputDirectory}" />
                                 <TextBlock
                                     FontSize="{StaticResource FontSizeMedium}"
                                     Foreground="{StaticResource BrushTextSecondary}"
@@ -563,7 +599,7 @@
                                 VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeSmall}"
                                 Foreground="{StaticResource BrushTextMuted}"
-                                Text="EXPLORE DIRECTORY"
+                                Text="{l10n:Localize ExploreDirectory}"
                                 TextTrimming="CharacterEllipsis"
                                 TextWrapping="NoWrap" />
                         </Button>
@@ -616,7 +652,7 @@
                                         Stroke="{StaticResource BrushAccentSecondary}"
                                         StrokeLineCap="Round"
                                         StrokeThickness="1.7" />
-                                    <TextBlock VerticalAlignment="Center" Text="Analyze" />
+                                    <TextBlock VerticalAlignment="Center" Text="{l10n:Localize Analyze}" />
                                 </StackPanel>
                             </Button>
                             <!--  Botón Normalizar  -->
@@ -638,7 +674,7 @@
                                         Stroke="{StaticResource BrushAccentSecondary}"
                                         StrokeLineCap="Round"
                                         StrokeThickness="1.7" />
-                                    <TextBlock VerticalAlignment="Center" Text="Normalize" />
+                                    <TextBlock VerticalAlignment="Center" Text="{l10n:Localize Normalize}" />
                                 </StackPanel>
                             </Button>
 
@@ -656,19 +692,22 @@
                                 RowSpacing="12">
 
                                 <!--  1.0 Encabezado de la función activa  -->
-                                <TextBlock
+                                <StackPanel
                                     Grid.Row="0"
                                     Margin="4,0"
-                                    FontSize="{StaticResource FontSizeXL}"
-                                    FontWeight="Bold"
-                                    Foreground="{StaticResource BrushTextPrimary}"
-                                    IsVisible="{Binding IsNormalizeMode}">
-                                    <Run
+                                    IsVisible="{Binding IsNormalizeMode}"
+                                    Orientation="Horizontal">
+                                    <TextBlock
+                                        FontSize="{StaticResource FontSizeXL}"
                                         FontWeight="Bold"
                                         Foreground="{StaticResource BrushAccentSkyblue}"
-                                        Text="DSP" />
-                                    <Run Text=" · Loudness Calibration" />
-                                </TextBlock>
+                                        Text="{l10n:Localize Dsp}" />
+                                    <TextBlock
+                                        FontSize="{StaticResource FontSizeXL}"
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource BrushTextPrimary}"
+                                        Text="{l10n:Localize DspSuffix}" />
+                                </StackPanel>
 
                                 <!--  1.1 Controles de normalización (focusable para forzar a actualizar los valores)  -->
                                 <Border
@@ -703,7 +742,7 @@
                                                     FontWeight="SemiBold"
                                                     Foreground="{StaticResource BrushTextSecondary}"
                                                     LetterSpacing="2.5"
-                                                    Text="TARGET LUFS" />
+                                                    Text="{l10n:Localize TargetLufs}" />
 
                                                 <!--  KNOB  -->
                                                 <Grid Grid.Row="1" VerticalAlignment="Center">
@@ -824,7 +863,7 @@
                                                 FontWeight="SemiBold"
                                                 Foreground="{StaticResource BrushTextMuted}"
                                                 LetterSpacing="1.5"
-                                                Text="LIMITER" />
+                                                Text="{l10n:Localize Limiter}" />
                                             <Border
                                                 Grid.Column="2"
                                                 Height="1"
@@ -850,7 +889,7 @@
                                                     FontSize="{StaticResource FontSizeSmall}"
                                                     FontWeight="SemiBold"
                                                     Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="True Peak Ceiling" />
+                                                    Text="{l10n:Localize TruePeakCeiling}" />
                                                 <TextBox
                                                     Grid.Column="2"
                                                     Width="50"
@@ -917,7 +956,7 @@
                                                     FontSize="{StaticResource FontSizeSmall}"
                                                     FontWeight="SemiBold"
                                                     Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="Release Time" />
+                                                    Text="{l10n:Localize ReleaseTime}" />
                                                 <TextBox
                                                     Grid.Column="2"
                                                     Width="50"
@@ -984,7 +1023,7 @@
                                                     FontSize="{StaticResource FontSizeSmall}"
                                                     FontWeight="SemiBold"
                                                     Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="Look-ahead Time" />
+                                                    Text="{l10n:Localize LookAheadTime}" />
                                                 <TextBox
                                                     Grid.Column="2"
                                                     Width="50"
@@ -1057,12 +1096,12 @@
                                                 FontSize="{StaticResource FontSizeSmall}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                Text="EXECUTION &amp; SAFETY" />
+                                                Text="{l10n:Localize ExecutionSafety}" />
                                         </Grid>
 
                                         <!--  Preservar Metadatos (solo aplica al normalizar)  -->
                                         <CheckBox
-                                            Content="Preserve Basic Metadata"
+                                            Content="{l10n:Localize PreserveMetadata}"
                                             Foreground="{StaticResource BrushTextSecondary}"
                                             IsChecked="True"
                                             IsEnabled="{Binding IsNormalizeMode}" />
@@ -1078,47 +1117,23 @@
                                 Spacing="12">
 
                                 <!--  Encabezado: título + chip de lote  -->
-                                <Grid
+                                <StackPanel
                                     Margin="4,0"
                                     VerticalAlignment="Center"
-                                    ColumnDefinitions="*,Auto">
+                                    Orientation="Horizontal">
                                     <TextBlock
                                         VerticalAlignment="Center"
                                         FontSize="{StaticResource FontSizeXL}"
                                         FontWeight="Bold"
-                                        Foreground="{StaticResource BrushTextPrimary}">
-                                        <Run
-                                            FontWeight="Bold"
-                                            Foreground="{StaticResource BrushAccentSkyblue}"
-                                            Text="Analysis" />
-                                        <Run Text=" · Loudness Report" />
-                                    </TextBlock>
-
-                                    <Border
-                                        Grid.Column="1"
-                                        Padding="10,3"
+                                        Foreground="{StaticResource BrushAccentSkyblue}"
+                                        Text="{l10n:Localize Analysis}" />
+                                    <TextBlock
                                         VerticalAlignment="Center"
-                                        Background="{StaticResource BrushBgInput}"
-                                        BorderBrush="{StaticResource BrushBorderSubtle}"
-                                        BorderThickness="1"
-                                        CornerRadius="999"
-                                        IsVisible="{Binding HasFiles}">
-                                        <StackPanel Orientation="Horizontal" Spacing="5">
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="{StaticResource FontSizeSmall}"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                Text="TRACKS" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="{StaticResource FontSizeSmall}"
-                                                FontWeight="Bold"
-                                                Foreground="{StaticResource BrushAccentSkyblue}"
-                                                Text="{Binding SummaryTotalText}" />
-                                        </StackPanel>
-                                    </Border>
-                                </Grid>
+                                        FontSize="{StaticResource FontSizeXL}"
+                                        FontWeight="Bold"
+                                        Foreground="{StaticResource BrushTextPrimary}"
+                                        Text="{l10n:Localize ReportSuffix}" />
+                                </StackPanel>
 
                                 <!--  Resumen del lote  -->
                                 <Border
@@ -1139,7 +1154,7 @@
                                                 FontSize="{StaticResource FontSizeSmall}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                Text="BATCH SUMMARY" />
+                                                Text="{l10n:Localize BatchSummary}" />
                                         </Grid>
 
                                         <!--  Métricas principales  -->
@@ -1157,7 +1172,7 @@
                                                         FontSize="{StaticResource FontSizeMicro}"
                                                         FontWeight="SemiBold"
                                                         Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="AVERAGE" />
+                                                        Text="{l10n:Localize Average}" />
                                                     <TextBlock
                                                         HorizontalAlignment="Center"
                                                         FontSize="{StaticResource FontSizeLG}"
@@ -1179,7 +1194,7 @@
                                                         FontSize="{StaticResource FontSizeMicro}"
                                                         FontWeight="SemiBold"
                                                         Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="AVG GAIN" />
+                                                        Text="{l10n:Localize AvgGain}" />
                                                     <TextBlock
                                                         HorizontalAlignment="Center"
                                                         FontSize="{StaticResource FontSizeLG}"
@@ -1201,7 +1216,7 @@
                                                         FontSize="{StaticResource FontSizeMicro}"
                                                         FontWeight="SemiBold"
                                                         Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="MAX PEAK" />
+                                                        Text="{l10n:Localize MaxPeak}" />
                                                     <TextBlock
                                                         HorizontalAlignment="Center"
                                                         FontSize="{StaticResource FontSizeLG}"
@@ -1219,7 +1234,7 @@
                                                     <TextBlock
                                                         FontSize="{StaticResource FontSizeSM}"
                                                         Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="Measured" />
+                                                        Text="{l10n:Localize Measured}" />
                                                     <TextBlock
                                                         Grid.Column="1"
                                                         FontSize="{StaticResource FontSizeSM}"
@@ -1231,7 +1246,7 @@
                                                     <TextBlock
                                                         FontSize="{StaticResource FontSizeSM}"
                                                         Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="Range" />
+                                                        Text="{l10n:Localize Range}" />
                                                     <TextBlock
                                                         Grid.Column="1"
                                                         FontSize="{StaticResource FontSizeSM}"
@@ -1247,7 +1262,7 @@
                                                     <TextBlock
                                                         FontSize="{StaticResource FontSizeSM}"
                                                         Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="On target" />
+                                                        Text="{l10n:Localize OnTarget}" />
                                                     <TextBlock
                                                         Grid.Column="1"
                                                         FontSize="{StaticResource FontSizeSM}"
@@ -1265,7 +1280,7 @@
                                                 HorizontalAlignment="Center"
                                                 FontSize="{StaticResource FontSizeSM}"
                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                Text="Ejecuta el análisis para ver los resultados del lote."
+                                                Text="{l10n:Localize BatchEmptyHint}"
                                                 TextAlignment="Center"
                                                 TextWrapping="Wrap" />
                                         </StackPanel>
@@ -1291,7 +1306,7 @@
                                                 FontSize="{StaticResource FontSizeSmall}"
                                                 FontWeight="SemiBold"
                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                Text="SELECTED FILE" />
+                                                Text="{l10n:Localize SelectedFile}" />
                                         </Grid>
 
                                         <StackPanel IsVisible="{Binding HasSelectedFile}" Spacing="10">
@@ -1316,7 +1331,7 @@
                                                         <TextBlock
                                                             FontSize="{StaticResource FontSizeMedium}"
                                                             Foreground="{StaticResource BrushTextSecondary}"
-                                                            Text="Format" />
+                                                            Text="{l10n:Localize Format}" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             FontSize="{StaticResource FontSizeMedium}"
@@ -1328,7 +1343,7 @@
                                                         <TextBlock
                                                             FontSize="{StaticResource FontSizeMedium}"
                                                             Foreground="{StaticResource BrushTextSecondary}"
-                                                            Text="Sample rate" />
+                                                            Text="{l10n:Localize SampleRate}" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             FontSize="{StaticResource FontSizeMedium}"
@@ -1345,7 +1360,7 @@
                                                         <TextBlock
                                                             FontSize="{StaticResource FontSizeMedium}"
                                                             Foreground="{StaticResource BrushTextSecondary}"
-                                                            Text="Duration" />
+                                                            Text="{l10n:Localize Duration}" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             FontSize="{StaticResource FontSizeMedium}"
@@ -1357,7 +1372,7 @@
                                                         <TextBlock
                                                             FontSize="{StaticResource FontSizeMedium}"
                                                             Foreground="{StaticResource BrushTextSecondary}"
-                                                            Text="Channels" />
+                                                            Text="{l10n:Localize Channels}" />
                                                         <TextBlock
                                                             Grid.Column="1"
                                                             FontSize="{StaticResource FontSizeMedium}"
@@ -1389,7 +1404,7 @@
                                                             FontSize="{StaticResource FontSizeMicro}"
                                                             FontWeight="SemiBold"
                                                             Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="LOUDNESS" />
+                                                            Text="{l10n:Localize Loudness}" />
                                                         <TextBlock
                                                             HorizontalAlignment="Center"
                                                             FontSize="{StaticResource FontSizeMeter}"
@@ -1422,7 +1437,7 @@
                                                                 FontSize="{StaticResource FontSizeMicro}"
                                                                 FontWeight="SemiBold"
                                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                                Text="TARGET" />
+                                                                Text="{l10n:Localize Target}" />
                                                             <TextBlock
                                                                 FontSize="{StaticResource FontSizeLarge}"
                                                                 FontWeight="SemiBold"
@@ -1434,7 +1449,7 @@
                                                                 FontSize="{StaticResource FontSizeMicro}"
                                                                 FontWeight="SemiBold"
                                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                                Text="TRUE PEAK" />
+                                                                Text="{l10n:Localize TruePeak}" />
                                                             <TextBlock
                                                                 FontSize="{StaticResource FontSizeLarge}"
                                                                 FontWeight="SemiBold"
@@ -1446,7 +1461,7 @@
                                                                 FontSize="{StaticResource FontSizeMicro}"
                                                                 FontWeight="SemiBold"
                                                                 Foreground="{StaticResource BrushTextMuted}"
-                                                                Text="GAIN TO TARGET" />
+                                                                Text="{l10n:Localize GainToTarget}" />
                                                             <TextBlock
                                                                 FontSize="{StaticResource FontSizeLarge}"
                                                                 FontWeight="SemiBold"
@@ -1478,7 +1493,7 @@
                                             FontSize="{StaticResource FontSizeSM}"
                                             Foreground="{StaticResource BrushTextMuted}"
                                             IsVisible="{Binding !HasSelectedFile}"
-                                            Text="Selecciona un archivo de la lista para ver su ficha."
+                                            Text="{l10n:Localize NoSelectionHint}"
                                             TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Border>
@@ -1511,18 +1526,18 @@
                                 VerticalAlignment="Center"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsNormalizeMode, FallbackValue=False}"
-                                Text="Run Batch Normalization" />
+                                Text="{l10n:Localize RunBatchNormalization}" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsAnalyzeMode}"
-                                Text="Run Batch Analysis" />
+                                Text="{l10n:Localize RunBatchAnalysis}" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeLG}"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsProcessing}"
-                                Text="Processing…" />
+                                Text="{l10n:Localize Processing}" />
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -1608,21 +1623,21 @@
 								 FontSize="{StaticResource FontSizeDisplay}"
 								 FontWeight="Bold"
 								 Foreground="{StaticResource BrushTextPrimary}"
-								 Text="Normalizando archivos de audio" />
-						
+								 Text="{l10n:Localize ModalNormalizingTitle}" />
+
                         <!--  Título Analizar  -->
 						<TextBlock
 								 IsVisible="{Binding IsAnalyzeMode}"
-                                FontSize="{StaticResource FontSizeDisplay}"
-                                FontWeight="Bold"
-                                Foreground="{StaticResource BrushTextPrimary}"
-                                Text="Analizando audio" />
+                                 FontSize="{StaticResource FontSizeDisplay}"
+                                 FontWeight="Bold"
+                                 Foreground="{StaticResource BrushTextPrimary}"
+                                 Text="{l10n:Localize ModalAnalyzingTitle}" />
                     </StackPanel>
 
                     <!--  Descripción  -->
                     <TextBlock                       
                         Foreground="{StaticResource BrushTextSecondary}" FontSize="12"
-                        Text="Por favor espere..."
+                        Text="{l10n:Localize ModalWait}"
                         TextWrapping="Wrap" />
 
                     <!--  Barra indeterminada + contadores reales del lote  -->
@@ -1647,7 +1662,7 @@
                                     FontFamily="{StaticResource FontMono}"
                                     FontSize="{StaticResource FontSizeSM}"
                                     Foreground="{StaticResource BrushTextMuted}"
-                                    Text="Tiempo" />
+                                    Text="{l10n:Localize ModalTime}" />
                                 <TextBlock
                                     FontFamily="{StaticResource FontMono}"
                                     FontSize="{StaticResource FontSizeSM}"
@@ -1673,13 +1688,13 @@
                                 FontSize="{StaticResource FontSizeBase}"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding !IsCancelling}"
-                                Text="Cancelar" />
+                                Text="{l10n:Localize ModalCancel}" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeBase}"
                                 Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsCancelling}"
-                                Text="Cancelando…" />
+                                Text="{l10n:Localize ModalCancelling}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

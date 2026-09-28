@@ -30,5 +30,9 @@ namespace ElysiumAudio.Models
         // Función o propósito activo al cerrar la app (Normalize / Analyze).
         [ObservableProperty]
         private AppMode appMode = AppMode.Normalize;
+
+        // Idioma de la interfaz ("es" o "en"), persistido con el resto de preferencias.
+        [ObservableProperty]
+        private string language = "es";
     }
 }

@@ -3,6 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using ElysiumAudio.Localization;
 using ElysiumAudio.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -56,6 +57,8 @@ namespace ElysiumAudio.Views
 
         // Este método se llama cuando archivos o carpetas son soltados sobre la ventana.
         // Resuelve archivos WAV/FLAC recursivamente y los agrega a la cola.
+        private static string L(string key) => LocalizationManager.Instance.Get(key);
+
         private async void OnDrop(object? sender, DragEventArgs e)
         {
             if (!e.DataTransfer.Formats.Contains(DataFormat.File)) return;
@@ -74,16 +77,62 @@ namespace ElysiumAudio.Views
 
             if (validPaths.Count == 0)
             {
-                vm.SystemStatus = "No se encontraron archivos WAV / FLAC.";
+                vm.SystemStatus = L("DropNoFiles");
                 return;
             }
 
-            vm.SystemStatus = $"Cargando {validPaths.Count} archivo(s)...";
+            vm.SystemStatus = string.Format(L("DropLoading"), validPaths.Count);
 
             int added = vm.AddFilesToQueue(validPaths);
             vm.SystemStatus = added > 0
-                ? $"Se añadieron {added} archivo(s) a la cola."
-                : "Todos los archivos ya están en la cola.";
+                ? string.Format(L("DropAdded"), added)
+                : L("DropAllInQueue");
+        }
+
+        // Los MenuItem del flyout del SplitButton no heredan el DataContext
+        // (viven en un popup), así que se conectan aquí a los comandos del VM.
+        private void OnAddFilesMenuClick(object? sender, RoutedEventArgs e)
+        {
+            if (ViewModel?.AddFileCommand is { } cmd && cmd.CanExecute(null))
+            {
+                cmd.Execute(null);
+            }
+        }
+
+        private void OnAddFolderMenuClick(object? sender, RoutedEventArgs e)
+        {
+            if (ViewModel?.AddDirectoryCommand is { } cmd && cmd.CanExecute(null))
+            {
+                cmd.Execute(null);
+            }
+        }
+
+        // Abre el modal de Ajustes. Necesario por código (y no por Command)
+        // porque el DataContext no llega a los MenuItem del MenuFlyout.
+        private async void OnSettingsMenuClick(object? sender, RoutedEventArgs e)
+        {
+            await ShowSettingsAsync();
+        }
+
+        private async void OnSettingsButtonClick(object? sender, RoutedEventArgs e)
+        {
+            await ShowSettingsAsync();
+        }
+
+        private async Task ShowSettingsAsync()
+        {
+            try
+            {
+                var dialog = new SettingsWindow { DataContext = ViewModel };
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                if (ViewModel is { } vm)
+                {
+                    vm.SystemStatus = ex.Message;
+                }
+            }
         }
 
         private void OnTargetLufsKeyDown(object? sender, KeyEventArgs e)

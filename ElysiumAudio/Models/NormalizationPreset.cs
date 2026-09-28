@@ -1,11 +1,19 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace ElysiumAudio.Models
 {
     /// <summary>
     /// Configuración predefinida de normalización para plataformas de streaming.
+    /// Name es observable para poder seguir al idioma activo.
     /// </summary>
-    public class NormalizationPreset
+    public partial class NormalizationPreset : ObservableObject
     {
-        public string Name { get; init; } = "";
+        [ObservableProperty]
+        private string _name = "";
+
+        /// <summary>Clave de traducción de Name; vacía si el nombre es una marca (p. ej. Spotify).</summary>
+        public string NameKey { get; init; } = "";
+
         public bool IsCustom { get; init; }
         public double TargetLufs { get; init; }
         public double TruePeakCeiling { get; init; }

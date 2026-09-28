@@ -5,11 +5,12 @@ using System;
 
 namespace ElysiumAudio.Views
 {
-    // Diálogo de confirmación al cerrar la app durante un procesamiento.
-    // Close(false) = seguir procesando (No), Close(true) = cancelar y salir (Sí).
-    public partial class ConfirmExitWindow : Window
+    // Modal de Ajustes: idioma, carpeta de salida e información del producto.
+    // El DataContext es el MainWindowViewModel del singleton, así que los cambios
+    // de idioma y de carpeta se aplican en vivo y se guardan solos.
+    public partial class SettingsWindow : Window
     {
-        public ConfirmExitWindow()
+        public SettingsWindow()
         {
             InitializeComponent();
             RefreshTitle();
@@ -18,12 +19,10 @@ namespace ElysiumAudio.Views
         }
 
         // Window.Title no admite binding, así que se actualiza a mano.
-        private void RefreshTitle() => Title = LocalizationManager.Instance.Get("ConfirmExitTitle");
+        private void RefreshTitle() => Title = LocalizationManager.Instance.Get("SettingsTitle");
 
         private void OnLanguageChanged(object? sender, EventArgs e) => RefreshTitle();
 
-        private void OnContinueClick(object? sender, RoutedEventArgs e) => Close(false);
-
-        private void OnExitClick(object? sender, RoutedEventArgs e) => Close(true);
+        private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
     }
 }

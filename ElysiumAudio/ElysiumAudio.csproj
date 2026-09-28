@@ -8,6 +8,23 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
+  <!-- Información del producto: la lee Services.AppInfo para el modal de Ajustes. -->
+  <PropertyGroup>
+    <Product>Elysium Audio</Product>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Company>simplan</Company>
+    <Authors>Juan EV</Authors>
+    <Copyright>Copyright © 2026 simplan</Copyright>
+  </PropertyGroup>
+
+  <!-- <Authors> solo afecta al paquete NuGet; esto lo publica como atributo de
+       ensamblado para que Services.AppInfo pueda leerlo. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="Author" Value="Juan EV" />
+  </ItemGroup>
+
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
