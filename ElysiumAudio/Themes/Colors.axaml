@@ -12,10 +12,10 @@
     <!-- Superficies -->
     <Color x:Key="BgBase">#0D0F14</Color>
     <Color x:Key="BgPanel">#13151F</Color>
-    <Color x:Key="BgPanelAlt">#0E1016</Color>
-    <Color x:Key="BgInput">#0D1117</Color>
-    <Color x:Key="BgElevated">#1A1F2E</Color>
-    <Color x:Key="BgButton">#151D2B</Color>
+    <Color x:Key="BgPanelAlt">#0E0F15</Color>
+    <Color x:Key="BgInput">#0D0F16</Color>
+    <Color x:Key="BgElevated">#1A1E2D</Color>
+    <Color x:Key="BgButton">#151B2A</Color>
     <Color x:Key="BgControl">#5A92FA</Color>
 	
 	
@@ -30,7 +30,7 @@
     <Color x:Key="TextSecondary">#98A2B8</Color>
     <Color x:Key="TextMuted">#5C6A82</Color>
     <Color x:Key="TextOnAccent">#FFFFFF</Color>
-    <Color x:Key="TextAccentSecondary">#6F7E99</Color>
+    <Color x:Key="TextAccentSecondary">#79869F</Color>
 
     <!-- Acentos primarios -->
     <Color x:Key="AccentPrimary">#1BA6FA</Color>
@@ -99,11 +99,11 @@
 
 	<LinearGradientBrush x:Key="Border_bg_degrade" StartPoint="0,0" EndPoint="0%,100%">
 		<GradientStop Color="#131922" Offset="0.0"/>
-		<GradientStop Color="#0E121A" Offset="1.0"/>
+		<GradientStop Color="#0E1119" Offset="1.0"/>
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
-		<GradientStop Color="#131620" Offset="0.0"/>
-		<GradientStop Color="#0D1018" Offset="1.0"/>
+		<GradientStop Color="#0D1018" Offset="0.0"/>
+		<GradientStop Color="#13151F" Offset="1.0"/>
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="btn_bg_degrade" StartPoint="0,0" EndPoint="100%,0%">
 		<GradientStop Color="#4987FA" Offset="0.0"/>

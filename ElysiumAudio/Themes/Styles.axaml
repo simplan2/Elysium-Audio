@@ -59,44 +59,164 @@
     <Style Selector="Button.ghost">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="Padding" Value="14,8" />
     </Style>
 
 
     <!--
-        SplitButton de la cola ("Agregar ▾"). Comparte métrica con los botones
-        ghost contiguos (mismo padding, radio, borde y tipografía), de modo que
-        los tres se leen como una familia. La acción primaria se distingue con
-        un tinte de acento suave, no con un degradado saturado.
+        SplitButton de la cola ("Agregar ▾").
+        
+        La plantilla por defecto de Fluent monta el control como
+        Grid > [Button PART_PrimaryButton] [SeparatorBorder] [Button PART_SecondaryButton]
+        es decir, SIN Border raíz. Por eso Background, BorderBrush y CornerRadius
+        asignados al SplitButton no se pintan nunca: lo que se ve es el tema por
+        defecto de los dos botones interiores. Por eso los estados de hover/press
+        tampoco se podían alinear con el resto de la familia.
+        
+        Aquí se sustituye la plantilla completa por una que sí tiene Border raíz
+        (PART_RootBorder) y pinta con Binding a las propiedades del propio
+        SplitButton, de modo que los tokens del tema mandan de verdad. Se conservan
+        los nombres de parte que exige SplitButton (PART_PrimaryButton,
+        PART_SecondaryButton, SeparatorBorder) para no romper el clic ni el flyout.
     -->
-
     <Style Selector="SplitButton.queue">
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderDefault}" />
+        <Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Foreground" Value="{StaticResource TextAccentSecondary}" />
         <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Foreground" Value="{StaticResource TextAccentSecondary}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeMedium}" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="FontSize" Value="{StaticResource FontSizeSmall}" />
-        <Setter Property="Padding" Value="14,9" />
         <Setter Property="MinHeight" Value="30" />
+        <Setter Property="Padding" Value="14,8,12,8" />
         <Setter Property="Transitions">
             <Transitions>
                 <BrushTransition Property="Background" Duration="0:0:0.15" />
                 <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
             </Transitions>
         </Setter>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border
+                    Name="PART_RootBorder"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+                    <Grid ColumnDefinitions="*,Auto,Auto">
+
+                        <!--  Mitad principal: dispara el Command del SplitButton.  -->
+                        <Button
+                            Name="PART_PrimaryButton"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            CornerRadius="8,0,0,8"
+                            FontSize="{TemplateBinding FontSize}"
+                            FontWeight="{TemplateBinding FontWeight}"
+                            Foreground="{TemplateBinding Foreground}">
+                            <ContentPresenter
+                                Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Button>
+
+                        <!--  Separador vertical, con la misma métrica de la familia.  -->
+                        <Border
+                            Name="SeparatorBorder"
+                            Grid.Column="1"
+                            Width="0.8"
+                            Margin="0,5"
+                            Background="Transparent" />
+
+                        <!--  Mitad del desplegable: abre el Flyout.  -->
+                        <Button
+                            Name="PART_SecondaryButton"
+                            Grid.Column="2"
+                            Width="28"
+                            Padding="0"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+							VerticalAlignment="Stretch"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            CornerRadius="0,8,8,0"
+                            FontSize="{TemplateBinding FontSize}"
+                            Foreground="{TemplateBinding Foreground}">
+                          
+                            <Path
+                                Width="8"
+                                Height="4"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Data="M0,0 L4,4 L8,0"
+                                Fill="Transparent"
+                                Stretch="None"
+                                Stroke="{TemplateBinding Foreground}"
+                                StrokeJoin="Round"
+                                StrokeLineCap="Round"
+                                StrokeThickness="1.5" />
+                        </Button>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
 
-    <Style Selector="SplitButton.queue:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+	<!-- Estilo global para los menús desplegables de las colas -->
+	<Style Selector="MenuFlyoutPresenter.queue-flyout">
+		<Setter Property="Background" Value="{StaticResource BrushBgOverlay}" />
+		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="Padding" Value="6" />
+	</Style>
+
+	<!-- Estilo opcional para los elementos individuales (MenuItems) dentro del menú -->
+	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem">
+		<Setter Property="CornerRadius" Value="0" />
+		<Setter Property="Height" Value="38" />
+		<Setter Property="Margin" Value="0,2" />
+		<Setter Property="FontSize" Value="{StaticResource FontSizeMD}" />
+		<Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+		<Setter Property="Padding" Value="20,8" />
+	</Style>
+		
+
+	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+	</Style>
+	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+	</Style>
+	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected:pointerover /template/ Border#PART_LayoutRoot">
+		<Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+	</Style>
+
+
+    <!--
+        Estados: se cambian las propiedades del propio SplitButton y el
+        TemplateBinding las propaga al Border raíz, que ya tiene la transición.
+    -->
+    <Style Selector="SplitButton.queue:pointerover">
         <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
-        <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
-
+		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+        <Setter Property="Foreground" Value="{StaticResource TextAccentSecondary}" />
     </Style>
 
-    <Style Selector="SplitButton.queue:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="SplitButton.queue:pressed">
         <Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
     </Style>
+
+    <!--  Al enfocar la mitad secundaria se resalta el borde del control completo.  -->
+    <Style Selector="SplitButton.queue:focus-visible /template/ Border#PART_RootBorder">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+    </Style>
+
 
     <Style Selector="Button.ghostNoZoom">
         <Setter Property="Background" Value="Transparent" />
@@ -186,9 +306,14 @@
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
+	<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+	</Style>
+	
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
     </Style>
+	
     <Style Selector="TextBox:disabled">
         <Setter Property="Opacity" Value="0.45" />
     </Style>
@@ -200,8 +325,10 @@
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="1,0" />
         <Setter Property="TextAlignment" Value="Center" />
-    </Style>
-
+	</Style>
+	<Style Selector="TextBox.param:focus /template/ TextPresenter">
+		<Setter Property="TextBlock.Foreground" Value="{StaticResource BrushTextPrimary}" />
+	</Style>
     <!--  ============================= SLIDER =============================  -->
 
     <!--  Hover  -->
@@ -394,6 +521,22 @@
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
         <Setter Property="Padding" Value="12,10" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeMD}" />
+    </Style>
+
+    <!--
+        Las cabeceras son el unico sitio donde una traduccion larga puede no caber: las
+        celdas ya traian TextTrimming propio. Con columnas Width="*" solo se recorta si
+        la ventana esta en su MinWidth, pero cuando ocurre se cortaba a pelo y se
+        derramaba sobre la columna vecina. Con puntos suspensivos al menos se degrada
+        limpio, y el ToolTip deja el texto completo disponible.
+    -->
+    <Style Selector="DataGridColumnHeader TextBlock">
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="ToolTip.Tip">
+            <Setter.Value>
+                <Binding Path="Text" RelativeSource="{RelativeSource Self}" />
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style Selector="DataGridCell">

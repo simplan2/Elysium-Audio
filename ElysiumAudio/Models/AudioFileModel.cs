@@ -27,30 +27,44 @@ namespace ElysiumAudio.Models
         [ObservableProperty]
         private string _statusMessage = "Pending";
 
+        // Estas cuatro celdas se muestran bajo cabeceras que ya llevan la unidad
+        // ("LUFS", "Pico dBTP"), y el motor devuelve el numero pelado: "-12.8", "0.22".
+        // El default por tanto es "-" y no un "0.0 dBTP": con unidad, la unidad
+        // aparecia al anadir archivos y desaparecia al medirlos. El "-" es ademas el
+        // mismo marcador que ya usa el motor para "aun sin medir".
         [ObservableProperty]
-        private string _peak = "0.0 dBFS";
+        private string _peak = "-";
 
         [ObservableProperty]
-        private string _loudness = "-0.0 LUFS";
+        private string _loudness = "-";
 
         [ObservableProperty]
-        private string _normalizedLoudness = "-0.0 LUFS";
+        private string _normalizedLoudness = "-";
 
         [ObservableProperty]
-        private string _normalizedPeak = "0.0 dBFS";
+        private string _normalizedPeak = "-";
 
         // Valores numéricos de los resultados normalizados: se usan para colorear
         // las columnas del grid según cumplan o no el objetivo/techo configurado.
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(NormLoudnessBrush))]
+        [NotifyPropertyChangedFor(nameof(NormalizedDeviation))]
+        [NotifyPropertyChangedFor(nameof(HasNormalizedResult))]
+        [NotifyPropertyChangedFor(nameof(HasDisplayMetrics))]
+        [NotifyPropertyChangedFor(nameof(DisplayLoudness))]
+        [NotifyPropertyChangedFor(nameof(DisplayPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
         private double _normalizedLoudnessDb = double.NaN;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(NormPeakBrush))]
+        [NotifyPropertyChangedFor(nameof(DisplayPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
         private double _normalizedPeakDb = double.NaN;
 
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(NormLoudnessBrush))]
+        [NotifyPropertyChangedFor(nameof(NormalizedDeviation))]
         private float _targetLufs = float.NaN;
 
         [ObservableProperty]
@@ -61,19 +75,90 @@ namespace ElysiumAudio.Models
         [ObservableProperty]
         [NotifyPropertyChangedFor(nameof(InputLoudnessBrush))]
         [NotifyPropertyChangedFor(nameof(InputPeakBrush))]
+        [NotifyPropertyChangedFor(nameof(HasDisplayMetrics))]
+        [NotifyPropertyChangedFor(nameof(DisplayLoudness))]
+        [NotifyPropertyChangedFor(nameof(DisplayPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
         private bool _hasMeasurement;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayLoudness))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
         private float _integratedLoudness = -70f;
 
+        // LRA (Loudness Range, EBU Tech 3342) del original y del resultado normalizado.
+        // NaN cuando el material no da datos suficientes (clip más corto que la ventana
+        // de 3 s, silencio digital o todo por debajo del suelo de -70 LUFS). No se
+        // sustituye por 0 porque "no se puede calcular" y "cero de verdad" son cosas
+        // distintas, y la ficha las presenta de forma distinta.
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayLra))]
+        private float _loudnessRange = float.NaN;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(DisplayLra))]
+        private float _normalizedLoudnessRange = float.NaN;
+
+        // LRA de la vista activa. Sigue al conmutador igual que el resto de métricas.
+        public double DisplayLra => ShowNormalized ? NormalizedLoudnessRange : LoudnessRange;
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(InputPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
+        [NotifyPropertyChangedFor(nameof(DisplayLra))]
         private float _maxTruePeakLinear;
+
+        // Conmutador Original/Normalizado de la ficha. Vive en el modelo para que
+        // cada archivo conserve su propia vista: no hay estado global que se pierda
+        // al cambiar de selección.
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasDisplayMetrics))]
+        [NotifyPropertyChangedFor(nameof(DisplayLoudness))]
+        [NotifyPropertyChangedFor(nameof(DisplayPeakDb))]
+        [NotifyPropertyChangedFor(nameof(DisplayPlr))]
+        [NotifyPropertyChangedFor(nameof(DisplayLra))]
+        private bool _showNormalized;
 
         [ObservableProperty]
         private int _sampleRate;
 
         [ObservableProperty]
         private int _channels;
+
+        // ── Métricas de la vista activa (original o normalizada) ──────────
+        // Todas devuelven NaN cuando el conjunto pedido todavía no existe, de
+        // forma que la ficha pueda distinguish "sin medir" de "cero de verdad".
+
+        // Hay resultado normalizado medido. Es lo que habilita el conmutador.
+        public bool HasNormalizedResult => !double.IsNaN(NormalizedLoudnessDb);
+
+        // Pico real de entrada en dBFS. NaN en silencio digital.
+        public double InputPeakDb => MaxTruePeakLinear > 0f
+            ? 20.0 * Math.Log10(MaxTruePeakLinear)
+            : double.NaN;
+
+        public bool HasDisplayMetrics => ShowNormalized ? HasNormalizedResult : HasMeasurement;
+
+        public double DisplayLoudness => ShowNormalized ? NormalizedLoudnessDb : IntegratedLoudness;
+
+        public double DisplayPeakDb => ShowNormalized ? NormalizedPeakDb : InputPeakDb;
+
+        // PLR de la vista activa. El umbral de -69.5 LUFS es el suelo de silencio
+        // que aplica el motor: por debajo, pico y loudness dejan de guardar relación
+        // y el PLR sería un número inventado.
+        public double DisplayPlr
+        {
+            get
+            {
+                if (!HasDisplayMetrics) return double.NaN;
+                double loudness = DisplayLoudness;
+                double peak = DisplayPeakDb;
+                if (double.IsNaN(loudness) || double.IsNaN(peak)) return double.NaN;
+                if (loudness <= -69.5) return double.NaN;
+                return peak - loudness;
+            }
+        }
 
         // ── Colores de las columnas del grid ─────────────────────────────
         // Mismas paletas del tema: skyblue para LUFS, teal para Peak, verde/ámbar/rojo
@@ -89,17 +174,27 @@ namespace ElysiumAudio.Models
 
         public IBrush InputPeakBrush => HasMeasurement ? BrushTeal : BrushMuted;
 
-        public IBrush NormLoudnessBrush
+        // Umbrales de desviación respecto al objetivo. Son los mismos para la celda
+        // del grid, la ficha del archivo y el resumen del lote: así el color significa
+        // exactamente lo mismo en los tres sitios.
+        public const double DeviationOk = 0.5;
+        public const double DeviationWarn = 1.5;
+
+        // Error de loudness tras normalizar, con signo: positivo = quedó más alto que
+        // el objetivo, negativo = más bajo. NaN mientras no se haya normalizado.
+        public double NormalizedDeviation =>
+            double.IsNaN(NormalizedLoudnessDb) || float.IsNaN(TargetLufs)
+                ? double.NaN
+                : NormalizedLoudnessDb - TargetLufs;
+
+        public static IBrush DeviationBrush(double absDeviation)
         {
-            get
-            {
-                if (double.IsNaN(NormalizedLoudnessDb)) return BrushMuted;
-                double diff = Math.Abs(NormalizedLoudnessDb - TargetLufs);
-                if (diff <= 0.5) return BrushGreen;
-                if (diff <= 1.5) return BrushAmber;
-                return BrushRed;
-            }
+            if (double.IsNaN(absDeviation)) return BrushMuted;
+            if (absDeviation <= DeviationOk) return BrushGreen;
+            return absDeviation <= DeviationWarn ? BrushAmber : BrushRed;
         }
+
+        public IBrush NormLoudnessBrush => DeviationBrush(Math.Abs(NormalizedDeviation));
 
         public IBrush NormPeakBrush
         {

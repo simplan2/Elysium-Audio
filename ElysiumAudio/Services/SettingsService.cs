@@ -36,8 +36,20 @@ namespace ElysiumAudio.Services
                 if (File.Exists(ConfigPath))
                 {
                     string json = File.ReadAllText(ConfigPath);
-                    var loaded = JsonSerializer.Deserialize<UserSettings>(json, JsonOptions);
-                    Current = ClampToRanges(loaded ?? new UserSettings());
+                    var loaded = JsonSerializer.Deserialize<UserSettings>(json, JsonOptions)
+                                 ?? new UserSettings();
+
+                    // Migración: en un JSON anterior a la existencia de
+                    // PreserveMetadata la clave no está, y el bool deserializa a
+                    // false, lo que desactivaría el clonado de metadatos sin que el
+                    // usuario lo haya pedido. Si la clave no viene, se usa el
+                    // default (true).
+                    if (!HasKey(json, nameof(UserSettings.PreserveMetadata)))
+                    {
+                        loaded.PreserveMetadata = true;
+                    }
+
+                    Current = ClampToRanges(loaded);
                 }
                 else
                 {
@@ -76,6 +88,21 @@ namespace ElysiumAudio.Services
         {
             WriteIndented = true
         };
+
+        /// <summary>Indica si el JSON guardado contiene la propiedad indicada.</summary>
+        private static bool HasKey(string json, string propertyName)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                return doc.RootElement.ValueKind == JsonValueKind.Object
+                       && doc.RootElement.TryGetProperty(propertyName, out _);
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+        }
 
         private void Attach(UserSettings settings)
         {

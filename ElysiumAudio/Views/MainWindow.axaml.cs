@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using ElysiumAudio.Localization;
+using ElysiumAudio.Models;
 using ElysiumAudio.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -35,12 +36,47 @@ namespace ElysiumAudio.Views
 
             // Buscamos el contenedor central por su nombre y le asignamos los eventos de arrastre
             var dropZone = this.FindControl<Border>("DropZoneBorder");
+            var dropZoneRight = this.FindControl<Border>("DropZoneRight");
             if (dropZone != null)
             {
                 dropZone.AddHandler(DragDrop.DragOverEvent, OnDragOver);
                 dropZone.AddHandler(DragDrop.DropEvent, OnDrop);
             }
+            if(dropZoneRight != null)
+            {
+                dropZoneRight.AddHandler(DragDrop.DragOverEvent, OnDragOver);
+                dropZoneRight.AddHandler(DragDrop.DropEvent, OnDrop);
+            }
         }
+
+        // Supr quita de la lista lo que esté seleccionado en la tabla. Va por KeyDown
+        // y no como Binding porque DataGrid expone SelectedItems como colección de
+        // solo lectura: no hay forma de enlazarla a un ICommand desde XAML.
+        //
+        // Se ignora cuando el foco está en un campo de texto, donde Supr debe seguir
+        // siendo "borrar el caracter a la derecha" y no tocar la cola.
+        private void OnQueueKeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Delete) return;
+            if (IsEditingText(e.Source as Avalonia.Input.IInputElement)) return;
+
+            if (this.FindControl<DataGrid>("AudioFilesGrid") is not { } grid) return;
+
+            var selected = grid.SelectedItems?
+                .OfType<AudioFileModel>()
+                .ToList();
+
+            if (selected is null || selected.Count == 0) return;
+
+            ViewModel?.RemoveSelectedFiles(selected);
+
+            // Si no se marca como manejada, Supr puede seguir burbujeando hacia arriba
+            // y acabar borrando una fila distinta de la que el usuarioerge.
+            e.Handled = true;
+        }
+
+        private static bool IsEditingText(Avalonia.Input.IInputElement? element) =>
+            element is TextBox or AutoCompleteBox;
 
         // Este método se llama cuando un archivo es arrastrado sobre la ventana. Si el archivo es válido, se permite el arrastre.
         private void OnDragOver(object? sender, DragEventArgs e)
@@ -83,10 +119,20 @@ namespace ElysiumAudio.Views
 
             vm.SystemStatus = string.Format(L("DropLoading"), validPaths.Count);
 
-            int added = vm.AddFilesToQueue(validPaths);
-            vm.SystemStatus = added > 0
-                ? string.Format(L("DropAdded"), added)
-                : L("DropAllInQueue");
+            int added = vm.AddFilesToQueue(validPaths, out int failed);
+            if (failed == 0)
+            {
+                vm.SystemStatus = added > 0
+                    ? string.Format(L("DropAdded"), added)
+                    : L("DropAllInQueue");
+            }
+            else
+            {
+                // Algunos no se pudieron leer. No hay fila donde poner una X roja,
+                // porque un archivo que no entra en la cola no existe en la tabla,
+                // así que el aviso solo puede ir por la barra de estado.
+                vm.ReportQueueResult(added, failed);
+            }
         }
 
         // Los MenuItem del flyout del SplitButton no heredan el DataContext
@@ -110,11 +156,6 @@ namespace ElysiumAudio.Views
         // Abre el modal de Ajustes. Necesario por código (y no por Command)
         // porque el DataContext no llega a los MenuItem del MenuFlyout.
         private async void OnSettingsMenuClick(object? sender, RoutedEventArgs e)
-        {
-            await ShowSettingsAsync();
-        }
-
-        private async void OnSettingsButtonClick(object? sender, RoutedEventArgs e)
         {
             await ShowSettingsAsync();
         }

@@ -27,7 +27,7 @@ namespace ElysiumAudio.Localization
             ["GridLufs"] = "LUFS",
             ["GridPeak"] = "Pico dBTP",
             ["GridNormLufs"] = "Norm LUFS",
-            ["GridNormPeak"] = "Norm Peak",
+            ["GridNormPeak"] = "Norm Pico dBTP",
 
             // --- Estado vacío de la cola ---
             ["DropHintTitle"] = "Suelta aquí archivos o carpetas WAV / FLAC",
@@ -54,6 +54,8 @@ namespace ElysiumAudio.Localization
             ["TruePeakCeiling"] = "Techo de pico real",
             ["ReleaseTime"] = "Tiempo de liberación",
             ["LookAheadTime"] = "Tiempo de anticipación",
+            ["RangeOf"] = "Rango de",
+            ["To"] = "a",
 
             // --- Ejecución y seguridad ---
             ["ExecutionSafety"] = "EJECUCIÓN Y SEGURIDAD",
@@ -66,6 +68,7 @@ namespace ElysiumAudio.Localization
             ["MaxPeak"] = "PICO MÁXIMO",
             ["Measured"] = "Medidos",
             ["Range"] = "Rango",
+            ["MaxDeviation"] = "Desviación máxima",
             ["OnTarget"] = "En objetivo",
             ["BatchEmptyHint"] = "Ejecuta el análisis para ver los resultados del lote.",
 
@@ -78,7 +81,14 @@ namespace ElysiumAudio.Localization
             ["Loudness"] = "LOUDNESS",
             ["Target"] = "OBJETIVO",
             ["TruePeak"] = "PICO REAL",
+            ["Plr"] = "PLR",
+            ["Lra"] = "LRA",
+            ["AvgLra"] = "LRA MEDIO",
+            ["Deviation"] = "DESVIACIÓN",
+            ["Original"] = "Original",
+            ["Normalized"] = "Normalizado",
             ["GainToTarget"] = "GANANCIA AL OBJETIVO",
+            ["GainToTargetWithTarget"] = "Ganancia hacia {0}",
             ["NoSelectionHint"] = "Selecciona un archivo de la lista para ver su ficha.",
 
             // --- Botón principal ---
@@ -127,7 +137,11 @@ namespace ElysiumAudio.Localization
             ["ProcessingFile"] = "Procesando {0}/{1}: {2}",
             ["FileDone"] = "[{0}/{1}] Completado: {2}",
             ["FileError"] = "Error en {0}: {1}",
+            ["FileDoneClamped"] = "{1}/{2}: {0} normalizado con tope, quedó en {3:F1} LUFS en vez del objetivo de {4:F1}.",
             ["QueueCleared"] = "Cola de archivos limpiada.",
+            ["QueueRemovedSelection"] = "{0} archivo(s) quitados de la lista. Los archivos no se han borrado del disco.",
+            ["QueueRemovedBusySkipped"] = "{0} archivo(s) no se quitaron porque se están procesando: {1}",
+            ["QueueRemovedPartial"] = "{0} quitado(s); {1} se dejaron por estar procesándose: {2}. Los archivos no se borran del disco.",
             ["QueueReset"] = "Estado de la cola restablecido. Todos los archivos esperan reprocesarse.",
             ["Cancelling"] = "Cancelando el procesamiento... Los archivos en curso se descartarán de forma segura.",
             ["OutputDirSet"] = "Directorio de salida: {0}",
@@ -148,6 +162,8 @@ namespace ElysiumAudio.Localization
             ["DropNoFiles"] = "No se encontraron archivos WAV / FLAC.",
             ["DropLoading"] = "Cargando {0} archivo(s)...",
             ["DropAdded"] = "Se añadieron {0} archivo(s) a la cola.",
+            ["QueuePartialFailed"] = "Se añadieron {0} archivo(s) a la cola; {1} no se pudieron leer y se omitieron.",
+            ["QueueAllFailed"] = "No se pudo leer ninguno de los {0} archivo(s). Ninguno se añadió a la cola.",
             ["DropAllInQueue"] = "Todos los archivos ya están en la cola.",
 
             // --- Títulos de pickers del sistema ---
@@ -161,12 +177,11 @@ namespace ElysiumAudio.Localization
             ["FunctionTitleNormalize"] = "Normalizar audio",
             ["FunctionDescAnalyze"] = "Mide loudness y pico verdadero. Nunca modifica los archivos originales.",
             ["FunctionDescNormalize"] = "Aplica normalización de loudness y limitador de pico real a los archivos de salida.",
-            ["QueueCounters"] = "Completados: {0}  ·  En curso: {1}  ·  Errores: {2}",
+            ["QueueCounters"] = "Completados: {0}  ·  En curso: {1}",
 
             // --- Modal de Ajustes ---
             ["Settings"] = "Ajustes",
             ["SettingsTitle"] = "Ajustes de Elysium Audio",
-            ["MoreOptions"] = "Más opciones",
             ["Language"] = "Idioma",
             ["OutputFolder"] = "Carpeta de salida",
             ["ChooseFolder"] = "Elegir carpeta…",
@@ -192,7 +207,7 @@ namespace ElysiumAudio.Localization
             ["GridLufs"] = "LUFS",
             ["GridPeak"] = "Peak dBTP",
             ["GridNormLufs"] = "Norm LUFS",
-            ["GridNormPeak"] = "Norm Peak",
+            ["GridNormPeak"] = "Norm Peak dBTP",
 
             ["DropHintTitle"] = "Drop WAV / FLAC files or folders here",
             ["DropHintSubtitle"] = "Or use Add Files / Add Folder to build the queue",
@@ -214,6 +229,8 @@ namespace ElysiumAudio.Localization
             ["TruePeakCeiling"] = "True Peak Ceiling",
             ["ReleaseTime"] = "Release Time",
             ["LookAheadTime"] = "Look-ahead Time",
+            ["RangeOf"] = "Range of",
+            ["To"] = "to",
 
             ["ExecutionSafety"] = "EXECUTION & SAFETY",
             ["PreserveMetadata"] = "Preserve Basic Metadata",
@@ -224,6 +241,7 @@ namespace ElysiumAudio.Localization
             ["MaxPeak"] = "MAX PEAK",
             ["Measured"] = "Measured",
             ["Range"] = "Range",
+            ["MaxDeviation"] = "Max deviation",
             ["OnTarget"] = "On target",
             ["BatchEmptyHint"] = "Run the analysis to see the batch results.",
 
@@ -235,7 +253,14 @@ namespace ElysiumAudio.Localization
             ["Loudness"] = "LOUDNESS",
             ["Target"] = "TARGET",
             ["TruePeak"] = "TRUE PEAK",
+            ["Plr"] = "PLR",
+            ["Lra"] = "LRA",
+            ["AvgLra"] = "AVERAGE LRA",
+            ["Deviation"] = "DEVIATION",
+            ["Original"] = "Original",
+            ["Normalized"] = "Normalized",
             ["GainToTarget"] = "GAIN TO TARGET",
+            ["GainToTargetWithTarget"] = "Gain toward {0}",
             ["NoSelectionHint"] = "Select a file from the list to see its details.",
 
             ["RunBatchNormalization"] = "Run Batch Normalization",
@@ -278,7 +303,11 @@ namespace ElysiumAudio.Localization
             ["ProcessingFile"] = "Processing {0}/{1}: {2}",
             ["FileDone"] = "[{0}/{1}] Completed: {2}",
             ["FileError"] = "Error in {0}: {1}",
+            ["FileDoneClamped"] = "{1}/{2}: {0} normalized with gain cap, landed at {3:F1} LUFS instead of the {4:F1} target.",
             ["QueueCleared"] = "File queue cleared.",
+            ["QueueRemovedSelection"] = "{0} file(s) removed from the list. The files themselves were not deleted from disk.",
+            ["QueueRemovedBusySkipped"] = "{0} file(s) were not removed because they are being processed: {1}",
+            ["QueueRemovedPartial"] = "{0} removed; {1} left in place because they are being processed: {2}. Files are not deleted from disk.",
             ["QueueReset"] = "Queue state reset. All files are waiting to be reprocessed.",
             ["Cancelling"] = "Cancelling the process... In-progress files will be safely discarded.",
             ["OutputDirSet"] = "Output directory: {0}",
@@ -299,6 +328,8 @@ namespace ElysiumAudio.Localization
             ["DropNoFiles"] = "No WAV / FLAC files found.",
             ["DropLoading"] = "Loading {0} file(s)...",
             ["DropAdded"] = "Added {0} file(s) to the queue.",
+            ["QueuePartialFailed"] = "Added {0} file(s) to the queue; {1} could not be read and were skipped.",
+            ["QueueAllFailed"] = "None of the {0} file(s) could be read. Nothing was added to the queue.",
             ["DropAllInQueue"] = "All files are already in the queue.",
 
             ["PickerFolderTitle"] = "Select a folder with audio tracks",
@@ -310,12 +341,11 @@ namespace ElysiumAudio.Localization
             ["FunctionTitleNormalize"] = "Normalize Audio",
             ["FunctionDescAnalyze"] = "Measures loudness and true peak only. Original files are never modified.",
             ["FunctionDescNormalize"] = "Applies loudness normalization and true-peak limiting to the output files.",
-            ["QueueCounters"] = "Completed: {0}  ·  In progress: {1}  ·  Errors: {2}",
+            ["QueueCounters"] = "Completed: {0}  ·  In progress: {1}",
 
             // --- Modal de Ajustes ---
             ["Settings"] = "Settings",
             ["SettingsTitle"] = "Elysium Audio settings",
-            ["MoreOptions"] = "More options",
             ["Language"] = "Language",
             ["OutputFolder"] = "Output folder",
             ["ChooseFolder"] = "Choose folder…",

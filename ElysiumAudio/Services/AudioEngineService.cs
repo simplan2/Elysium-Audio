@@ -20,6 +20,7 @@ namespace ElysiumAudio.Services
         public string LoudnessFormatted { get; set; } = "-0.0 LUFS";
         public float MaxTruePeakLinear { get; set; } = 0f;
         public float IntegratedLoudness { get; set; } = -70f; // Sonoridad estimada
+        public float LoudnessRange { get; set; } = float.NaN; // LRA (EBU Tech 3342), NaN si no hay datos suficientes
         public int SampleRate { get; set; } = 0;
         public int Channels { get; set; } = 0;
     }
@@ -728,6 +729,58 @@ namespace ElysiumAudio.Services
             }
 
             var blockEnergies = new List<double>(sampleRate);
+
+            // ── LRA (EBU Tech 3342): sonoridad de corto plazo, ventana de 3 s ──
+            // Se reutiliza el mismo segmento de 100 ms que ya se calcula para la
+            // integrada, así que el coste es O(1) por salto y el audio no se recorre
+            // dos veces. 3.0 s / 0.1 s = 30 segmentos. La norma solo admite un valor
+            // cuando la ventana está COMPLETA.
+            const int stSegsPerWindow = 30;
+            double stWindowSamples = hopSizeSamples * (double)stSegsPerWindow;
+            var stSegRing = new RingBuffer[channels];
+            double[] stAcc = new double[channels];
+            int[] stSegCount = new int[channels];
+            double[] stFragSum = new double[channels];
+            int[] stFragCount = new int[channels];
+            for (int c = 0; c < channels; c++) stSegRing[c] = new RingBuffer(stSegsPerWindow + 2);
+            var shortTermEnergies = new List<double>(sampleRate);
+
+            // Emite un valor de corto plazo si la ventana de 3 s está completa.
+            // La compuerta absoluta de -70 LUFS se aplica ya aquí, igual que en los
+            // bloques de la integrada.
+            void EmitirCortoPlazo()
+            {
+                for (int c = 0; c < channels; c++)
+                {
+                    if (stSegCount[c] < stSegsPerWindow) return;
+                }
+
+                double stEnergySum = 0.0;
+                for (int c = 0; c < channels; c++)
+                {
+                    stEnergySum += channelWeights[c] * (stAcc[c] / stWindowSamples);
+                }
+
+                double stLoudness = stEnergySum > 0.0
+                    ? (-0.691 + 10.0 * Math.Log10(stEnergySum)) : -70.0;
+
+                if (stLoudness > -70.0) shortTermEnergies.Add(stEnergySum);
+            }
+
+            // Acumula un segmento de 100 ms en la ventana de 3 s del canal c.
+            void AñadirSegmentoCortoPlazo(int c, double seg)
+            {
+                stSegRing[c].Add((float)seg);
+                stAcc[c] += seg;
+                stSegCount[c]++;
+                if (stSegCount[c] > stSegsPerWindow)
+                {
+                    stAcc[c] -= stSegRing[c][0];
+                    stSegRing[c].RemoveFirst(1);
+                    stSegCount[c]--;
+                }
+            }
+
             var truePeakMeter = measureTruePeak ? new TruePeakMeter(channels) : null;
             float maxTruePeak = 0f;
 
@@ -798,6 +851,7 @@ namespace ElysiumAudio.Services
                                 windowAcc[c] -= segRing[c][0]; // descarta el segmento más antiguo
                                 segRing[c].RemoveFirst(1);
                             }
+                            AñadirSegmentoCortoPlazo(c, seg); // misma energía, ventana de 3 s
                             completed = true;                  // todos los canales avanzan a la vez
                         }
 
@@ -817,6 +871,8 @@ namespace ElysiumAudio.Services
                             {
                                 blockEnergies.Add(blockEnergySum);
                             }
+
+                            EmitirCortoPlazo();
                         }
                     }
                 }
@@ -828,9 +884,22 @@ namespace ElysiumAudio.Services
                         var rb = energyRing[c];
                         for (int i = 0; i < frames; i++)
                         {
-                            rb.Add(filteredOut[c][i]);
+                            float sample = filteredOut[c][i];
+                            rb.Add(sample);
+
+                            // LRA: aquí no hay segmentos precalculados, así que se forma
+                            // el de 100 ms al vuelo con el mismo criterio de la vía rápida.
+                            stFragSum[c] += sample * sample;
+                            stFragCount[c]++;
+                            if (stFragCount[c] >= hopSizeSamples)
+                            {
+                                AñadirSegmentoCortoPlazo(c, stFragSum[c]);
+                                stFragSum[c] = 0.0;
+                                stFragCount[c] = 0;
+                            }
                         }
                     }
+                    EmitirCortoPlazo();
 
                     while (energyRing[0].Count >= blockLengthSamples)
                     {
@@ -912,7 +981,9 @@ namespace ElysiumAudio.Services
                 }
 
                 info.IntegratedLoudness = (float)gatedLoudness;
-                info.LoudnessFormatted = $"{gatedLoudness:F1}";
+                // Se formatea desde el float ya almacenado, no desde el double: así la
+                // grilla y el panel de detalle muestran siempre el mismo redondeo.
+                info.LoudnessFormatted = $"{info.IntegratedLoudness:F1}";
             }
             else
             {
@@ -920,7 +991,55 @@ namespace ElysiumAudio.Services
                 info.LoudnessFormatted = "-70.0";
             }
 
+            info.LoudnessRange = CalcularRangoSonoridad(shortTermEnergies);
+
             return info;
+        }
+
+        // LRA = P95 − P10 de la distribución de sonoridades de corto plazo (ventana de 3 s),
+        // EBU Tech 3342 §3.
+        //
+        // Diferencias importantes con la LoudnessRange de la integrada:
+        //  · la compuerta relativa es de −20 LU, no de −10 LU;
+        //  · se calcula UNA sola vez sobre el conjunto que ya superó la compuerta
+        //    absoluta de −70 LUFS, en lugar de iterarse hasta convergencia;
+        //  · el resultado NO es una sonoridad sino una diferencia en LU.
+        //
+        // Percentiles por rango más próximo (nearest-rank), el método de las
+        // implementaciones de referencia (libebur128): P10 = s[ceil(0.1*(n-1))] y
+        // P95 = s[floor(0.95*(n-1))]. No se interpola, para no Reportar valores que la
+        // norma no define.
+        //
+        // Devuelve NaN cuando no hay datos suficientes en vez de 0: "no se puede
+        // calcular" y "cero de verdad" son cosas distintas en la ficha.
+        private static float CalcularRangoSonoridad(List<double> shortTermEnergies)
+        {
+            const int minSamples = 10;
+            if (shortTermEnergies.Count < minSamples) return float.NaN;
+
+            double sum = 0.0;
+            foreach (var e in shortTermEnergies) sum += e;
+            double meanEnergy = sum / shortTermEnergies.Count;
+
+            // −20 LU en el dominio de energía equivale a multiplicar por 0.01
+            double thresholdEnergy = meanEnergy * 0.01;
+
+            var values = new List<double>(shortTermEnergies.Count);
+            foreach (var e in shortTermEnergies)
+            {
+                if (e >= thresholdEnergy) values.Add(-0.691 + 10.0 * Math.Log10(e));
+            }
+            if (values.Count < minSamples) return float.NaN;
+
+            values.Sort();
+            int n = values.Count;
+            int idxLow = (int)Math.Ceiling(0.1 * (n - 1));
+            int idxHigh = (int)Math.Floor(0.95 * (n - 1));
+            if (idxHigh < idxLow) idxHigh = idxLow;
+
+            double lra = values[idxHigh] - values[idxLow];
+            if (double.IsNaN(lra) || double.IsInfinity(lra) || lra < 0.0) return float.NaN;
+            return (float)lra;
         }
 
 
@@ -1385,11 +1504,51 @@ namespace ElysiumAudio.Services
             }
         }
 
+        /// <summary>
+        /// Tope de ganancia aplicada en un sentido, en dB. La normalización nunca
+        /// aplica más de esto ni hacia arriba ni hacia abajo.
+        ///
+        /// No es un ajuste de usuario: es una red de seguridad, igual que en las
+        /// herramientas de referencia (los normalizadores EBU R128 usan 30 dB por
+        /// defecto). Con un objetivo de −14, solo se activa con material por debajo
+        /// de −44 LUFS, así que un master real no lo toca nunca.
+        ///
+        /// La amplificación es lo peligroso: el ruido de fondo sube con la señal. Un
+        /// archivo en silencio digital o muy bajo mide −70 LUFS por la compuerta
+        /// absoluta, y con un objetivo de −14 pediría +56 dB: unas 630 veces más
+        /// amplitud. El limitador de pico real sólo recorta picos, no baja la ganancia
+        /// global, así que no lo evita: el archivo sale sin clip pero con el ruido
+        /// disparado y la dinámica aplastada contra el ceiling.
+        ///
+        /// Se topa en vez de rechazar para que el archivo no se pierda: sale por
+        /// debajo del objetivo, que es información recuperable, mientras que un
+        /// rechazo deja al usuario sin nada. Quien necesite más debe hacerlo en su
+        /// DAW, donde tiene la medición completa y decide con ella.
+        /// </summary>
+        public const float MaxSafeGainDb = 30f;
+
+        /// <summary>
+        /// Ganancia necesaria para llevar <paramref name="currentLoudness"/> a
+        /// <paramref name="targetLufs"/>. Un valor positivo amplifica.
+        /// </summary>
         public float CalculateTargetGain(float currentLoudness, float targetLufs)
         {
             float gainNeeded = targetLufs - currentLoudness;
             if (Math.Abs(gainNeeded) < 0.1f) return 0f;
             return gainNeeded;
+        }
+
+        /// <summary>
+        /// Limita <paramref name="gainDb"/> a ±<see cref="MaxSafeGainDb"/>. Devuelve la
+        /// ganancia realmente aplicable y dice en <paramref name="wasClamped"/> si el
+        /// tope alteró lo que se pidió, para poder avisar en vez de dejar que el
+        /// usuario crea que llegó al objetivo.
+        /// </summary>
+        public static float ClampSafeGain(float gainDb, out bool wasClamped)
+        {
+            float clamped = Math.Clamp(gainDb, -MaxSafeGainDb, MaxSafeGainDb);
+            wasClamped = Math.Abs(clamped - gainDb) > 0.01f;
+            return clamped;
         }
 
         // Limpieza de directorios temporales huérfanos (%TEMP%\ElysiumAudio\*) que quedan

@@ -34,5 +34,14 @@ namespace ElysiumAudio.Models
         // Idioma de la interfaz ("es" o "en"), persistido con el resto de preferencias.
         [ObservableProperty]
         private string language = "es";
+
+        /// <summary>
+        /// Si al normalizar se deben clonar los metadatos del original (tags +
+        /// carátula) al archivo de salida. Por defecto activo.
+        /// Nota: es un bool, así que SettingsService.Load() lo fuerza a true si
+        /// el JSON guardado es anterior a la existencia de este campo.
+        /// </summary>
+        [ObservableProperty]
+        private bool preserveMetadata = true;
     }
 }
