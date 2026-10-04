@@ -418,18 +418,5 @@ namespace ElysiumAudio.Views
                 _handlingClose = false;
             }
         }
-
-        protected override void OnLoaded(RoutedEventArgs e)
-        {
-            base.OnLoaded(e);
-            // Forzar re-evaluación del Value después de que Min/Max estén listos
-            var slider = this.FindControl<Slider>("TruePeakCeilingSlider");
-            if (slider != null && DataContext is MainWindowViewModel vm)
-            {
-                slider.Minimum = vm.MinTruePeakCeiling;
-                slider.Maximum = vm.MaxTruePeakCeiling;
-                slider.Value = vm.TruePeakCeiling;
-            }
-        }
     }
 }

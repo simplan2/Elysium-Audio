@@ -877,7 +877,7 @@
                                         </Border>
 
                                         <!--  Sección: parámetros del limitador  -->
-                                        <Grid Margin="0,14,0,4" ColumnDefinitions="Auto,10,*">
+                                        <Grid Margin="0,12,0,4" ColumnDefinitions="Auto,10,*">
                                             <TextBlock
                                                 VerticalAlignment="Center"
                                                 FontSize="{StaticResource FontSizeSmall}"
@@ -892,439 +892,384 @@
                                                 Background="{StaticResource BrushBorderSubtle}" />
                                         </Grid>
 
-                                        <StackPanel Spacing="18">
-                                            <!--  Fila: True Peak Ceiling BrushAccentSkyblue  -->
-                                            <Grid
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="4"
-                                                RowDefinitions="Auto,Auto">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushAccentSkyblue}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize TruePeakCeiling}" />
-                                                <TextBox
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="30"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="{StaticResource BrushBgInput}"
-                                                    BorderBrush="{StaticResource BrushBorderDefault}"
-                                                    BorderThickness="1"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource TextAccentSecondary}"
-                                                    KeyDown="OnTruePeakKeyDown"
-                                                    LostFocus="OnTruePeakLostFocus"
-                                                    Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushAccentSkyblue}"
-                                                    Text="dBTP" />
-
-                                                <StackPanel
-                                                    Grid.Row="1"
-                                                    Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    Spacing="4">
-                                                    <TextBlock
+                                        <Border
+                                            Padding="12,16"
+                                            Background="{StaticResource Border_bg_degrade}"
+                                            BorderBrush="{StaticResource BrushBorderDefault}"
+                                            BorderThickness="1"
+                                            CornerRadius="8">
+                                            <StackPanel Spacing="12">
+												
+                                                <!--  Fila: True Peak Ceiling BrushAccentSkyblue  -->
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="2"
+                                                    RowDefinitions="Auto,Auto">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize RangeOf}" />
+                                                        Fill="{StaticResource BrushAccentSkyblue}" />
                                                     <TextBlock
                                                         Grid.Column="1"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize TruePeakCeiling}" />
+                                                    <TextBox
+                                                        Grid.RowSpan="2"
                                                         Grid.Column="2"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize To}" />
+                                                        Width="48"
+                                                        MinHeight="30"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnTruePeakKeyDown"
+                                                        LostFocus="OnTruePeakLostFocus"
+                                                        Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
                                                     <TextBlock
+                                                        Grid.RowSpan="2"
                                                         Grid.Column="3"
+                                                        HorizontalAlignment="Right"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                </StackPanel>
-                                            </Grid>
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushAccentSkyblue}"
+                                                        Text="dBTP" />
 
-                                            <!--  Fila: Release Time  -->
-                                            <Grid
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="4"
-                                                RowDefinitions="Auto,Auto">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushAccentRosa}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize ReleaseTime}" />
-                                                <TextBox
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="30"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="{StaticResource BrushBgInput}"
-                                                    BorderBrush="{StaticResource BrushBorderDefault}"
-                                                    BorderThickness="1"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource TextAccentSecondary}"
-                                                    KeyDown="OnReleaseTimeMsKeyDown"
-                                                    LostFocus="OnReleaseTimeMsLostFocus"
-                                                    Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushAccentRosa}"
-                                                    Text="ms" />
-
-                                                <StackPanel
-                                                    Grid.Row="1"
-                                                    Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    Spacing="4">
-                                                    <TextBlock
+                                                    <StackPanel
+                                                        Grid.Row="1"
+                                                        Grid.Column="1"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4">
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize RangeOf}" />
+                                                        <TextBlock
+                                                            Grid.Column="1"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                        <TextBlock
+                                                            Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize To}" />
+                                                        <TextBlock
+                                                            Grid.Column="3"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <!--  Fila: Release Time  -->
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="2"
+                                                    RowDefinitions="Auto,Auto">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize RangeOf}" />
+                                                        Fill="{StaticResource BrushAccentRosa}" />
                                                     <TextBlock
+                                                        Grid.Column="1"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                    <TextBlock
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize To}" />
-                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize ReleaseTime}" />
+                                                    <TextBox
+                                                        Grid.RowSpan="2"
                                                         Grid.Column="2"
+                                                        Width="48"
+                                                        MinHeight="30"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnReleaseTimeMsKeyDown"
+                                                        LostFocus="OnReleaseTimeMsLostFocus"
+                                                        Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
+                                                    <TextBlock
+                                                        Grid.RowSpan="2"
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                </StackPanel>
-                                            </Grid>
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushAccentRosa}"
+                                                        Text="ms" />
 
-                                            <!--  Fila: Look-ahead Time  -->
-                                            <Grid
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="4"
-                                                RowDefinitions="Auto,Auto">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushSuccess}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize LookAheadTime}" />
-                                                <TextBox
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="30"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="{StaticResource BrushBgInput}"
-                                                    BorderBrush="{StaticResource BrushBorderDefault}"
-                                                    BorderThickness="1"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource TextAccentSecondary}"
-                                                    KeyDown="OnLookAheadKeyDown"
-                                                    LostFocus="OnLookAheadLostFocus"
-                                                    Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.RowSpan="2"
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushSuccess}"
-                                                    Text="ms" />
+                                                    <StackPanel
+                                                        Grid.Row="1"
+                                                        Grid.Column="1"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4">
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize RangeOf}" />
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize To}" />
+                                                        <TextBlock
+                                                            Grid.Column="2"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                    </StackPanel>
+                                                </Grid>
 
-                                                <StackPanel
-                                                    Grid.Row="1"
-                                                    Grid.Column="1"
-                                                    Orientation="Horizontal"
-                                                    Spacing="4">
-                                                    <TextBlock
+                                                <!--  Fila: Look-ahead Time  -->
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="2"
+                                                    RowDefinitions="Auto,Auto">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize RangeOf}" />
+                                                        Fill="{StaticResource BrushSuccess}" />
                                                     <TextBlock
+                                                        Grid.Column="1"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize LookAheadTime}" />
+                                                    <TextBox
+                                                        Grid.RowSpan="2"
+                                                        Grid.Column="2"
+                                                        Width="48"
+                                                        MinHeight="30"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnLookAheadKeyDown"
+                                                        LostFocus="OnLookAheadLostFocus"
+                                                        Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
                                                     <TextBlock
+                                                        Grid.RowSpan="2"
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
                                                         VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{l10n:Localize To}" />
-                                                    <TextBlock
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeTiny}"
-                                                        Foreground="{StaticResource BrushTextMuted}"
-                                                        Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                </StackPanel>
-                                            </Grid>
-                                        </StackPanel>
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushSuccess}"
+                                                        Text="ms" />
 
-                                        <!--<StackPanel Spacing="6">
+                                                    <StackPanel
+                                                        Grid.Row="1"
+                                                        Grid.Column="1"
+                                                        Orientation="Horizontal"
+                                                        Spacing="4">
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize RangeOf}" />
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{l10n:Localize To}" />
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeTiny}"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!--<Border
+                                            Padding="12,10"
+                                            Background="{StaticResource Border_bg_degrade2}"
+                                            BorderBrush="{StaticResource BrushBorderSubtle}"
+                                            BorderThickness="1"
+                                            CornerRadius="10">
+                                            <StackPanel Spacing="12" Margin="0,10">
 
                                         -->
                                         <!--  Fila: True Peak Ceiling  -->
                                         <!--
-                                            <Grid
-                                                Margin="0,0,0,0"
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="8">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushAccentSkyblue}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize TruePeakCeiling}" />
-                                                <TextBox
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="26"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="Transparent"
-                                                    BorderBrush="Transparent"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushAccentSkyblue}"
-                                                    KeyDown="OnTruePeakKeyDown"
-                                                    LostFocus="OnTruePeakLostFocus"
-                                                    Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="dBTP" />
-                                            </Grid>
-
-                                            <Grid ColumnDefinitions="24,*,24">
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                <Slider
-                                                    x:Name="TruePeakCeilingSlider"
-                                                    Grid.Column="1"
-                                                    Height="14"
-                                                    VerticalAlignment="Center"
-                                                    Classes="active-second"
-                                                    Maximum="{Binding #TruePeakCeilingSlider.DataContext.MaxTruePeakCeiling}"
-                                                    Minimum="{Binding #TruePeakCeilingSlider.DataContext.MinTruePeakCeiling}"
-                                                    Value="{Binding TruePeakCeiling, Mode=TwoWay}" />
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                            </Grid>
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="8">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{StaticResource BrushAccentSkyblue}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize TruePeakCeiling}" />
+                                                    <TextBox
+                                                        Grid.Column="2"
+                                                        Width="50"
+                                                        MinHeight="28"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnTruePeakKeyDown"
+                                                        LostFocus="OnTruePeakLostFocus"
+                                                        Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
+                                                    <TextBlock
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushAccentSkyblue}"
+                                                        Text="dBTP" />
+                                                </Grid>
 
                                         -->
                                         <!--  Fila: Release Time  -->
                                         <!--
-                                            <Grid
-                                                Margin="0,4,0,0"
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="8">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushAccentRosa}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize ReleaseTime}" />
-                                                <TextBox
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="26"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="Transparent"
-                                                    BorderBrush="Transparent"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushAccentRosa}"
-                                                    KeyDown="OnReleaseTimeMsKeyDown"
-                                                    LostFocus="OnReleaseTimeMsLostFocus"
-                                                    Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="ms" />
-                                            </Grid>
-
-                                            <Grid ColumnDefinitions="24,*,24">
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                <Slider
-                                                    Grid.Column="1"
-                                                    Height="14"
-                                                    VerticalAlignment="Center"
-                                                    Classes="active-amber"
-                                                    Maximum="{Binding MaxReleaseTimeMs}"
-                                                    Minimum="{Binding MinReleaseTimeMs}"
-                                                    TickFrequency="0.1"
-                                                    Value="{Binding ReleaseTimeMs, Mode=TwoWay}" />
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                            </Grid>
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="8">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{StaticResource BrushAccentRosa}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize ReleaseTime}" />
+                                                    <TextBox
+                                                        Grid.Column="2"
+                                                        Width="50"
+                                                        MinHeight="28"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnReleaseTimeMsKeyDown"
+                                                        LostFocus="OnReleaseTimeMsLostFocus"
+                                                        Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
+                                                    <TextBlock
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushAccentRosa}"
+                                                        Text="ms" />
+                                                </Grid>
 
                                         -->
                                         <!--  Fila: Look-ahead Time  -->
                                         <!--
-                                            <Grid
-                                                Margin="0,4,0,0"
-                                                ColumnDefinitions="6,*,Auto,30"
-                                                ColumnSpacing="8">
-                                                <Ellipse
-                                                    Width="5"
-                                                    Height="5"
-                                                    VerticalAlignment="Center"
-                                                    Fill="{StaticResource BrushSuccess}" />
-                                                <TextBlock
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeSmall}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    Text="{l10n:Localize LookAheadTime}" />
-                                                <TextBox
-                                                    Grid.Column="2"
-                                                    Width="50"
-                                                    MinHeight="26"
-                                                    Padding="0"
-                                                    VerticalContentAlignment="Center"
-                                                    Background="Transparent"
-                                                    BorderBrush="Transparent"
-                                                    Classes="param"
-                                                    FontFamily="{StaticResource FontMono}"
-                                                    FontSize="{StaticResource FontSizeBase}"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushSuccess}"
-                                                    KeyDown="OnLookAheadKeyDown"
-                                                    LostFocus="OnLookAheadLostFocus"
-                                                    Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                    TextAlignment="Center" />
-                                                <TextBlock
-                                                    Grid.Column="3"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeXS}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="ms" />
-                                            </Grid>
+                                                <Grid
+                                                    ColumnDefinitions="6,*,Auto,30"
+                                                    ColumnSpacing="8">
+                                                    <Ellipse
+                                                        Width="5"
+                                                        Height="5"
+                                                        VerticalAlignment="Center"
+                                                        Fill="{StaticResource BrushSuccess}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource BrushTextSecondary}"
+                                                        Text="{l10n:Localize LookAheadTime}" />
+                                                    <TextBox
+                                                        Grid.Column="2"
+                                                        Width="50"
+                                                        MinHeight="28"
+                                                        Padding="0"
+                                                        VerticalContentAlignment="Center"
+                                                        Background="{StaticResource BrushBgInput}"
+                                                        BorderBrush="{StaticResource BrushBorderDefault}"
+                                                        BorderThickness="1"
+                                                        Classes="param"
+                                                        FontFamily="{StaticResource FontMono}"
+                                                        FontSize="{StaticResource FontSizeBase}"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{StaticResource TextAccentSecondary}"
+                                                        KeyDown="OnLookAheadKeyDown"
+                                                        LostFocus="OnLookAheadLostFocus"
+                                                        Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                        TextAlignment="Center" />
+                                                    <TextBlock
+                                                        Grid.Column="3"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSizeXS}"
+                                                        Foreground="{StaticResource BrushSuccess}"
+                                                        Text="ms" />
+                                                </Grid>
 
-                                            <Grid ColumnDefinitions="24,*,24">
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                <Slider
-                                                    Grid.Column="1"
-                                                    Height="14"
-                                                    VerticalAlignment="Center"
-                                                    Classes="active-green"
-                                                    Maximum="{Binding MaxLookAheadTimeMs}"
-                                                    Minimum="{Binding MinLookAheadTimeMs}"
-                                                    Value="{Binding LookAheadTimeMs, Mode=TwoWay}" />
-                                                <TextBlock
-                                                    Grid.Column="2"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="{StaticResource FontSizeTiny}"
-                                                    Foreground="{StaticResource BrushTextMuted}"
-                                                    Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                            </Grid>
-                                        </StackPanel>-->
+                                            </StackPanel>
+                                        </Border>-->
+
                                     </StackPanel>
                                 </Border>
 

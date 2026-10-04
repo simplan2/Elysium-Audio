@@ -48,6 +48,19 @@ Generar release:
 dotnet publish .\ElysiumAudio\ElysiumAudio.csproj -c Release -o .\publish
 ```
 
+## Descarga
+
+La última versión disponible es **v1.0.0**.
+
+- [Descargar ElysiumAudio v1.0.0 (Windows)](https://github.com/simplan/ElysiumAudio/releases/download/v1.0.0/ElysiumAudio-v1.0.0-win-x64.zip) _(actualizar URL cuando se suba a Releases)_
+
+### Requisitos para la versión portable
+
+- Windows 10/11 (x64)
+- [.NET Desktop Runtime 10.0](https://dotnet.microsoft.com/es-es/download/dotnet/10.0/runtime) (si no tienes el SDK instalado; la mayoría de sistemas con actualizaciones recientes lo tienen)
+
+El ZIP portable contiene el ejecutable `ElysiumAudio.exe` y todas sus dependencias. Extrae la carpeta y ejecútalo directamente.
+
 ## Uso
 
 1. Arrastra archivos WAV/FLAC a la zona de arrastre, o usa `Añadir archivos/carpeta`.

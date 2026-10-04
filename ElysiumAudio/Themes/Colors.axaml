@@ -28,7 +28,7 @@
     <!-- Texto -->
     <Color x:Key="TextPrimary">#EDF0F7</Color>
     <Color x:Key="TextSecondary">#98A2B8</Color>
-    <Color x:Key="TextMuted">#5C6A82</Color>
+    <Color x:Key="TextMuted">#5C6B83</Color>
     <Color x:Key="TextOnAccent">#FFFFFF</Color>
     <Color x:Key="TextAccentSecondary">#79869F</Color>
 
@@ -46,7 +46,7 @@
     <Color x:Key="AccentCyan">#38BDF8</Color>
     <Color x:Key="AccentRed">#F06464</Color>
 	<Color x:Key="AccentRosa">#BA7AE2</Color>
-	<Color x:Key="AccentSkyblue">#5F95FA</Color>
+	<Color x:Key="AccentSkyblue">#6196FA</Color>
 	
     <!-- Estado -->
     <Color x:Key="Success">#34D399</Color>
@@ -98,8 +98,8 @@
 	</LinearGradientBrush>
 
 	<LinearGradientBrush x:Key="Border_bg_degrade" StartPoint="0,0" EndPoint="0%,100%">
-		<GradientStop Color="#131922" Offset="0.0"/>
-		<GradientStop Color="#0E1119" Offset="1.0"/>
+		<GradientStop Color="#13151F" Offset="0.0"/>
+		<GradientStop Color="#0D1018" Offset="1.0"/>
 	</LinearGradientBrush>
 	<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
 		<GradientStop Color="#0D1018" Offset="0.0"/>

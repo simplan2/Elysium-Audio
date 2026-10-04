@@ -62,7 +62,58 @@
         <Setter Property="Padding" Value="14,8" />
     </Style>
 
+	<!--  ============================= SCROLLBAR =============================  -->
+	<!-- Fondo transparente global para el ScrollBar -->
+	<Style Selector="ScrollBar">
+		<!-- Ancho del scrollbar cuando está activo -->
+		<Setter Property="Width" Value="10" />
+		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}">
+					<!-- El Track es obligatorio para que calcule la posición -->
+					<Track Name="PART_Track"
+                           Minimum="{TemplateBinding Minimum}"
+                           Maximum="{TemplateBinding Maximum}"
+                           Value="{TemplateBinding Value}"
+                           ViewportSize="{TemplateBinding ViewportSize}"
+                           Orientation="{TemplateBinding Orientation}"
+                           IsDirectionReversed="True">
 
+						<!-- El Thumb es la barra que se mueve -->
+						<Thumb Name="PART_Thumb">
+							<Thumb.Template>
+								<ControlTemplate>
+									<Border Background="#EEF2FE"
+                                            CornerRadius="4"
+                                            Margin="2"/>
+								</ControlTemplate>
+							</Thumb.Template>
+						</Thumb>
+
+					</Track>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</Style>
+
+	<Style Selector="ScrollBar:pointerover /template/ Border">
+		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+	</Style>
+	<Style Selector="ScrollBar:pressed /template/ Border">
+		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+	</Style>
+	<!-- Efecto al pasar el mouse por encima del Thumb personalizado -->
+	<Style Selector="ScrollBar /template/ Thumb:pointerover /template/ Border">
+		<Setter Property="Background" Value="#8F9196" />
+	</Style>
+
+	<!-- Efecto al hacer clic / presionar el Thumb -->
+	<Style Selector="ScrollBar /template/ Thumb:pressed /template/ Border">
+		<Setter Property="Background" Value="#9A9BA0" />
+	</Style>
+
+	<!--  ============================= SPLITBUTTON =============================  -->
     <!--
         SplitButton de la cola ("Agregar ▾").
         
