@@ -10,13 +10,13 @@
          ===================================================================== -->
 
     <!-- Superficies -->
-    <Color x:Key="BgBase">#0D0F14</Color>
-    <Color x:Key="BgPanel">#13151F</Color>
-    <Color x:Key="BgPanelAlt">#0E0F15</Color>
+    <Color x:Key="BgBase">#0C0E12</Color>
+    <Color x:Key="BgPanel">#161924</Color>
+    <Color x:Key="BgPanelAlt">#0C0F16</Color>
     <Color x:Key="BgInput">#0D0F16</Color>
     <Color x:Key="BgElevated">#1A1E2D</Color>
     <Color x:Key="BgButton">#151B2A</Color>
-    <Color x:Key="BgControl">#5A92FA</Color>
+    <!--<Color x:Key="BgControl">#1F293D</Color>-->
 	
 	
 
@@ -26,17 +26,17 @@
     <Color x:Key="BorderStrong">#37415A</Color>
 
     <!-- Texto -->
-    <Color x:Key="TextPrimary">#EDF0F7</Color>
-    <Color x:Key="TextSecondary">#98A2B8</Color>
-    <Color x:Key="TextMuted">#5C6B83</Color>
+    <Color x:Key="TextPrimary">#D5D9E0</Color>
+    <Color x:Key="TextSecondary">#98A2B3</Color>
+    <Color x:Key="TextMuted">#636F8A</Color>
     <Color x:Key="TextOnAccent">#FFFFFF</Color>
-    <Color x:Key="TextAccentSecondary">#79869F</Color>
+    <Color x:Key="TextAccentSecondary">#A5B3C7</Color>
 
     <!-- Acentos primarios -->
-    <Color x:Key="AccentPrimary">#1BA6FA</Color>
-    <Color x:Key="AccentPrimaryHover">#6B93FF</Color>
-    <Color x:Key="AccentPrimaryPress">#3B63D6</Color>
-    <Color x:Key="AccentPrimaryDim">#253A56</Color> 
+    <Color x:Key="AccentPrimary">#20A3FA</Color>
+    <Color x:Key="AccentPrimaryHover">#5E93FF</Color>
+    <Color x:Key="AccentPrimaryPress">#4674E8</Color>
+    <Color x:Key="AccentPrimaryDim">#233E5C</Color> 
 
     <!-- Acentos secundarios -->
     <Color x:Key="AccentViolet">#A78BFA</Color>
@@ -46,7 +46,7 @@
     <Color x:Key="AccentCyan">#38BDF8</Color>
     <Color x:Key="AccentRed">#F06464</Color>
 	<Color x:Key="AccentRosa">#BA7AE2</Color>
-	<Color x:Key="AccentSkyblue">#6196FA</Color>
+	<Color x:Key="AccentSkyblue">#6EADFF</Color>
 	
     <!-- Estado -->
     <Color x:Key="Success">#34D399</Color>
@@ -61,7 +61,7 @@
     <SolidColorBrush x:Key="BrushBgInput" Color="{StaticResource BgInput}" />
     <SolidColorBrush x:Key="BrushBgElevated" Color="{StaticResource BgElevated}" />
     <SolidColorBrush x:Key="BrushBgButton" Color="{StaticResource BgButton}" />
-    <SolidColorBrush x:Key="BrushBgControl" Color="{StaticResource BgControl}" />
+    <!--<SolidColorBrush x:Key="BrushBgControl" Color="{StaticResource BgControl}" />-->
 
     <SolidColorBrush x:Key="BrushBorderSubtle" Color="{StaticResource BorderSubtle}" />
     <SolidColorBrush x:Key="BrushBorderDefault" Color="{StaticResource BorderDefault}" />
@@ -92,24 +92,51 @@
     <SolidColorBrush x:Key="BrushInfo" Color="{StaticResource Info}" />
 
 	<LinearGradientBrush x:Key="bg_degrade" StartPoint="0,0" EndPoint="100%,0%">
-		<GradientStop Color="#1A2233" Offset="0.0"/>
-		<GradientStop Color="#293752" Offset="0.5"/>
-		<GradientStop Color="#1A2233" Offset="1.0"/>
+		<GradientStop Color="#1B2232" Offset="0.0"/>
+		<GradientStop Color="#2C3650" Offset="0.5"/>
+		<GradientStop Color="#1B2232" Offset="1.0"/>
+	</LinearGradientBrush>
+
+	<LinearGradientBrush x:Key="BrushBgControl" StartPoint="0,0" EndPoint="100%,0%">
+		<GradientStop Color="#181E2E" Offset="0.0"/>
+		<GradientStop Color="#20293D" Offset="0.5"/>
+		<GradientStop Color="#181E2E" Offset="1.0"/>
 	</LinearGradientBrush>
 
 	<LinearGradientBrush x:Key="Border_bg_degrade" StartPoint="0,0" EndPoint="0%,100%">
-		<GradientStop Color="#13151F" Offset="0.0"/>
-		<GradientStop Color="#0D1018" Offset="1.0"/>
+		<GradientStop Color="#0C0F16" Offset="0.0"/>
+		<GradientStop Color="#0B0E14" Offset="1.0"/>
 	</LinearGradientBrush>
-	<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
-		<GradientStop Color="#0D1018" Offset="0.0"/>
-		<GradientStop Color="#13151F" Offset="1.0"/>
+	
+	<LinearGradientBrush x:Key="Border_bg_normalize" StartPoint="0,0" EndPoint="0%,100%">
+		<GradientStop Color="#1D2130" Offset="0.0"/>
+		<GradientStop Color="#141721" Offset="1.0"/>
 	</LinearGradientBrush>
+	
+	<!--<LinearGradientBrush x:Key="Border_bg_degrade2" StartPoint="0,0" EndPoint="0%,100%">
+		<GradientStop Color="#0B0E14" Offset="0.0"/>
+		<GradientStop Color="#13151E" Offset="1.0"/>
+	</LinearGradientBrush>-->
+	
 	<LinearGradientBrush x:Key="btn_bg_degrade" StartPoint="0,0" EndPoint="100%,0%">
-		<GradientStop Color="#4987FA" Offset="0.0"/>
-		<GradientStop Color="#4987FA" Offset="1.0"/>
+		<GradientStop Color="#4781E5" Offset="0.0"/>
+		<GradientStop Color="#4781E5" Offset="1.0"/>
+	</LinearGradientBrush>
+	
+	<!-- Main button-->
+	<LinearGradientBrush x:Key="ButtonNeonBorder" StartPoint="0,0" EndPoint="100%,0%">
+		<GradientStop Color="#4B8BE8" Offset="0.0"/>
+		<GradientStop Color="#00E5FF" Offset="1.0"/>
 	</LinearGradientBrush>
 
+	<LinearGradientBrush x:Key="ButtonNeonForegroundHover" StartPoint="0,0" EndPoint="100%,0%">
+		<GradientStop Color="#4A87F0" Offset="0.0"/>
+		<GradientStop Color="#0AE1FF" Offset="1.0"/>
+	</LinearGradientBrush>
+	<Color x:Key="ButtonNeonBackground">#1D2133</Color>
+	<Color x:Key="ButtonNeonHoverBackground">#252A42</Color>
+	<Color x:Key="ButtonNeonPressedBackground">#0F1017</Color>
+	<Color x:Key="ButtonNeonForegroundPressed">#4781E5</Color>
 	<!-- =========================================================================
 		 DESIGN TOKENS
 		 ========================================================================= -->

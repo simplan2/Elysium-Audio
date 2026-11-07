@@ -38,7 +38,7 @@
     </Style>
 
     <!--  Variantes de botones: primario y fantasma  -->
-    <Style Selector="Button.main">
+    <Style Selector="Button.main2">
         <Setter Property="Background" Value="{StaticResource btn_bg_degrade}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBgInput}" />
         <Setter Property="Foreground" Value="{StaticResource BrushTextOnAccent}" />
@@ -47,11 +47,11 @@
         <Setter Property="Background" Value="{StaticResource BrushAccent}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
     </Style>-->
-    <Style Selector="Button.main:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.main2:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushAccentHover}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
     </Style>
-    <Style Selector="Button.main:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.main2:pressed /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{StaticResource BrushAccentPress}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderAccent}" />
     </Style>
@@ -62,74 +62,75 @@
         <Setter Property="Padding" Value="14,8" />
     </Style>
 
-	<!--  ============================= SCROLLBAR =============================  -->
-	<!-- Fondo transparente global para el ScrollBar -->
-	<Style Selector="ScrollBar">
-		<!-- Ancho del scrollbar cuando está activo -->
-		<Setter Property="Width" Value="10" />
-		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
+    <!--  ============================= Button Neon =============================  -->
+	<Style Selector="Button.main">
+		<!-- Usamos tu color de fondo base para botones -->
+		<Setter Property="Background" Value="{StaticResource ButtonNeonBackground}"/>
+		<Setter Property="Foreground" Value="{StaticResource ButtonNeonBorder}"/>
+		<Setter Property="FontSize" Value="13" />
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+		<Setter Property="CornerRadius" Value="10"/>
+		<Setter Property="Padding" Value="24,12"/>
+		<Setter Property="Focusable" Value="False"/>
 		<Setter Property="Template">
 			<ControlTemplate>
-				<Border Background="{TemplateBinding Background}">
-					<!-- El Track es obligatorio para que calcule la posición -->
-					<Track Name="PART_Track"
-                           Minimum="{TemplateBinding Minimum}"
-                           Maximum="{TemplateBinding Maximum}"
-                           Value="{TemplateBinding Value}"
-                           ViewportSize="{TemplateBinding ViewportSize}"
-                           Orientation="{TemplateBinding Orientation}"
-                           IsDirectionReversed="True">
+				<!-- 1. Marco exterior con tu borde por defecto -->
+				<Border Background="{TemplateBinding Background}"
+						BorderBrush="{StaticResource BorderDefault}"
+						BorderThickness="1"
+						CornerRadius="{TemplateBinding CornerRadius}">
 
-						<!-- El Thumb es la barra que se mueve -->
-						<Thumb Name="PART_Thumb">
-							<Thumb.Template>
-								<ControlTemplate>
-									<Border Background="#EEF2FE"
-                                            CornerRadius="4"
-                                            Margin="2"/>
-								</ControlTemplate>
-							</Thumb.Template>
-						</Thumb>
+					<Panel>
+						<!-- 2. Resplandor central adaptado con tu color AccentPrimary (#1BA6FA) -->
+						<Border CornerRadius="{TemplateBinding CornerRadius}" Margin="1">
+							<Border.Background>
+								<RadialGradientBrush Center="50%,50%" RadiusX="0.9" RadiusY="0.9">
+									<!-- Nota: Usamos variaciones de opacidad sobre tu AccentPrimary -->
+									<GradientStop Color="#331BA6FA" Offset="0.0"/>
+									<GradientStop Color="#0A1BA6FA" Offset="0.6"/>
+									<GradientStop Color="#001BA6FA" Offset="1.0"/>
+								</RadialGradientBrush>
+							</Border.Background>
+						</Border>
 
-					</Track>
+						<!-- 3. Borde interior brillante usando tu AccentPrimary -->
+						<Border Margin="3"
+								BorderBrush="{StaticResource ButtonNeonBorder}"
+								Background="Transparent"
+								BorderThickness="1.5"
+								CornerRadius="7"/>
+
+						<!-- 4. Contenido del botón limpio y transparente -->
+						<ContentPresenter Background="Transparent"
+										  BorderBrush="Transparent"
+										  IsHitTestVisible="False"
+										  Content="{TemplateBinding Content}"
+										  ContentTemplate="{TemplateBinding ContentTemplate}"
+										  Foreground="{TemplateBinding Foreground}"
+										  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+										  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+										  Margin="{TemplateBinding Padding}"/>
+					</Panel>
 				</Border>
 			</ControlTemplate>
 		</Setter>
 	</Style>
 
-	<Style Selector="ScrollBar:pointerover /template/ Border">
-		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
-	</Style>
-	<Style Selector="ScrollBar:pressed /template/ Border">
-		<Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
-	</Style>
-	<!-- Efecto al pasar el mouse por encima del Thumb personalizado -->
-	<Style Selector="ScrollBar /template/ Thumb:pointerover /template/ Border">
-		<Setter Property="Background" Value="#8F9196" />
+	<!-- Estados Interactivos vinculados a tus superficies y acentos de hover/press -->
+	<Style Selector="Button.main:pointerover">
+		<Setter Property="Background" Value="{StaticResource ButtonNeonHoverBackground}"/>
+		<Setter Property="Foreground" Value="{StaticResource ButtonNeonForegroundHover}"/>
 	</Style>
 
-	<!-- Efecto al hacer clic / presionar el Thumb -->
-	<Style Selector="ScrollBar /template/ Thumb:pressed /template/ Border">
-		<Setter Property="Background" Value="#9A9BA0" />
+	<Style Selector="Button.main:pressed">
+		<Setter Property="Background" Value="{StaticResource ButtonNeonPressedBackground}"/>
+		<Setter Property="Foreground" Value="{StaticResource AccentPrimary}"/>
+		<Setter Property="RenderTransform" Value="Scale(0.98)"/>
 	</Style>
 
-	<!--  ============================= SPLITBUTTON =============================  -->
-    <!--
-        SplitButton de la cola ("Agregar ▾").
-        
-        La plantilla por defecto de Fluent monta el control como
-        Grid > [Button PART_PrimaryButton] [SeparatorBorder] [Button PART_SecondaryButton]
-        es decir, SIN Border raíz. Por eso Background, BorderBrush y CornerRadius
-        asignados al SplitButton no se pintan nunca: lo que se ve es el tema por
-        defecto de los dos botones interiores. Por eso los estados de hover/press
-        tampoco se podían alinear con el resto de la familia.
-        
-        Aquí se sustituye la plantilla completa por una que sí tiene Border raíz
-        (PART_RootBorder) y pinta con Binding a las propiedades del propio
-        SplitButton, de modo que los tokens del tema mandan de verdad. Se conservan
-        los nombres de parte que exige SplitButton (PART_PrimaryButton,
-        PART_SecondaryButton, SeparatorBorder) para no romper el clic ni el flyout.
-    -->
+    <!--  ============================= SPLIT =============================  -->
+
     <Style Selector="SplitButton.queue">
         <Setter Property="Background" Value="{StaticResource BrushBgPanel}" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
@@ -188,15 +189,15 @@
                             Grid.Column="2"
                             Width="28"
                             Padding="0"
+                            VerticalAlignment="Stretch"
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
-							VerticalAlignment="Stretch"
                             Background="Transparent"
                             BorderThickness="0"
                             CornerRadius="0,8,8,0"
                             FontSize="{TemplateBinding FontSize}"
                             Foreground="{TemplateBinding Foreground}">
-                          
+
                             <Path
                                 Width="8"
                                 Height="4"
@@ -216,35 +217,35 @@
         </Setter>
     </Style>
 
-	<!-- Estilo global para los menús desplegables de las colas -->
-	<Style Selector="MenuFlyoutPresenter.queue-flyout">
-		<Setter Property="Background" Value="{StaticResource BrushBgOverlay}" />
-		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
-		<Setter Property="BorderThickness" Value="1" />
-		<Setter Property="CornerRadius" Value="8" />
-		<Setter Property="Padding" Value="6" />
-	</Style>
+    <!--  Estilo global para los menús desplegables de las colas  -->
+    <Style Selector="MenuFlyoutPresenter.queue-flyout">
+        <Setter Property="Background" Value="{StaticResource BrushBgOverlay}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="6" />
+    </Style>
 
-	<!-- Estilo opcional para los elementos individuales (MenuItems) dentro del menú -->
-	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem">
-		<Setter Property="CornerRadius" Value="0" />
-		<Setter Property="Height" Value="38" />
-		<Setter Property="Margin" Value="0,2" />
-		<Setter Property="FontSize" Value="{StaticResource FontSizeMD}" />
-		<Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
-		<Setter Property="Padding" Value="20,8" />
-	</Style>
-		
+    <!--  Estilo opcional para los elementos individuales (MenuItems) dentro del menú  -->
+    <Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem">
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeLarge}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+        <Setter Property="Padding" Value="20,8" />
+    </Style>
 
-	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:pointerover /template/ Border#PART_LayoutRoot">
-		<Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
-	</Style>
-	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected /template/ Border#PART_LayoutRoot">
-		<Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
-	</Style>
-	<Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected:pointerover /template/ Border#PART_LayoutRoot">
-		<Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
-	</Style>
+
+    <Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
+    </Style>
+    <Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+    </Style>
+    <Style Selector="MenuFlyoutPresenter.queue-flyout MenuItem:selected:pointerover /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource BrushAccentDim}" />
+    </Style>
 
 
     <!--
@@ -253,7 +254,7 @@
     -->
     <Style Selector="SplitButton.queue:pointerover">
         <Setter Property="Background" Value="{StaticResource BrushBgElevated}" />
-		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
         <Setter Property="Foreground" Value="{StaticResource TextAccentSecondary}" />
     </Style>
 
@@ -357,14 +358,14 @@
         <Setter Property="Padding" Value="10,6" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
-	<Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
-		<Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
-	</Style>
-	
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource BrushBorderStrong}" />
+    </Style>
+
     <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="{StaticResource BrushAccent}" />
     </Style>
-	
+
     <Style Selector="TextBox:disabled">
         <Setter Property="Opacity" Value="0.45" />
     </Style>
@@ -376,10 +377,10 @@
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="1,0" />
         <Setter Property="TextAlignment" Value="Center" />
-	</Style>
-	<Style Selector="TextBox.param:focus /template/ TextPresenter">
-		<Setter Property="TextBlock.Foreground" Value="{StaticResource BrushTextPrimary}" />
-	</Style>
+    </Style>
+    <Style Selector="TextBox.param:focus /template/ TextPresenter">
+        <Setter Property="TextBlock.Foreground" Value="{StaticResource BrushTextPrimary}" />
+    </Style>
     <!--  ============================= SLIDER =============================  -->
 
     <!--  Hover  -->
@@ -489,7 +490,7 @@
                         Background="Transparent"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="1.4"
-                        CornerRadius="{StaticResource RadiusSM}"
+                        CornerRadius="3"
                         DockPanel.Dock="Left">
                         <Viewbox
                             Width="11"
@@ -646,6 +647,77 @@
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="BorderBrush" Value="{StaticResource BrushBorderSubtle}" />
     </Style>
+
+
+    <!--  Slider fade audio  -->
+    <Style Selector="Slider.audioFader">
+        <Setter Property="Orientation" Value="Vertical" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="MinHeight" Value="250" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!--  2. Arreglo definitivo del Riel de Incremento (El tramo superior: debe ser invisible/oscuro)  -->
+    <Style Selector="Slider.AudioFader /template/ RepeatButton#PART_IncreaseButton">
+        <Setter Property="Background" Value="#14181F" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="4" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!--  3. Arreglo definitivo del Riel de Decremento (El tramo inferior: el Neón Azul que sube)  -->
+    <Style Selector="Slider.AudioFader /template/ RepeatButton#PART_DecreaseButton">
+        <Setter Property="Background" Value="#00A2FF" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="4" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <!--  4. Diseño del Botón de Arrastre (Thumb Metálico con indicador azul)  -->
+    <Style Selector="Slider.AudioFader /template/ Thumb">
+        <Setter Property="Width" Value="26" />
+        <Setter Property="Height" Value="38" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--  Contenedor en capas para el botón físico sin romper el Hit-Test  -->
+                <Grid>
+                    <!--  Cuerpo de metal con degradado y sombra de caída  -->
+                    <Border
+                        BorderBrush="#111111"
+                        BorderThickness="1"
+                        BoxShadow="0 4 6 0 #80000000"
+                        CornerRadius="5">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                                <GradientStop Offset="0.0" Color="#737A85" />
+                                <GradientStop Offset="0.3" Color="#4A5059" />
+                                <GradientStop Offset="0.7" Color="#2B3036" />
+                                <GradientStop Offset="1.0" Color="#1C1F24" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!--  Brillo de aluminio en el borde superior  -->
+                    <Border
+                        Height="1"
+                        Margin="1,1,1,0"
+                        VerticalAlignment="Top"
+                        Background="#55FFFFFF"
+                        CornerRadius="4,4,0,0" />
+
+                    <!--  Línea indicadora azul horizontal central  -->
+                    <Rectangle
+                        Height="2"
+                        Margin="1,0"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Center"
+                        Fill="#00A2FF" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
 </Styles>
 
 

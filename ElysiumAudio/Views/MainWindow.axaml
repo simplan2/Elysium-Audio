@@ -32,6 +32,7 @@
         <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
         <conv:DynamicNumberFormatConverter x:Key="DynamicNumberFormatConverter" />
         <conv:RowAlternationConverter x:Key="RowAlternationConverter" />
+        <conv:TextCaseConverter x:Key="TextCaseConverter" />
     </Window.Resources>
 
     <Grid
@@ -85,9 +86,11 @@
                                 frecuente), flecha = archivos / carpeta / ajustes.
                             -->
                             <SplitButton
+                                BorderThickness="0"
                                 Classes="queue"
-                                Command="{Binding AddFileCommand}"
-                                Content="{l10n:Localize Add}">
+                                Command="{Binding AddFileCommand}">
+                                <TextBlock Foreground="{StaticResource TextAccentSecondary}" Text="{l10n:Localize Add, Converter={StaticResource TextCaseConverter}, ConverterParameter=upper}" />
+
                                 <SplitButton.Flyout>
                                     <MenuFlyout FlyoutPresenterClasses="queue-flyout">
                                         <MenuItem Click="OnAddFilesMenuClick" Header="{l10n:Localize AddFiles}">
@@ -130,20 +133,30 @@
                                 </SplitButton.Flyout>
                             </SplitButton>
 
-                            <Button Classes="ghost" Command="{Binding ClearListCommand}">
+                            <Button
+                                BorderThickness="0"
+                                Classes="ghost"
+                                Command="{Binding ClearListCommand}">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     FontSize="{StaticResource FontSizeMedium}"
                                     Foreground="{StaticResource TextAccentSecondary}"
-                                    Text="{l10n:Localize Clear}" />
+                                    Text="{l10n:Localize Clear,
+                                                         Converter={StaticResource TextCaseConverter},
+                                                         ConverterParameter=upper}" />
                             </Button>
 
-                            <Button Classes="ghost" Command="{Binding ResetQueueCommand}">
+                            <Button
+                                BorderThickness="0"
+                                Classes="ghost"
+                                Command="{Binding ResetQueueCommand}">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     FontSize="{StaticResource FontSizeMedium}"
                                     Foreground="{StaticResource TextAccentSecondary}"
-                                    Text="{l10n:Localize Reset}" />
+                                    Text="{l10n:Localize Reset,
+                                                         Converter={StaticResource TextCaseConverter},
+                                                         ConverterParameter=upper}" />
                             </Button>
                         </StackPanel>
 
@@ -613,14 +626,22 @@
                             Classes="ghostNoZoom"
                             Command="{Binding ExploreOutputDirectoryCommand}"
                             CornerRadius="8">
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                FontSize="{StaticResource FontSizeSmall}"
-                                Foreground="{StaticResource BrushTextMuted}"
-                                Text="{l10n:Localize ExploreDirectory}"
-                                TextTrimming="CharacterEllipsis"
-                                TextWrapping="NoWrap" />
+                            <StackPanel Spacing="0">
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeSmall}"
+                                    Foreground="{StaticResource BrushTextMuted}"
+                                    Text="{l10n:Localize ExploreDirectory}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="NoWrap" />
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    FontSize="{StaticResource FontSizeMedium}"
+                                    Foreground="{StaticResource BrushTextSecondary}"
+                                    Text="..." />
+                            </StackPanel>
+
                         </Button>
                     </Grid>
                 </Border>
@@ -630,7 +651,7 @@
             <Border
                 x:Name="DropZoneRight"
                 Grid.Column="1"
-                Background="{StaticResource BrushBgPanel}"
+                Background="{StaticResource Border_bg_normalize}"
                 BorderBrush="{StaticResource BrushBorderDefault}"
                 BorderThickness="1"
                 CornerRadius="12"
@@ -664,15 +685,16 @@
                                     HorizontalAlignment="Center"
                                     Orientation="Horizontal"
                                     Spacing="8">
-                                    <Path
-                                        Width="15"
-                                        Height="15"
-                                        VerticalAlignment="Center"
-                                        Data="M7.5,1 L7.5,14 M1,7.5 L14,7.5 M4,7.5 C4,5.5 5.5,4 7.5,4 C9.5,4 11,5.5 11,7.5 C11,9.5 9.5,11 7.5,11 C5.5,11 4,9.5 4,7.5 Z"
-                                        Fill="Transparent"
-                                        Stroke="{StaticResource BrushAccentSecondary}"
-                                        StrokeLineCap="Round"
-                                        StrokeThickness="1.7" />
+                                    <Viewbox
+                                        Width="13"
+                                        Height="13"
+                                        VerticalAlignment="Center">
+                                        <Path
+                                            Data="M163.38,94.76l-38.2,176.01c-1.95,8.99-7.31,14.78-15.7,15.61-7.76.77-16.54-3.22-18.93-11.66l-31.99-113.01-39.18-.21c-10.87-.06-19.01-7.44-19.36-17.56s6.95-18.66,17.92-18.69l52.37-.17c7.46-.02,15.71,3.86,18.09,11.59l17.2,55.98L144.59,11.71C146.25,3.97,155.18-.14,161.16,0c6.47.16,14.68,4.02,16.79,11.7l41.78,152.22,15.96-30.17c2.28-4.32,8.76-8.63,13.69-8.6l57.55.29c10.26.05,16.4,11.23,15.28,19.56-1.35,10.01-8.38,16.51-19.13,16.52l-41.46.05-30.95,61.67c-3.2,6.39-9.85,9.81-16.38,9.62-5.17-.15-13.82-3.91-15.64-10.51l-35.26-127.59Z"
+                                            Fill="{StaticResource BrushAccentSecondary}"
+                                            StrokeLineCap="Round" />
+                                    </Viewbox>
+
                                     <TextBlock VerticalAlignment="Center" Text="{l10n:Localize Analyze}" />
                                 </StackPanel>
                             </Button>
@@ -686,15 +708,15 @@
                                     HorizontalAlignment="Center"
                                     Orientation="Horizontal"
                                     Spacing="8">
-                                    <Path
-                                        Width="15"
-                                        Height="15"
-                                        VerticalAlignment="Center"
-                                        Data="M2,7.5 L4,4 L6,11 L8,6 L10,9 L13,7.5"
-                                        Fill="Transparent"
-                                        Stroke="{StaticResource BrushAccentSecondary}"
-                                        StrokeLineCap="Round"
-                                        StrokeThickness="1.7" />
+                                    <Viewbox
+                                        Width="13"
+                                        Height="13"
+                                        VerticalAlignment="Center">
+                                        <Path
+                                            Data="M322.33,119.24h0c0,10.49-8.51,19-19,19h-6.29c-10.49,0-19,8.51-19,19v74.69c0,10.49-8.51,19-19,19h-2.16v.06h-94.72c-10.49,0-19-8.51-19-19V57c0-10.49-8.51-19-19-19h-22.88c-10.49,0-19,8.51-19,19v83.24c0,10.49-8.51,19-19,19H19c-10.49,0-19-8.51-19-19h0c0-10.49,8.51-19,19-19h6.28c10.49,0,19-8.51,19-19V19.26C44.28,8.77,52.79.26,63.28.26h2.55v-.26h82.28v.53h14.05c10.49,0,19,8.51,19,19v174.46c0,10.49,8.51,19,19,19h20.88c10.49,0,19-8.51,19-19v-74.75c0-10.49,8.51-19,19-19h44.29c10.49,0,19,8.51,19,19Z"
+                                            Fill="{StaticResource BrushAccentSecondary}"
+                                            StrokeLineCap="Round" />
+                                    </Viewbox>                                 
                                     <TextBlock VerticalAlignment="Center" Text="{l10n:Localize Normalize}" />
                                 </StackPanel>
                             </Button>
@@ -706,11 +728,15 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <Grid Margin="16,12,16,0">
 
-                            <!--  1. Panel de Normalilzar (modo normalizar)  -->
+                            <!--
+                                =====================================================================
+                                1.2 PANEL DE NORMALIZAR (modo analizar)
+                                =====================================================================
+                            -->
                             <Grid
                                 IsVisible="{Binding IsNormalizeMode}"
                                 RowDefinitions="Auto, Auto, Auto"
-                                RowSpacing="12">
+                                RowSpacing="8">
 
                                 <!--  1.0 Encabezado de la función activa  -->
                                 <StackPanel
@@ -733,543 +759,412 @@
                                 <!--  1.1 Controles de normalización (focusable para forzar a actualizar los valores)  -->
                                 <Border
                                     Grid.Row="1"
-                                    Padding="18,18"
-                                    Background="{StaticResource Border_bg_degrade2}"
+                                    Padding="0,10"
+                                    Background="{StaticResource Border_bg_nornalize}"
                                     BorderBrush="{StaticResource BrushBorderDefault}"
-                                    BorderThickness="1"
-                                    CornerRadius="8"
+                                    BorderThickness="0"
+                                    CornerRadius="0"
                                     Focusable="True">
 
-                                    <StackPanel Spacing="10">
+                                    <StackPanel Spacing="12">
 
-                                        <!--  Sección: Target Loudness  -->
-                                        <Border
-                                            Padding="0,10,0,10"
-                                            Background="{StaticResource bg_degrade}"
-                                            BorderBrush="{StaticResource BrushBorderDefault}"
-                                            BorderThickness="1"
-                                            CornerRadius="10">
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="Auto" />
-                                                    <RowDefinition Height="172" />
-                                                    <RowDefinition Height="Auto" />
-                                                </Grid.RowDefinitions>
-
-                                                <!--  TITULO  -->
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    FontSize="12"
-                                                    FontWeight="SemiBold"
-                                                    Foreground="{StaticResource BrushTextSecondary}"
-                                                    LetterSpacing="2.5"
-                                                    Text="{l10n:Localize TargetLufs}" />
-
-                                                <!--  KNOB  -->
-                                                <Grid Grid.Row="1" VerticalAlignment="Center">
-
-                                                    <controls:LufsKnob
-                                                        x:Name="TargetLufsKnob"
-                                                        Width="140"
-                                                        Height="140"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        Maximum="-6"
-                                                        Minimum="-24"
-                                                        TickCount="19"
-                                                        Value="{Binding TargetLufs, Mode=TwoWay}" />
-
-                                                    <!--  VALOR CENTRAL  -->
-                                                    <Grid
-                                                        Width="74"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        Background="Transparent"
-                                                        IsHitTestVisible="False"
-                                                        RowDefinitions="Auto, Auto"
-                                                        RowSpacing="0">
-
-                                                        <TextBox
-                                                            Width="68"
-                                                            MinWidth="68"
-                                                            MinHeight="24"
-                                                            Margin="0"
-                                                            Padding="0"
-                                                            Background="Transparent"
-                                                            BorderBrush="Transparent"
-                                                            Classes="param"
-                                                            FontSize="16"
-                                                            FontWeight="SemiBold"
-                                                            Foreground="{StaticResource BrushAccentSkyblue}"
-                                                            IsHitTestVisible="False"
-                                                            KeyDown="OnTargetLufsKeyDown"
-                                                            LostFocus="OnTargetLufsLostFocus"
-                                                            Text="{Binding TargetLufs, Mode=OneWay, StringFormat={}{0:F1}}"
-                                                            TextAlignment="Center" />
-
-                                                        <TextBlock
-                                                            Grid.Row="1"
-                                                            HorizontalAlignment="Center"
-                                                            FontSize="8.5"
-                                                            Foreground="#8B91A3"
-                                                            IsHitTestVisible="False"
-                                                            LetterSpacing="1"
-                                                            Text="LUFS" />
-                                                    </Grid>
-                                                </Grid>
-
-                                                <!--  PRESETS  -->
-                                                <Button
-                                                    Grid.Row="2"
-                                                    HorizontalAlignment="Center"
-                                                    HorizontalContentAlignment="Center"
-                                                    Background="{StaticResource BrushBgPanelAlt}"
-                                                    BorderBrush="{StaticResource BrushBorderSubtle}"
-                                                    Classes="ghostNoZoom"
-                                                    Command="{Binding TogglePresetsPopupCommand}"
-                                                    CornerRadius="12">
-
-                                                    <Button.Flyout>
-                                                        <Flyout
-                                                            Closed="OnPresetsFlyoutClosed"
-                                                            IsOpen="{Binding IsPresetsFlyoutOpen}"
-                                                            ShowMode="Standard">
-
-                                                            <ListBox
-                                                                MinWidth="332"
-                                                                Classes="dark-popup"
-                                                                ItemsSource="{Binding Presets}"
-                                                                SelectedItem="{Binding SelectedPreset}"
-                                                                SelectionMode="Single">
-                                                                <ListBox.ItemTemplate>
-                                                                    <DataTemplate>
-                                                                        <TextBlock
-                                                                            Margin="20,0"
-                                                                            VerticalAlignment="Center"
-                                                                            FontSize="{StaticResource FontSizeMD}"
-                                                                            Text="{Binding Name}" />
-                                                                    </DataTemplate>
-                                                                </ListBox.ItemTemplate>
-                                                            </ListBox>
-                                                        </Flyout>
-                                                    </Button.Flyout>
-
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock
-                                                            FontSize="{StaticResource FontSizeMedium}"
-                                                            Foreground="{StaticResource BrushTextSecondary}"
-                                                            Text="{Binding SelectedPreset.Name}" />
-
-                                                        <Path
-                                                            Grid.Column="1"
-                                                            Width="10"
-                                                            Height="6"
-                                                            Margin="12,0,0,0"
-                                                            HorizontalAlignment="Right"
-                                                            Data="M 0 0 L 8 0 L 4 5 Z"
-                                                            Fill="{StaticResource TextMuted}"
-                                                            Stretch="Uniform" />
-                                                    </Grid>
-
-                                                </Button>
-
-                                            </Grid>
-                                        </Border>
-
-                                        <!--  Sección: parámetros del limitador  -->
-                                        <Grid Margin="0,12,0,4" ColumnDefinitions="Auto,10,*">
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontSize="{StaticResource FontSizeSmall}"
-                                                FontWeight="SemiBold"
-                                                Foreground="{StaticResource BrushTextMuted}"
-                                                LetterSpacing="1.5"
-                                                Text="{l10n:Localize Limiter}" />
+                                        <!--  Sección: Target Loudness Border_bg_normalize  -->
+                                        <Grid>
                                             <Border
-                                                Grid.Column="2"
-                                                Height="1"
-                                                VerticalAlignment="Center"
-                                                Background="{StaticResource BrushBorderSubtle}" />
+                                                Padding="24,10,24,24"
+                                                Background="{StaticResource Border_bg_degrade}"
+                                                BorderBrush="{StaticResource BrushBorderDefault}"
+                                                BorderThickness="1"
+                                                CornerRadius="10">
+                                                <StackPanel Spacing="16">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="170" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+
+                                                        <Image
+                                                            Grid.RowSpan="3"
+                                                            Height="194"
+                                                            Margin="0,0,0,0"
+                                                            RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                            Source="/Assets/knob-ticks.png" />
+                                                        <Image
+                                                            Grid.RowSpan="3"
+                                                            Height="146"
+                                                            Margin="0,0,0,0"
+                                                            RenderOptions.BitmapInterpolationMode="HighQuality"
+                                                            Source="/Assets/knob.png" />
+
+                                                        <!--  TITULO  -->
+                                                        <Grid
+                                                            Height="38">
+                                                            <TextBlock
+                                                                Margin="0,0,0,0"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="12"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                LetterSpacing="2.5"
+                                                                Text="{l10n:Localize TargetLufs}" />
+                                                           
+                                                        </Grid>
+
+                                                        <!--  KNOB  -->
+                                                        <Grid Grid.Row="1" VerticalAlignment="Center">
+
+                                                            <controls:LufsKnob
+                                                                x:Name="TargetLufsKnob"
+                                                                Width="164"
+                                                                Height="164"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Maximum="-6"
+                                                                Minimum="-24"
+                                                                TickCount="19"
+                                                                Value="{Binding TargetLufs, Mode=TwoWay}" />
+
+                                                            <!--  VALOR CENTRAL  -->
+                                                            <Grid
+                                                                Width="74"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Background="Transparent"
+                                                                RowDefinitions="Auto, Auto">
+
+                                                                <TextBox
+                                                                    Width="54"
+                                                                    MinWidth="54"
+                                                                    MinHeight="24"
+                                                                    Margin="0"
+                                                                    Padding="0"
+                                                                    Background="Transparent"
+                                                                    BorderBrush="Transparent"
+                                                                    Classes="param"
+                                                                    FontSize="16"
+                                                                    FontWeight="SemiBold"
+                                                                    Foreground="{StaticResource BrushAccentSkyblue}"
+                                                                    KeyDown="OnTargetLufsKeyDown"
+                                                                    LostFocus="OnTargetLufsLostFocus"
+                                                                    Text="{Binding TargetLufs, Mode=OneWay, StringFormat={}{0:F1}}"
+                                                                    TextAlignment="Center" />
+
+                                                                <TextBlock
+                                                                    Grid.Row="1"
+                                                                    HorizontalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeMicro}"
+                                                                    Foreground="#8B91A3"
+                                                                    IsHitTestVisible="False"
+                                                                    LetterSpacing="1"
+                                                                    Text="LUFS" />
+                                                            </Grid>
+                                                        </Grid>
+
+														<!--  PRESETS  -->
+														<Button Grid.Row="2"
+															Margin="0,8,0,0"
+															HorizontalAlignment="Center"
+															HorizontalContentAlignment="Center"
+															Background="{StaticResource BrushBgPanelAlt}"
+															BorderBrush="{StaticResource BrushBorderDefault}"
+															Classes="ghostNoZoom"
+															Command="{Binding TogglePresetsPopupCommand}"
+															CornerRadius="12">
+
+															<Button.Flyout>
+																<Flyout
+																	Closed="OnPresetsFlyoutClosed"
+																	IsOpen="{Binding IsPresetsFlyoutOpen}"
+																	ShowMode="Standard">
+
+																	<ListBox
+																		MinWidth="332"
+																		Classes="dark-popup"
+																		ItemsSource="{Binding Presets}"
+																		SelectedItem="{Binding SelectedPreset}"
+																		SelectionMode="Single">
+																		<ListBox.ItemTemplate>
+																			<DataTemplate>
+																				<TextBlock
+																					Margin="20,0"
+																					VerticalAlignment="Center"
+																					FontSize="{StaticResource FontSizeMD}"
+																					Text="{Binding Name}" />
+																			</DataTemplate>
+																		</ListBox.ItemTemplate>
+																	</ListBox>
+																</Flyout>
+															</Button.Flyout>
+
+															<Grid ColumnDefinitions="*,Auto">
+																<TextBlock
+																	FontSize="{StaticResource FontSizeMedium}"
+																	Foreground="{StaticResource BrushTextSecondary}"
+																	Text="{Binding SelectedPreset.Name}" />
+
+																<Path
+																	Grid.Column="1"
+																	Width="8"
+																	Height="4"
+																	Margin="12,0,0,0"
+																	HorizontalAlignment="Right"
+																	VerticalAlignment="Center"
+																	Data="M0,0 L4,4 L8,0"
+																	Fill="Transparent"
+																	Stretch="None"
+																	Stroke="{StaticResource TextMuted}"
+																	StrokeJoin="Round"
+																	StrokeLineCap="Round"
+																	StrokeThickness="1.5" />														
+															</Grid>
+
+														</Button>
+
+
+													</Grid>
+
+                                                    <!--  Sección: parámetros del limitador  -->
+                                                    <Grid Margin="0,2,0,0" ColumnDefinitions="Auto,10,*">
+                                                        <TextBlock
+                                                            VerticalAlignment="Center"
+                                                            FontSize="{StaticResource FontSizeSmall}"
+                                                            FontWeight="SemiBold"
+                                                            Foreground="{StaticResource BrushTextMuted}"
+                                                            LetterSpacing="1.5"
+                                                            Text="{l10n:Localize Limiter}" />                                                
+                                                    </Grid>
+
+                                                    <StackPanel Spacing="16">
+
+                                                        <!--  Fila: True Peak Ceiling BrushAccentSkyblue  -->
+                                                        <Grid
+                                                            ColumnDefinitions="6,*,Auto,30"
+                                                            ColumnSpacing="2"
+                                                            RowDefinitions="Auto,Auto">
+                                                            <Ellipse
+                                                                Width="5"
+                                                                Height="5"
+                                                                VerticalAlignment="Center"
+                                                                Fill="{StaticResource BrushAccentSkyblue}" />
+                                                            <TextBlock
+                                                                Grid.Column="1"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeSM}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                Text="{l10n:Localize TruePeakCeiling}" />
+                                                            <TextBox
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="2"
+                                                                Width="48"
+                                                                MinHeight="30"
+                                                                Padding="0"
+                                                                VerticalContentAlignment="Center"
+                                                                Background="{StaticResource BrushBgInput}"
+                                                                BorderBrush="{StaticResource BrushBorderDefault}"
+                                                                BorderThickness="1"
+                                                                Classes="param"
+                                                                FontFamily="{StaticResource FontMono}"
+                                                                FontSize="{StaticResource FontSizeBase}"
+                                                                FontWeight="Medium"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                KeyDown="OnTruePeakKeyDown"
+                                                                LostFocus="OnTruePeakLostFocus"
+                                                                Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                                TextAlignment="Center" />
+                                                            <TextBlock
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="3"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeXS}"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="dBTP" />
+
+                                                            <StackPanel
+                                                                Grid.Row="1"
+                                                                Grid.Column="1"
+                                                                Orientation="Horizontal"
+                                                                Spacing="4">
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize RangeOf}" />
+                                                                <TextBlock
+                                                                    Grid.Column="1"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                                <TextBlock
+                                                                    Grid.Column="2"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize To}" />
+                                                                <TextBlock
+                                                                    Grid.Column="3"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <!--  Fila: Release Time  -->
+                                                        <Grid
+                                                            ColumnDefinitions="6,*,Auto,30"
+                                                            ColumnSpacing="2"
+                                                            RowDefinitions="Auto,Auto">
+                                                            <Ellipse
+                                                                Width="5"
+                                                                Height="5"
+                                                                VerticalAlignment="Center"
+                                                                Fill="{StaticResource BrushAccentRosa}" />
+                                                            <TextBlock
+                                                                Grid.Column="1"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeSM}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                Text="{l10n:Localize ReleaseTime}" />
+                                                            <TextBox
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="2"
+                                                                Width="48"
+                                                                MinHeight="30"
+                                                                Padding="0"
+                                                                VerticalContentAlignment="Center"
+                                                                Background="{StaticResource BrushBgInput}"
+                                                                BorderBrush="{StaticResource BrushBorderDefault}"
+                                                                BorderThickness="1"
+                                                                Classes="param"
+                                                                FontFamily="{StaticResource FontMono}"
+                                                                FontSize="{StaticResource FontSizeBase}"
+                                                                FontWeight="Medium"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                KeyDown="OnReleaseTimeMsKeyDown"
+                                                                LostFocus="OnReleaseTimeMsLostFocus"
+                                                                Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                                TextAlignment="Center" />
+                                                            <TextBlock
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="3"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeXS}"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="ms" />
+
+                                                            <StackPanel
+                                                                Grid.Row="1"
+                                                                Grid.Column="1"
+                                                                Orientation="Horizontal"
+                                                                Spacing="4">
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize RangeOf}" />
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize To}" />
+                                                                <TextBlock
+                                                                    Grid.Column="2"
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+
+                                                            </StackPanel>
+                                                        </Grid>
+
+                                                        <!--  Fila: Look-ahead Time  -->
+                                                        <Grid
+                                                            ColumnDefinitions="6,*,Auto,30"
+                                                            ColumnSpacing="2"
+                                                            RowDefinitions="Auto,Auto">
+                                                            <Ellipse
+                                                                Width="5"
+                                                                Height="5"
+                                                                VerticalAlignment="Center"
+                                                                Fill="{StaticResource BrushSuccess}" />
+                                                            <TextBlock
+                                                                Grid.Column="1"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeSM}"
+                                                                FontWeight="SemiBold"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                Text="{l10n:Localize LookAheadTime}" />
+                                                            <TextBox
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="2"
+                                                                Width="48"
+                                                                MinHeight="30"
+                                                                Padding="0"
+                                                                VerticalContentAlignment="Center"
+                                                                Background="{StaticResource BrushBgInput}"
+                                                                BorderBrush="{StaticResource BrushBorderDefault}"
+                                                                BorderThickness="1"
+                                                                Classes="param"
+                                                                FontFamily="{StaticResource FontMono}"
+                                                                FontSize="{StaticResource FontSizeBase}"
+                                                                FontWeight="Medium"
+                                                                Foreground="{StaticResource BrushTextSecondary}"
+                                                                KeyDown="OnLookAheadKeyDown"
+                                                                LostFocus="OnLookAheadLostFocus"
+                                                                Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
+                                                                TextAlignment="Center" />
+                                                            <TextBlock
+                                                                Grid.RowSpan="2"
+                                                                Grid.Column="3"
+                                                                HorizontalAlignment="Right"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="{StaticResource FontSizeXS}"
+                                                                Foreground="{StaticResource BrushTextMuted}"
+                                                                Text="ms" />
+
+                                                            <StackPanel
+                                                                Grid.Row="1"
+                                                                Grid.Column="1"
+                                                                Orientation="Horizontal"
+                                                                Spacing="4">
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize RangeOf}" />
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{l10n:Localize To}" />
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="{StaticResource FontSizeTiny}"
+                                                                    Foreground="{StaticResource BrushTextMuted}"
+                                                                    Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </StackPanel>
+                                                </StackPanel>
+
+                                            </Border>
                                         </Grid>
-
-                                        <Border
-                                            Padding="12,16"
-                                            Background="{StaticResource Border_bg_degrade}"
-                                            BorderBrush="{StaticResource BrushBorderDefault}"
-                                            BorderThickness="1"
-                                            CornerRadius="8">
-                                            <StackPanel Spacing="12">
-												
-                                                <!--  Fila: True Peak Ceiling BrushAccentSkyblue  -->
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="2"
-                                                    RowDefinitions="Auto,Auto">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushAccentSkyblue}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize TruePeakCeiling}" />
-                                                    <TextBox
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="2"
-                                                        Width="48"
-                                                        MinHeight="30"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnTruePeakKeyDown"
-                                                        LostFocus="OnTruePeakLostFocus"
-                                                        Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushAccentSkyblue}"
-                                                        Text="dBTP" />
-
-                                                    <StackPanel
-                                                        Grid.Row="1"
-                                                        Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="4">
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize RangeOf}" />
-                                                        <TextBlock
-                                                            Grid.Column="1"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MinTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                        <TextBlock
-                                                            Grid.Column="2"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize To}" />
-                                                        <TextBlock
-                                                            Grid.Column="3"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MaxTruePeakCeiling, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                                <!--  Fila: Release Time  -->
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="2"
-                                                    RowDefinitions="Auto,Auto">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushAccentRosa}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize ReleaseTime}" />
-                                                    <TextBox
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="2"
-                                                        Width="48"
-                                                        MinHeight="30"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnReleaseTimeMsKeyDown"
-                                                        LostFocus="OnReleaseTimeMsLostFocus"
-                                                        Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushAccentRosa}"
-                                                        Text="ms" />
-
-                                                    <StackPanel
-                                                        Grid.Row="1"
-                                                        Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="4">
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize RangeOf}" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MinReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize To}" />
-                                                        <TextBlock
-                                                            Grid.Column="2"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MaxReleaseTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                    </StackPanel>
-                                                </Grid>
-
-                                                <!--  Fila: Look-ahead Time  -->
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="2"
-                                                    RowDefinitions="Auto,Auto">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushSuccess}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize LookAheadTime}" />
-                                                    <TextBox
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="2"
-                                                        Width="48"
-                                                        MinHeight="30"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnLookAheadKeyDown"
-                                                        LostFocus="OnLookAheadLostFocus"
-                                                        Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.RowSpan="2"
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushSuccess}"
-                                                        Text="ms" />
-
-                                                    <StackPanel
-                                                        Grid.Row="1"
-                                                        Grid.Column="1"
-                                                        Orientation="Horizontal"
-                                                        Spacing="4">
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize RangeOf}" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MinLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{l10n:Localize To}" />
-                                                        <TextBlock
-                                                            VerticalAlignment="Center"
-                                                            FontSize="{StaticResource FontSizeTiny}"
-                                                            Foreground="{StaticResource BrushTextMuted}"
-                                                            Text="{Binding MaxLookAheadTimeMs, Converter={StaticResource DynamicNumberFormatConverter}}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </StackPanel>
-                                        </Border>
-
-                                        <!--<Border
-                                            Padding="12,10"
-                                            Background="{StaticResource Border_bg_degrade2}"
-                                            BorderBrush="{StaticResource BrushBorderSubtle}"
-                                            BorderThickness="1"
-                                            CornerRadius="10">
-                                            <StackPanel Spacing="12" Margin="0,10">
-
-                                        -->
-                                        <!--  Fila: True Peak Ceiling  -->
-                                        <!--
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="8">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushAccentSkyblue}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize TruePeakCeiling}" />
-                                                    <TextBox
-                                                        Grid.Column="2"
-                                                        Width="50"
-                                                        MinHeight="28"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnTruePeakKeyDown"
-                                                        LostFocus="OnTruePeakLostFocus"
-                                                        Text="{Binding TruePeakCeiling, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushAccentSkyblue}"
-                                                        Text="dBTP" />
-                                                </Grid>
-
-                                        -->
-                                        <!--  Fila: Release Time  -->
-                                        <!--
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="8">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushAccentRosa}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize ReleaseTime}" />
-                                                    <TextBox
-                                                        Grid.Column="2"
-                                                        Width="50"
-                                                        MinHeight="28"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnReleaseTimeMsKeyDown"
-                                                        LostFocus="OnReleaseTimeMsLostFocus"
-                                                        Text="{Binding ReleaseTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushAccentRosa}"
-                                                        Text="ms" />
-                                                </Grid>
-
-                                        -->
-                                        <!--  Fila: Look-ahead Time  -->
-                                        <!--
-                                                <Grid
-                                                    ColumnDefinitions="6,*,Auto,30"
-                                                    ColumnSpacing="8">
-                                                    <Ellipse
-                                                        Width="5"
-                                                        Height="5"
-                                                        VerticalAlignment="Center"
-                                                        Fill="{StaticResource BrushSuccess}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeSmall}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource BrushTextSecondary}"
-                                                        Text="{l10n:Localize LookAheadTime}" />
-                                                    <TextBox
-                                                        Grid.Column="2"
-                                                        Width="50"
-                                                        MinHeight="28"
-                                                        Padding="0"
-                                                        VerticalContentAlignment="Center"
-                                                        Background="{StaticResource BrushBgInput}"
-                                                        BorderBrush="{StaticResource BrushBorderDefault}"
-                                                        BorderThickness="1"
-                                                        Classes="param"
-                                                        FontFamily="{StaticResource FontMono}"
-                                                        FontSize="{StaticResource FontSizeBase}"
-                                                        FontWeight="SemiBold"
-                                                        Foreground="{StaticResource TextAccentSecondary}"
-                                                        KeyDown="OnLookAheadKeyDown"
-                                                        LostFocus="OnLookAheadLostFocus"
-                                                        Text="{Binding LookAheadTimeMs, Mode=OneWay, Converter={StaticResource DynamicNumberFormatConverter}}"
-                                                        TextAlignment="Center" />
-                                                    <TextBlock
-                                                        Grid.Column="3"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Center"
-                                                        FontSize="{StaticResource FontSizeXS}"
-                                                        Foreground="{StaticResource BrushSuccess}"
-                                                        Text="ms" />
-                                                </Grid>
-
-                                            </StackPanel>
-                                        </Border>-->
-
                                     </StackPanel>
                                 </Border>
 
@@ -1307,7 +1202,11 @@
                                 </Border>
                             </Grid>
 
-                            <!--  2. Panel de Análisis (modo Analizar)  -->
+                            <!--
+                                =====================================================================
+                                2 PANEL DE ÁNALISIS (modo Analizar)
+                                =====================================================================
+                            -->
                             <StackPanel
                                 Grid.Row="1"
                                 IsVisible="{Binding IsAnalyzeMode}"
@@ -1469,7 +1368,7 @@
                                             <!--  Medidor  -->
                                             <Border
                                                 Padding="12,12"
-                                                Background="{StaticResource bg_degrade}"
+                                                Background="{StaticResource BrushBgControl}"
                                                 BorderBrush="{StaticResource BrushBorderSubtle}"
                                                 BorderThickness="1"
                                                 CornerRadius="8"
@@ -1507,7 +1406,7 @@
                                                         Grid.Column="1"
                                                         Width="1"
                                                         Margin="0,6"
-                                                        Fill="{StaticResource BrushBorderSubtle}" />
+                                                        Fill="{StaticResource BorderDefault}" />
 
                                                     <!--  Info  -->
                                                     <Grid
@@ -1807,39 +1706,34 @@
                     <!--  Botón principal de ejecución  -->
                     <Button
                         Grid.Row="2"
-                        Height="44"
+                        Height="50"
                         Margin="18"
                         HorizontalAlignment="Stretch"
                         Classes="main"
-                        Command="{Binding StartNormalizationCommand}">
+                        Command="{Binding StartNormalizationCommand}"
+                        FocusAdorner="{x:Null}">
+
                         <StackPanel
                             HorizontalAlignment="Center"
                             Orientation="Horizontal"
                             Spacing="8">
-                            <Path
-                                Width="15"
-                                Height="15"
-                                VerticalAlignment="Center"
-                                Data="M8,5 L19,12 L8,19 Z"
-                                Fill="{StaticResource BrushTextOnAccent}"
-                                IsVisible="{Binding !IsProcessing}"
-                                Stretch="Uniform" />
+
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding ShowRunNormalizationLabel}"
                                 Text="{l10n:Localize RunBatchNormalization}" />
+
                             <TextBlock
                                 VerticalAlignment="Center"
-                                Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding ShowRunAnalysisLabel}"
                                 Text="{l10n:Localize RunBatchAnalysis}" />
+
                             <TextBlock
                                 VerticalAlignment="Center"
                                 FontSize="{StaticResource FontSizeLG}"
-                                Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsProcessing}"
                                 Text="{l10n:Localize Processing}" />
+
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -1990,14 +1884,10 @@
 
                             <TextBlock
                                 VerticalAlignment="Center"
-                                FontSize="{StaticResource FontSizeBase}"
-                                Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding !IsCancelling}"
                                 Text="{l10n:Localize ModalCancel}" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                FontSize="{StaticResource FontSizeBase}"
-                                Foreground="{StaticResource BrushTextOnAccent}"
                                 IsVisible="{Binding IsCancelling}"
                                 Text="{l10n:Localize ModalCancelling}" />
                         </StackPanel>

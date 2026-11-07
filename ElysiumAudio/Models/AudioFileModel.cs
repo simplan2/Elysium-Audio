@@ -164,7 +164,7 @@ namespace ElysiumAudio.Models
         // Mismas paletas del tema: skyblue para LUFS, teal para Peak, verde/ámbar/rojo
         // según cumplimiento de objetivo/techo en los resultados normalizados.
         private static readonly IBrush BrushMuted = Solid(0x5C, 0x6A, 0x82);   // TextMuted
-        private static readonly IBrush BrushSky = Solid(0x5A, 0x92, 0xFA);     // AccentSkyblue
+        private static readonly IBrush BrushSky = Solid(0x6A, 0xAA, 0xFF);     // AccentSkyblue
         private static readonly IBrush BrushTeal = Solid(0x2D, 0xD4, 0xBF);    // AccentTeal
         private static readonly IBrush BrushGreen = Solid(0x34, 0xD3, 0x99);   // Success
         private static readonly IBrush BrushAmber = Solid(0xFB, 0xBF, 0x24);   // Warning

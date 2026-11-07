@@ -52,7 +52,8 @@
 
             <Arc
                 Width="27.8"
-                Height="27.8" Margin="1"
+                Height="27.8"
+                Margin="1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 StartAngle="0"

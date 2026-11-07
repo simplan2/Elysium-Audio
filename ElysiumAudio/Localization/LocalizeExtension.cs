@@ -1,4 +1,5 @@
 using Avalonia.Data;
+using Avalonia.Data.Converters;
 using Avalonia.Markup.Xaml;
 using System;
 
@@ -18,6 +19,8 @@ namespace ElysiumAudio.Localization
         }
 
         public string? Key { get; set; }
+        public IValueConverter? Converter { get; set; }
+        public object? ConverterParameter { get; set; }
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
@@ -29,8 +32,11 @@ namespace ElysiumAudio.Localization
             return new Binding(nameof(TranslationEntry.Value))
             {
                 Source = LocalizationManager.Instance.GetEntry(Key),
-                Mode = BindingMode.OneWay
+                Mode = BindingMode.OneWay,
+                Converter = Converter,
+                ConverterParameter = ConverterParameter
             };
+
         }
     }
 }

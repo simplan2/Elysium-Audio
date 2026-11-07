@@ -831,7 +831,7 @@ namespace ElysiumAudio.ViewModels
         // Comando para añadir archivos a la cola de procesamiento
         [RelayCommand]
         private async Task AddFile()
-        {
+        {            
             await OnAddFile();
         }
 

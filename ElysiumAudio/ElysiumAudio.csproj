@@ -6,7 +6,26 @@
 	  <ApplicationIcon>Assets\elysium.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
+
+  <!-- Sin símbolos en Release: el ejecutable distribuible no los necesita. En Debug
+       se dejan intactos para poder depurar paso a paso. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <!-- Los paquetes nativos de SkiaSharp y HarfBuzzSharp meten sus .pdb dentro de
+       runtimes/<rid>/native/, y el SDK los copia al publicar sin distinguirlos del
+       resto de assets. Son ~100 MB de símbolos que no aportan nada en una release. -->
+  <Target Name="StripPublishDebugSymbols" AfterTargets="Publish">
+    <ItemGroup>
+      <_PdbToStrip Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_PdbToStrip)" />
+    <Message Importance="high" Text="StripPublishDebugSymbols: eliminados @(_PdbToStrip->Count()) .pdb" />
+  </Target>
 
   <!-- Información del producto: la lee Services.AppInfo para el modal de Ajustes. -->
   <PropertyGroup>
@@ -14,9 +33,9 @@
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Company>simplan</Company>
+    <Company>Simplan</Company>
     <Authors>Juan Esteban V.</Authors>
-    <Copyright>Copyright © 2026 simplan</Copyright>
+    <Copyright>Copyright © 2026 Simplan</Copyright>
     <StartupObject>ElysiumAudio.Program</StartupObject>
     <AssemblyTitle></AssemblyTitle>
     <AssemblyName></AssemblyName>

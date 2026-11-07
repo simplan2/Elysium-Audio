@@ -76,7 +76,8 @@ namespace ElysiumAudio.Controls
 
         // Pista (arco base) — BorderDefault (#2A3346)
         private static readonly IBrush TrackBrush =
-            new SolidColorBrush(Color.Parse("#10141F"));
+            //new SolidColorBrush(Color.Parse("#10141F"));
+        new SolidColorBrush(Color.Parse("Transparent"));
 
         // Arco activo — degradé AccentPrimary -> AccentSkyblue, en la dirección
         // del recorrido del knob (abajo-izquierda -> abajo-derecha), como bg_degrade.
@@ -87,18 +88,18 @@ namespace ElysiumAudio.Controls
                 EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
                 GradientStops =
                 {
-                    new GradientStop(Color.Parse("#4987FA"), 0.0),
-                    new GradientStop(Color.Parse("#64A4FC"), 1.0),
+                    new GradientStop(Color.Parse("#6AAAFF"), 0.0),
+                    new GradientStop(Color.Parse("#64F2FA"), 1.0),
                 },
             };
 
-        // Ticks inactivos — gris azulado apagado (TextMuted / BorderStrong)
+        // Ticks inactivos — gris azulado apagado (TextMuted / BorderStrong) 7F8995 4D5773
         private static readonly IBrush TickBrush =
-            new SolidColorBrush(Color.Parse("#4D5773"));
+            new SolidColorBrush(Color.Parse("#8B96A3"));
 
-        // Ticks activos + aguja — versión clara de AccentSkyblue, visible sobre el disco
+        // Ticks activos + aguja — versión clara de AccentSkyblue, visible sobre el disco A9CCFF
         private static readonly IBrush ActiveTickBrush =
-            new SolidColorBrush(Color.Parse("#A9CCFF"));
+            new SolidColorBrush(Color.Parse("#BED0E5"));
 
         // Centro del knob — BgPanelAlt (#0F131C)
         private static readonly IBrush CenterBrush =
@@ -106,7 +107,7 @@ namespace ElysiumAudio.Controls
 
         // Aro exterior — BorderStrong (#37415A), sutil
         private static readonly IBrush OuterRingBrush =
-            new SolidColorBrush(Color.Parse("#374159"));
+            new SolidColorBrush(Color.Parse("Transparent"));
 
         // Borde del disco central — BorderDefault (#2A3346)
         private static readonly IBrush CenterBorderBrush =
@@ -151,7 +152,7 @@ namespace ElysiumAudio.Controls
             if (activeAngle > 0.1)
             {
                 DrawArc(context, center, arcRadius, StartAngle, activeAngle,
-                        new Pen(ValueBrush, size * 0.055));
+                        new Pen(ValueBrush, size * 0.035));
             }
 
             // 4. Ticks
@@ -162,8 +163,8 @@ namespace ElysiumAudio.Controls
                 CenterBrush,
                 new Pen(CenterBorderBrush, 1),
                 center,
-                size * 0.27,
-                size * 0.27);
+                size * 0.26,
+                size * 0.26);
 
             // 6. Indicador (aguja) — sin el "center dot"
             double indicatorAngle = StartAngle + activeAngle;
@@ -199,8 +200,8 @@ namespace ElysiumAudio.Controls
 
                 bool active = position <= normalized + 0.0001;
 
-                double r1 = outerRadius + 4;
-                double r2 = outerRadius + (active ? 12 : 9);
+                double r1 = outerRadius + 1;
+                double r2 = outerRadius + (active ? 10 : 10);
 
                 var p1 = new Point(
                     center.X + Math.Cos(radians) * r1,
@@ -213,7 +214,7 @@ namespace ElysiumAudio.Controls
                 context.DrawLine(
                     new Pen(
                         active ? ActiveTickBrush : TickBrush,
-                        active ? 1.5 : 1),
+                        active ? 1.4 : 1.4),
                     p1, p2);
             }
         }
